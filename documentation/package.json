@@ -1,0 +1,39 @@
+{
+  "name": "@aponia.js/documentation",
+  "version": "0.0.1",
+  "description": "aponia.js documentation",
+  "private": true,
+  "license": "MIT",
+  "homepage": "https://elysium-everlasting.github.io/aponia.js",
+  "funding": "https://github.com/Elysium-Everlasting/aponia.js",
+  "contributors": [
+    {
+      "name": "ap0nia",
+      "email": "",
+      "url": "https://github.com/ap0nia"
+    }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Elysium-Everlasting/aponia.js",
+    "directory": "documentation"
+  },
+  "bugs": {
+    "url": "https://github.com/Elysium-Everlasting/aponia.js/issues"
+  },
+  "type": "module",
+  "scripts": {
+    "dev": "vitepress dev src/routes",
+    "build": "vitepress build src/routes",
+    "preview": "vitepress preview src/routes"
+  },
+  "devDependencies": {
+    "ci-info": "^3.8.0",
+    "vitepress": "1.0.0-rc.4"
+  },
+  "packageManager": "pnpm@8.6.12",
+  "engines": {
+    "pnpm": "^8.0.0",
+    "node": ">=18"
+  }
+}
