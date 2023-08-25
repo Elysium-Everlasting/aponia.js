@@ -23,6 +23,50 @@
   },
   "keywords": [],
   "type": "module",
+  ".": {
+    "types": "./dist/src/index.d.ts",
+    "require": "./dist/src/index.cjs",
+    "default": "./dist/src/index.js"
+  },
+  "./session": {
+    "types": "./dist/src/session.d.ts",
+    "require": "./dist/src/session.cjs",
+    "default": "./dist/src/session.js"
+  },
+  "./providers/credentials": {
+    "types": "./dist/src/providers/credentials.d.ts",
+    "require": "./dist/src/providers/credentials.cjs",
+    "default": "./dist/src/providers/credentials.js"
+  },
+  "./providers/email": {
+    "types": "./dist/src/providers/email.d.ts",
+    "require": "./dist/src/providers/email.cjs",
+    "default": "./dist/src/providers/email.js"
+  },
+  "./providers/*": {
+    "types": "./dist/providers/*.d.ts",
+    "require": "./dist/providers/*.cjs",
+    "default": "./dist/providers/*.js"
+  },
+  "typesVersions": {
+    "*": {
+      ".": [
+        "./dist/src/index.d.ts"
+      ],
+      "session": [
+        "./dist/src/session.d.ts"
+      ],
+      "providers/credentials": [
+        "./dist/src/providers/credentials.d.ts"
+      ],
+      "providers/email": [
+        "./dist/src/providers/email.d.ts"
+      ],
+      "providers/*": [
+        "./dist/providers/*.d.ts"
+      ]
+    }
+  },
   "scripts": {
     "format": "prettier --write --cache .",
     "lint": "eslint --cache .",
