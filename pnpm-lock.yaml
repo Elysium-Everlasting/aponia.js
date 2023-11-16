@@ -88,9 +88,6 @@ importers:
 
   packages/core:
     dependencies:
-      '@auth/core':
-        specifier: ^0.18.1
-        version: 0.18.1
       '@panva/hkdf':
         specifier: ^1.1.1
         version: 1.1.1
@@ -104,6 +101,9 @@ importers:
         specifier: ^2.3.0
         version: 2.3.0
     devDependencies:
+      '@auth/core':
+        specifier: ^0.18.1
+        version: 0.18.1
       '@types/cookie':
         specifier: ^0.5.1
         version: 0.5.1
@@ -339,7 +339,7 @@ packages:
       oauth4webapi: 2.3.0
       preact: 10.11.3
       preact-render-to-string: 5.2.3(preact@10.11.3)
-    dev: false
+    dev: true
 
   /@babel/code-frame@7.22.5:
     resolution:
@@ -1416,7 +1416,6 @@ packages:
       {
         integrity: sha512-dhPeilub1NuIG0X5Kvhh9lH4iW3ZsHlnzwgwbOlgwQ2wG1IqFzsgHqmKPk3WzsdWAeaxKJxgM0+W433RmN45GA==,
       }
-    dev: false
 
   /@sinclair/typebox@0.27.8:
     resolution:
@@ -2858,7 +2857,6 @@ packages:
         integrity: sha512-YZ3GUyn/o8gfKJlnlX7g7xq4gyO6OSuhGPKaaGssGB2qgDUS0gPgtTvoyZLTt9Ab6dC4hfc9dV5arkvc/OCmrw==,
       }
     engines: { node: '>= 0.6' }
-    dev: false
 
   /cosmiconfig-typescript-loader@4.4.0(@types/node@20.4.5)(cosmiconfig@8.2.0)(ts-node@10.9.1)(typescript@5.1.6):
     resolution:
@@ -4794,7 +4792,7 @@ packages:
       {
         integrity: sha512-bfB+lNxowY49LfrBO0ITUn93JbUhxUN8I11K6oI5hJu/G6PO6fEUddVLjqdD0cQ9SXIHWXuWh7eJYwZF7Z0N/g==,
       }
-    dev: false
+    dev: true
 
   /joycon@3.1.1:
     resolution:
@@ -5522,7 +5520,6 @@ packages:
       {
         integrity: sha512-JGkb5doGrwzVDuHwgrR4nHJayzN4h59VCed6EW8Tql6iHDfZIabCJvg6wtbn5q6pyB2hZruI3b77Nudvq7NmvA==,
       }
-    dev: false
 
   /object-assign@4.1.1:
     resolution:
@@ -5944,14 +5941,14 @@ packages:
     dependencies:
       preact: 10.11.3
       pretty-format: 3.8.0
-    dev: false
+    dev: true
 
   /preact@10.11.3:
     resolution:
       {
         integrity: sha512-eY93IVpod/zG3uMF22Unl8h9KkrcKIRs2EGar8hwLZZDU1lkjph303V9HZBwufh2s736U6VXuhD109LYqPoffg==,
       }
-    dev: false
+    dev: true
 
   /preact@10.16.0:
     resolution:
@@ -6016,7 +6013,7 @@ packages:
       {
         integrity: sha512-WuxUnVtlWL1OfZFQFuqvnvs6MiAGk9UNsBostyBOB0Is9wb5uRESevA6rnl/rkksXaGX3GzZhPup5d6Vp1nFew==,
       }
-    dev: false
+    dev: true
 
   /pseudomap@1.0.2:
     resolution:
