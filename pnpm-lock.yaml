@@ -94,6 +94,9 @@ importers:
       cookie:
         specifier: ^0.5.0
         version: 0.5.0
+      defu:
+        specifier: ^6.1.3
+        version: 6.1.3
       jose:
         specifier: ^4.14.4
         version: 4.14.4
@@ -3082,6 +3085,13 @@ packages:
       has-property-descriptors: 1.0.0
       object-keys: 1.1.1
     dev: true
+
+  /defu@6.1.3:
+    resolution:
+      {
+        integrity: sha512-Vy2wmG3NTkmHNg/kzpuvHhkqeIx3ODWqasgCRbKtbXEN0G+HpEEv9BtJLp7ZG1CZloFaC41Ah3ZFbq7aqCqMeQ==,
+      }
+    dev: false
 
   /detect-file@1.0.0:
     resolution:
