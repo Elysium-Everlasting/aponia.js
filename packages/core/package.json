@@ -23,38 +23,51 @@
   },
   "keywords": [],
   "type": "module",
-  ".": {
-    "types": "./dist/src/index.d.ts",
-    "require": "./dist/src/index.cjs",
-    "default": "./dist/src/index.js"
-  },
-  "./session": {
-    "types": "./dist/src/session.d.ts",
-    "require": "./dist/src/session.cjs",
-    "default": "./dist/src/session.js"
-  },
-  "./providers/credentials": {
-    "types": "./dist/src/providers/credentials.d.ts",
-    "require": "./dist/src/providers/credentials.cjs",
-    "default": "./dist/src/providers/credentials.js"
-  },
-  "./providers/email": {
-    "types": "./dist/src/providers/email.d.ts",
-    "require": "./dist/src/providers/email.cjs",
-    "default": "./dist/src/providers/email.js"
-  },
-  "./providers/*": {
-    "types": "./dist/providers/*.d.ts",
-    "require": "./dist/providers/*.cjs",
-    "default": "./dist/providers/*.js"
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "require": "./dist/src/index.cjs",
+      "default": "./dist/src/index.js"
+    },
+    "./client": {
+      "types": "./src/controllers/client-auth.ts",
+      "require": "./src/controllers/client-auth.ts",
+      "default": "./src/controllers/client-auth.ts",
+      "import": "./src/controllers/client-auth.ts"
+    },
+    "./session": {
+      "types": "./src/controllers/session.ts",
+      "require": "./src/controllers/session.ts",
+      "default": "./src/controllers/session.ts",
+      "import": "./src/controllers/session.ts"
+    },
+    "./providers/credentials": {
+      "types": "./dist/src/providers/credentials.d.ts",
+      "require": "./dist/src/providers/credentials.cjs",
+      "default": "./dist/src/providers/credentials.js"
+    },
+    "./providers/email": {
+      "types": "./dist/src/providers/email.d.ts",
+      "require": "./dist/src/providers/email.cjs",
+      "default": "./dist/src/providers/email.js"
+    },
+    "./providers/*": {
+      "types": "./dist/providers/*.d.ts",
+      "require": "./dist/providers/*.cjs",
+      "default": "./dist/providers/*.js"
+    }
   },
   "typesVersions": {
     "*": {
       ".": [
         "./dist/src/index.d.ts"
       ],
+      "client": [
+        "./src/controllers/client-auth.ts"
+      ],
       "session": [
-        "./dist/src/session.d.ts"
+        "./dist/src/session.d.ts",
+        "./src/controllers/session.ts"
       ],
       "providers/credentials": [
         "./dist/src/providers/credentials.d.ts"
