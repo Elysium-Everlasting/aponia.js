@@ -1,10 +1,10 @@
 import { parse } from 'cookie'
 import { defu } from 'defu'
 
-import { createCookiesOptions, type Cookie, type CookiesOptions } from './security/cookie'
-import { encode, decode } from './security/jwt'
-import type { JWTOptions } from './security/jwt'
-import type { Awaitable, DeepPartial, Nullish } from './utils/types'
+import { createCookiesOptions, type Cookie, type CookiesOptions } from '../security/cookie'
+import { encode, decode } from '../security/jwt'
+import type { JWTOptions } from '../security/jwt'
+import type { Awaitable, DeepPartial, Nullish } from '../utils/types'
 
 const hourInSeconds = 60 * 60
 

@@ -86,12 +86,12 @@
     "tsup": "^7.2.0",
     "typescript": "^5.1.6"
   },
-  "publishConfig": {
-    "access": "public"
-  },
   "packageManager": "pnpm@8.6.12",
   "engines": {
     "pnpm": "^8.0.0",
     "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
