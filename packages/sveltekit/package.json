@@ -1,6 +1,6 @@
 {
   "name": "@aponia.js/sveltekit",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "aponia.js sveltekit - web authentication adapter for SvelteKit",
   "private": true,
   "license": "MIT",
