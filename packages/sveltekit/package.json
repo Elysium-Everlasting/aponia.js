@@ -22,20 +22,20 @@
   },
   "keywords": [],
   "type": "module",
-  "types": "./dist/src/index.d.ts",
-  "main": "./dist/src/index.js",
+  "types": "./src/index.ts",
+  "main": "./dist/index.js",
   "exports": {
     ".": {
-      "types": "./dist/src/index.d.ts",
-      "require": "./dist/src/index.cjs",
-      "default": "./dist/src/index.js",
-      "exports": "./dist/src/index.js"
+      "types": "./src/index.ts",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.js",
+      "import": "./dist/index.js"
     }
   },
   "typesVersions": {
     "*": {
       ".": [
-        "./dist/src/index.d.ts"
+        "./src/index.ts"
       ]
     }
   },
