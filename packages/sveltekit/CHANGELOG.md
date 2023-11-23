@@ -1,5 +1,13 @@
 # @aponia.js/sveltekit
 
+## 0.0.2
+
+### Patch Changes
+
+- 1c99ecd: fix: type exports
+- Updated dependencies [1c99ecd]
+  - @aponia.js/core@0.0.2
+
 ## 0.0.1
 
 ### Patch Changes
