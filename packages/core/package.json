@@ -23,39 +23,44 @@
   },
   "keywords": [],
   "type": "module",
-  "types": "./dist/index.d.ts",
+  "types": "./src/index.ts",
   "main": "./dist/index.js",
   "exports": {
     ".": {
-      "types": "./dist/index.ts",
-      "require": "./dist/index.ts",
-      "default": "./dist/index.ts",
-      "export": "./dist/index.ts"
+      "types": "./src/index.ts",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.js",
+      "import": "./dist/index.js"
     },
     "./client": {
       "types": "./src/controllers/client-auth.ts",
       "require": "./src/controllers/client-auth.ts",
-      "default": "./src/controllers/client-auth.ts"
+      "default": "./src/controllers/client-auth.ts",
+      "import": "./src/controllers/client-auth.ts"
     },
     "./session": {
       "types": "./src/controllers/session.ts",
       "require": "./src/controllers/session.ts",
-      "default": "./src/controllers/session.ts"
+      "default": "./src/controllers/session.ts",
+      "import": "./src/controllers/session.ts"
     },
     "./providers/credentials": {
       "types": "./src/providers/credentials.ts",
       "require": "./src/providers/credentials.ts",
-      "default": "./src/providers/credentials.js"
+      "default": "./src/providers/credentials.js",
+      "import": "./src/providers/credentials.js"
     },
     "./providers/email": {
       "types": "./src/providers/email.ts",
       "require": "./src/providers/email.ts",
-      "default": "./src/providers/email.ts"
+      "default": "./src/providers/email.ts",
+      "import": "./src/providers/email.ts"
     },
     "./providers/*": {
       "types": "./providers/*.ts",
       "require": "./providers/*.ts",
-      "default": "./providers/*.ts"
+      "default": "./providers/*.ts",
+      "import": "./providers/*.ts"
     }
   },
   "typesVersions": {
