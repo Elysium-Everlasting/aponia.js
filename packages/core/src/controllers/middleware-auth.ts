@@ -1,5 +1,5 @@
-// import type { CredentialsProvider } from './providers/credentials'
-// import type { EmailProvider } from './providers/email'
+import type { CredentialsProvider } from '../providers/credentials'
+import type { EmailProvider } from '../providers/email'
 import type { OAuthProvider } from '../providers/oauth'
 import type { OIDCProvider } from '../providers/oidc'
 import type { PageEndpoint } from '../providers/types.js'
@@ -7,7 +7,11 @@ import type { Awaitable, Nullish } from '../utils/types'
 
 import type { SessionManager } from './session'
 
-export type AnyProvider = OAuthProvider<any> | OIDCProvider<any> // | CredentialsProvider | EmailProvider
+export type AnyProvider =
+  | OAuthProvider<any>
+  | OIDCProvider<any>
+  | CredentialsProvider
+  | EmailProvider
 
 /**
  * Static auth pages handled by the framework.
