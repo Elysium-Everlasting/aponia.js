@@ -1,7 +1,12 @@
 import { parse } from 'cookie'
 import { defu } from 'defu'
 
-import { createCookiesOptions, type Cookie, type CookiesOptions } from '../security/cookie'
+import {
+  createCookiesOptions,
+  type Cookie,
+  type CookiesOptions,
+  type CreateCookiesOptions,
+} from '../security/cookie'
 import { encode, decode } from '../security/jwt'
 import type { JWTOptions } from '../security/jwt'
 import type { Awaitable, DeepPartial, Nullish } from '../utils/types'
@@ -54,6 +59,11 @@ interface OldSession {
  * Internal session configuration.
  */
 export interface SessionConfig {
+  /**
+   * The secret used to sign the JWT. Must be at least 1 character long.
+   *
+   * @default 'secret'
+   */
   secret: string
 
   pages: {
@@ -62,7 +72,7 @@ export interface SessionConfig {
 
   jwt: Required<Omit<JWTOptions, 'maxAge'>>
 
-  useSecureCookies?: boolean
+  createCookieOptions?: CreateCookiesOptions
 
   cookieOptions: CookiesOptions
 
@@ -81,9 +91,7 @@ export interface SessionConfig {
 /**
  * Session user configuration.
  */
-export interface SessionUserConfig
-  extends DeepPartial<Omit<SessionConfig, 'secret'>>,
-    Required<Pick<SessionConfig, 'secret'>> {}
+export type SessionUserConfig = DeepPartial<SessionConfig>
 
 /**
  * Session manager.
@@ -91,18 +99,21 @@ export interface SessionUserConfig
 export class SessionManager {
   config: SessionConfig
 
-  constructor(config: SessionUserConfig) {
-    const cookieOptions = createCookiesOptions(config.useSecureCookies)
+  constructor(config?: SessionUserConfig) {
+    const cookieOptions = createCookiesOptions(config?.createCookieOptions)
 
     cookieOptions.accessToken.options.maxAge ??= DefaultAccessTokenMaxAge
     cookieOptions.refreshToken.options.maxAge ??= DefaultRefreshTokenMaxAge
 
+    const secret = config?.secret || 'secret'
+
     this.config = defu(config, {
+      secret,
       pages: {
         logoutRedirect: '/auth/login',
       },
       jwt: {
-        secret: config.secret,
+        secret,
         encode,
         decode,
       },

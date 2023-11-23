@@ -3,7 +3,7 @@ import * as oauth from 'oauth4webapi'
 
 import * as checks from '../security/checks'
 import { createCookiesOptions } from '../security/cookie'
-import type { Cookie, CookiesOptions } from '../security/cookie'
+import type { Cookie, CookiesOptions, CreateCookiesOptions } from '../security/cookie'
 import type { JWTOptions } from '../security/jwt'
 import type { Awaitable, DeepPartial, Nullish } from '../utils/types'
 
@@ -50,7 +50,7 @@ export interface OIDCUserConfig<TProfile>
   extends DeepPartial<Omit<OIDCConfig<TProfile>, 'clientId' | 'clientSecret'>> {
   clientId: string
   clientSecret: string
-  useSecureCookies?: boolean
+  createCookiesOptions?: CreateCookiesOptions
 }
 
 /**
@@ -176,7 +176,9 @@ export class OIDCProvider<TProfile> {
       state,
     )
 
-    if (oauth.isOAuth2Error(codeGrantParams)) throw new Error(codeGrantParams.error_description)
+    if (oauth.isOAuth2Error(codeGrantParams)) {
+      throw new Error(codeGrantParams.error_description)
+    }
 
     const [pkce, pkceCookie] = await checks.pkce.use(request, this.config)
 
@@ -205,7 +207,9 @@ export class OIDCProvider<TProfile> {
 
     const [nonce, nonceCookie] = await checks.nonce.use(request, this.config)
 
-    if (nonceCookie) cookies.push(nonceCookie)
+    if (nonceCookie) {
+      cookies.push(nonceCookie)
+    }
 
     const tokens = await oauth.processAuthorizationCodeOpenIDResponse(
       this.authorizationServer,
@@ -214,7 +218,9 @@ export class OIDCProvider<TProfile> {
       nonce,
     )
 
-    if (oauth.isOAuth2Error(tokens)) throw new Error('TODO: Handle OIDC response body error')
+    if (oauth.isOAuth2Error(tokens)) {
+      throw new Error('TODO: Handle OIDC response body error')
+    }
 
     const profile = oauth.getValidatedIdTokenClaims(tokens) as TProfile
 
@@ -250,7 +256,7 @@ export function mergeOIDCOptions(
       jwt: {
         secret: '',
       },
-      cookies: createCookiesOptions(userOptions.useSecureCookies),
+      cookies: createCookiesOptions(userOptions.createCookiesOptions),
       checks: ['pkce'] as OIDCCheck[],
       pages: {
         login: {

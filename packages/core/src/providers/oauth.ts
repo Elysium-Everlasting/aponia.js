@@ -3,7 +3,7 @@ import * as oauth from 'oauth4webapi'
 
 import * as checks from '../security/checks'
 import { createCookiesOptions } from '../security/cookie'
-import type { Cookie, CookiesOptions } from '../security/cookie'
+import type { Cookie, CookiesOptions, CreateCookiesOptions } from '../security/cookie'
 import type { JWTOptions } from '../security/jwt'
 import type { Awaitable, DeepPartial, Nullish } from '../utils/types'
 
@@ -50,7 +50,7 @@ export interface OAuthUserConfig<TProfile>
   extends DeepPartial<Omit<OAuthConfig<TProfile>, 'clientId' | 'clientSecret'>> {
   clientId: string
   clientSecret: string
-  useSecureCookies?: boolean
+  createCookiesOptions?: CreateCookiesOptions
 }
 
 /**
@@ -191,7 +191,9 @@ export class OAuthProvider<TProfile> {
         .userInfoRequest(this.authorizationServer, this.config.client, tokens.access_token)
         .then((response) => response.json()))
 
-    if (!profile) throw new Error('TODO: Handle missing profile')
+    if (!profile) {
+      throw new Error('TODO: Handle missing profile')
+    }
 
     const processedResponse = (await this.config.onAuth(profile, tokens)) ?? {
       redirect: this.config.pages.callback.redirect,
@@ -225,7 +227,7 @@ export function mergeOAuthOptions(
       jwt: {
         secret: '',
       },
-      cookies: createCookiesOptions(userOptions.useSecureCookies),
+      cookies: createCookiesOptions(userOptions.createCookiesOptions),
       checks: ['pkce'] as OAuthCheck[],
       pages: {
         login: {

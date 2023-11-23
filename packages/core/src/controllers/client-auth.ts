@@ -1,51 +1,46 @@
-import type { AnyProvider, AuthCallbacks, AuthConfig, AuthPages } from './middleware-auth'
-import type { SessionManager } from './session'
+import Cookies from 'universal-cookie'
+
+import { Auth, type AuthConfig } from './middleware-auth'
+
+export const cookieStore = new Cookies()
 
 export class ClientAuth {
-  session: SessionManager
-
-  providers: AnyProvider[]
-
-  pages: AuthPages
-
-  callbacks: Partial<AuthCallbacks>
-
-  routes: {
-    login: Map<string, AnyProvider>
-    callback: Map<string, AnyProvider>
-  }
+  auth: Auth
 
   constructor(config: AuthConfig) {
-    this.providers = config.providers
-
-    this.session = config.session
-
-    this.pages = {
-      logout: config.pages?.logout ?? { route: '/auth/logout', methods: ['POST'] },
-      update: config.pages?.update ?? { route: '/auth/update', methods: ['POST'] },
-      forgot: config.pages?.forgot ?? { route: '/auth/forgot', methods: ['POST'] },
-      reset: config.pages?.reset ?? { route: '/auth/reset', methods: ['POST'] },
-    }
-
-    this.callbacks = config.callbacks ?? {}
-
-    this.routes = {
-      login: new Map(),
-      callback: new Map(),
-    }
-
-    this.providers.forEach((provider) => {
-      provider
-        .setJwtOptions(this.session.config.jwt)
-        .setCookiesOptions(this.session.config.cookieOptions)
-
-      this.routes.login.set(provider.config.pages.login.route, provider)
-      this.routes.callback.set(provider.config.pages.callback.route, provider)
-    })
+    this.auth = new Auth(config)
   }
 
   /**
-   * Client login.
+   * Handle the client page load.
    */
-  login() {}
+  async handle() {
+    const url = new URL(window.location.href)
+
+    const request = new Request(url)
+
+    const result = await this.auth.handle({ request, url, cookies: cookieStore.getAll() })
+
+    console.log('handle result: ', result)
+
+    result.cookies?.forEach((c) => {
+      cookieStore.set(c.name, c.value, c.options)
+    })
+
+    if (result.user) {
+      // TODO
+    }
+
+    if (result.redirect) {
+      window.location.href = result.redirect
+      return
+    }
+  }
+
+  /**
+   * TODO
+   */
+  async login() {
+    window.location.href = '/auth/login/google'
+  }
 }

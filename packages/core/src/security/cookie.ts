@@ -27,11 +27,18 @@ export interface CookiesOptions {
   callbackUrl: CookieOption
 }
 
-export function createCookiesOptions(
-  useSecureCookies = false,
-  cookieName = defaultCookieName,
-  securePrefix = defaultSecurePrefix,
-): CookiesOptions {
+export type CreateCookiesOptions = {
+  useSecureCookies?: boolean
+  globalOverrides?: CookieSerializeOptions
+  cookieName?: string
+  securePrefix?: string
+}
+
+export function createCookiesOptions(options?: CreateCookiesOptions): CookiesOptions {
+  const useSecureCookies = options?.useSecureCookies ?? false
+  const globalOverrides = options?.globalOverrides
+  const cookieName = options?.cookieName ?? defaultCookieName
+  const securePrefix = options?.securePrefix ?? defaultSecurePrefix
   const cookiePrefix = useSecureCookies ? securePrefix : ''
   return {
     accessToken: {
@@ -41,6 +48,7 @@ export function createCookiesOptions(
         sameSite: 'lax',
         path: '/',
         secure: useSecureCookies,
+        ...globalOverrides,
       },
     },
     refreshToken: {
@@ -50,6 +58,7 @@ export function createCookiesOptions(
         sameSite: 'lax',
         path: '/',
         secure: useSecureCookies,
+        ...globalOverrides,
       },
     },
     callbackUrl: {
@@ -59,6 +68,7 @@ export function createCookiesOptions(
         sameSite: 'lax',
         path: '/',
         secure: useSecureCookies,
+        ...globalOverrides,
       },
     },
     csrfToken: {
@@ -72,6 +82,7 @@ export function createCookiesOptions(
         sameSite: 'lax',
         path: '/',
         secure: useSecureCookies,
+        ...globalOverrides,
       },
     },
     pkceCodeVerifier: {
@@ -82,6 +93,7 @@ export function createCookiesOptions(
         path: '/',
         secure: useSecureCookies,
         maxAge: fifteenMinutesInSeconds,
+        ...globalOverrides,
       },
     },
     state: {
@@ -92,6 +104,7 @@ export function createCookiesOptions(
         path: '/',
         secure: useSecureCookies,
         maxAge: fifteenMinutesInSeconds,
+        ...globalOverrides,
       },
     },
     nonce: {
@@ -102,6 +115,7 @@ export function createCookiesOptions(
         path: '/',
         secure: useSecureCookies,
         maxAge: fifteenMinutesInSeconds,
+        ...globalOverrides,
       },
     },
   }

@@ -187,7 +187,11 @@ export class Auth {
      */
     if (providerResponse.user) {
       const sessionTokens = await this.session.config.createSession?.(providerResponse.user)
-      providerResponse.user = sessionTokens?.user
+
+      if (sessionTokens?.user) {
+        providerResponse.user = sessionTokens.user
+      }
+
       if (sessionTokens) {
         providerResponse.cookies ??= []
         providerResponse.cookies.push(...(await this.session.createCookies(sessionTokens)))

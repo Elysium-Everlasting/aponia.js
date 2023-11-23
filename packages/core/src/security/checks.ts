@@ -135,6 +135,8 @@ async function signCookie(
 ) {
   const e = config.jwt.encode ?? encode
 
+  console.log({ ...jwt, token: { value } })
+
   const signedCookie: Cookie = {
     name: config.cookies[key].name,
     value: await e({ ...jwt, token: { value } }),
