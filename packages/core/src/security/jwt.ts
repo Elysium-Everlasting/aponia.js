@@ -70,3 +70,5 @@ export async function decode<T = Record<string, any>>(
 
   return payload as T & JWTPayload
 }
+
+export const defaultJWTOptions: JWTOptions = { secret: 'secret' }

@@ -2,8 +2,8 @@ import type { OIDCUserConfig, OIDCConfig } from '@auth/core/providers'
 import * as oauth from 'oauth4webapi'
 
 import * as checks from '../security/checks'
-import { createCookiesOptions, type Cookie, type CookiesOptions } from '../security/cookie'
-import type { JWTOptions } from '../security/jwt'
+import { defaultCookiesOptions, type Cookie, type CookiesOptions } from '../security/cookie'
+import { defaultJWTOptions, type JWTOptions } from '../security/jwt'
 import type { Awaitable, Nullish } from '../utils/types'
 
 import type { ProviderPages } from './types'
@@ -67,13 +67,24 @@ export class OIDCProvider<TProfile> {
    */
   authorizationServer: oauth.AuthorizationServer
 
-  cookiesOptions: CookiesOptions = createCookiesOptions()
+  cookiesOptions = defaultCookiesOptions
 
-  jwt: JWTOptions = { secret: 'secret' }
+  jwt = defaultJWTOptions
 
   constructor(options: ResolvedOIDCConfig<TProfile>) {
     this.config = options
     this.authorizationServer = { issuer: options.issuer }
+  }
+
+  /**
+   * The provider configures the behavior of the OAuth checks.
+   */
+  get checkParams(): checks.CheckParams {
+    return {
+      checks: this.config.checks,
+      cookies: this.cookiesOptions,
+      jwt: this.jwt,
+    }
   }
 
   setJwtOptions(options: JWTOptions) {
@@ -139,20 +150,20 @@ export class OIDCProvider<TProfile> {
     }
 
     if (this.config.checks?.includes('state')) {
-      const [state, stateCookie] = await checks.state.create(this.config)
+      const [state, stateCookie] = await checks.state.create(this.checkParams)
       url.searchParams.set('state', state)
       cookies.push(stateCookie)
     }
 
     if (this.config.checks?.includes('pkce')) {
-      const [pkce, pkceCookie] = await checks.pkce.create(this.config)
+      const [pkce, pkceCookie] = await checks.pkce.create(this.checkParams)
       url.searchParams.set('code_challenge', pkce)
       url.searchParams.set('code_challenge_method', 'S256')
       cookies.push(pkceCookie)
     }
 
     if (this.config.checks?.includes('nonce')) {
-      const [nonce, nonceCookie] = await checks.nonce.create(this.config)
+      const [nonce, nonceCookie] = await checks.nonce.create(this.checkParams)
       url.searchParams.set('nonce', nonce)
       cookies.push(nonceCookie)
     }
@@ -168,7 +179,7 @@ export class OIDCProvider<TProfile> {
 
     const cookies: Cookie[] = []
 
-    const [state, stateCookie] = await checks.state.use(request, this.config)
+    const [state, stateCookie] = await checks.state.use(request, this.checkParams)
 
     if (stateCookie) cookies.push(stateCookie)
 
@@ -183,7 +194,7 @@ export class OIDCProvider<TProfile> {
       throw new Error(codeGrantParams.error_description)
     }
 
-    const [pkce, pkceCookie] = await checks.pkce.use(request, this.config)
+    const [pkce, pkceCookie] = await checks.pkce.use(request, this.checkParams)
 
     if (pkceCookie) cookies.push(pkceCookie)
 
@@ -208,7 +219,7 @@ export class OIDCProvider<TProfile> {
       throw new Error('TODO: Handle www-authenticate challenges as needed')
     }
 
-    const [nonce, nonceCookie] = await checks.nonce.use(request, this.config)
+    const [nonce, nonceCookie] = await checks.nonce.use(request, this.checkParams)
 
     if (nonceCookie) {
       cookies.push(nonceCookie)

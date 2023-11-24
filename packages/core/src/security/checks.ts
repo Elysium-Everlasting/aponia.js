@@ -1,7 +1,5 @@
+import type { OAuthConfig, OIDCConfig } from '@auth/core/providers/oauth'
 import * as oauth from 'oauth4webapi'
-
-import type { OAuthCheck } from '../providers/oauth.js'
-import type { OIDCCheck } from '../providers/oidc.js'
 
 import type { Cookie, CookiesOptions } from './cookie.js'
 import { encode, decode, type JWTOptions } from './jwt.js'
@@ -23,7 +21,7 @@ const NONCE_MAX_AGE = FifteenMinutesInSeconds
  * or validate an existing instance of the check (i.e. reading the cookie value).
  */
 export type CheckParams = {
-  checks?: OAuthCheck[] | OIDCCheck[]
+  checks?: OAuthConfig<any>['checks'] | OIDCConfig<any>['checks']
   jwt: JWTOptions
   cookies: CookiesOptions
 }
@@ -143,7 +141,9 @@ export const nonce = {
   },
 
   async use(request: Aponia.InternalRequest, params: CheckParams) {
-    if (!params.checks?.includes('nonce')) return [oauth.expectNoNonce, null] as const
+    if (!params.checks?.includes('nonce' as any)) {
+      return [oauth.expectNoNonce, null] as const
+    }
 
     const nonce = request.cookies[params.cookies.nonce.name]
 

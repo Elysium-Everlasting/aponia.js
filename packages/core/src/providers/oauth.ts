@@ -2,9 +2,9 @@ import type { OAuthUserConfig, OAuthConfig } from '@auth/core/providers'
 import * as oauth from 'oauth4webapi'
 
 import * as checks from '../security/checks'
-import { createCookiesOptions } from '../security/cookie'
+import { defaultCookiesOptions } from '../security/cookie'
 import type { Cookie, CookiesOptions } from '../security/cookie'
-import type { JWTOptions } from '../security/jwt'
+import { defaultJWTOptions, type JWTOptions } from '../security/jwt'
 import type { Awaitable, Nullish } from '../utils/types'
 
 import type { ProviderPages } from './types'
@@ -68,9 +68,9 @@ export class OAuthProvider<TProfile> {
    */
   authorizationServer: oauth.AuthorizationServer
 
-  cookiesOptions: CookiesOptions = createCookiesOptions()
+  cookiesOptions = defaultCookiesOptions
 
-  jwt: JWTOptions = { secret: 'secret' }
+  jwt = defaultJWTOptions
 
   constructor(options: ResolvedOAuthConfig<TProfile>) {
     this.config = options
@@ -80,6 +80,17 @@ export class OAuthProvider<TProfile> {
       authorization_endpoint: options.endpoints.authorization.url,
       token_endpoint: options.endpoints.token.url,
       userinfo_endpoint: options.endpoints.userinfo.url,
+    }
+  }
+
+  /**
+   * The provider configures the behavior of the OAuth checks.
+   */
+  get checkParams(): checks.CheckParams {
+    return {
+      checks: this.config.checks,
+      cookies: this.cookiesOptions,
+      jwt: this.jwt,
     }
   }
 
@@ -117,13 +128,13 @@ export class OAuthProvider<TProfile> {
     }
 
     if (this.config.checks?.includes('state')) {
-      const [state, stateCookie] = await checks.state.create(this.config)
+      const [state, stateCookie] = await checks.state.create(this.checkParams)
       url.searchParams.set('state', state)
       cookies.push(stateCookie)
     }
 
     if (this.config.checks?.includes('pkce')) {
-      const [pkce, pkceCookie] = await checks.pkce.create(this.config)
+      const [pkce, pkceCookie] = await checks.pkce.create(this.checkParams)
       url.searchParams.set('code_challenge', pkce)
       url.searchParams.set('code_challenge_method', 'S256')
       cookies.push(pkceCookie)
@@ -138,7 +149,7 @@ export class OAuthProvider<TProfile> {
   async callback(request: Aponia.InternalRequest): Promise<Aponia.InternalResponse> {
     const cookies: Cookie[] = []
 
-    const [state, stateCookie] = await checks.state.use(request, this.config)
+    const [state, stateCookie] = await checks.state.use(request, this.checkParams)
 
     if (stateCookie) cookies.push(stateCookie)
 
@@ -149,9 +160,11 @@ export class OAuthProvider<TProfile> {
       state,
     )
 
-    if (oauth.isOAuth2Error(codeGrantParams)) throw new Error(codeGrantParams.error_description)
+    if (oauth.isOAuth2Error(codeGrantParams)) {
+      throw new Error(codeGrantParams.error_description)
+    }
 
-    const [pkce, pkceCookie] = await checks.pkce.use(request, this.config)
+    const [pkce, pkceCookie] = await checks.pkce.use(request, this.checkParams)
 
     if (pkceCookie) cookies.push(pkceCookie)
 
