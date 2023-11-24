@@ -19,10 +19,6 @@ const DefaultAccessTokenMaxAge = hourInSeconds
 
 const DefaultRefreshTokenMaxAge = weekInSeconds
 
-const defaultCreateSession = (user: Aponia.User) => ({ user, accessToken: user })
-
-const defaultGetAccessTokenUser = <T>(session: T) => session
-
 /**
  * Ensure a possibly async value is a `Promise`.
  */
@@ -126,7 +122,7 @@ export interface SessionConfig {
    * (session) => session
    * i.e. The session is the user itself.
    */
-  getAccessTokenUser: (session: Aponia.AccessToken) => Awaitable<Aponia.User | Nullish>
+  getAccessTokenUser?: (session: Aponia.AccessToken) => Awaitable<Aponia.User | Nullish>
 
   /**
    * Given the info
@@ -179,8 +175,6 @@ export class Session {
         refreshToken: DefaultRefreshTokenMaxAge,
       },
       cookieOptions,
-      createSession: defaultCreateSession,
-      getAccessTokenUser: defaultGetAccessTokenUser,
     })
   }
 
@@ -246,15 +240,17 @@ export class Session {
    * Get the user from a request.
    */
   async getUserFromRequest(request: Aponia.InternalRequest): Promise<Aponia.User | null> {
-    const accessToken = request.cookies[this.config.cookieOptions.accessToken.name]
+    const encodedAccessToken = request.cookies[this.config.cookieOptions.accessToken.name]
 
-    const { accessTokenData: access } = await this.decodeTokens({ accessToken })
+    const { accessTokenData: accessToken } = await this.decodeTokens({
+      accessToken: encodedAccessToken,
+    })
 
-    if (!access) {
+    if (!accessToken) {
       return null
     }
 
-    const user = await this.config.getAccessTokenUser(access)
+    const user = (await this.config.getAccessTokenUser?.(accessToken)) ?? accessToken
     return user ?? null
   }
 

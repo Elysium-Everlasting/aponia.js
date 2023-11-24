@@ -244,6 +244,7 @@ export class OIDCProvider<TProfile> {
       profile,
       tokens,
     )) ?? {
+      user: profile as any,
       redirect: this.config.pages.callback.redirect,
       status: 302,
     }
@@ -304,6 +305,5 @@ export function resolveOIDCConfig(
       token: config.token ?? config.options?.token ?? {},
       userinfo: config.userinfo ?? config.options?.userinfo ?? {},
     },
-    onAuth: (user) => ({ user, session: user, redirect: '/', status: 302 }),
   }
 }

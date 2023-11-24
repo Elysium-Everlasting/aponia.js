@@ -77,17 +77,22 @@ export function createAuthHelpers(auth: Auth, options: Options = {}) {
   const localsAuthKey = options.localsAuthKey ?? defaultLocalsAuthKey
 
   const getUser = async (event: RequestEvent): Promise<Aponia.User | null> => {
-    const initialUser = (event.locals as any)[localsUserKey]
-    if (initialUser) return initialUser
+    const cachedUser = (event.locals as any)[localsUserKey]
+
+    if (cachedUser) {
+      return cachedUser
+    }
 
     const accessToken = event.cookies.get(auth.session.config.cookieOptions.accessToken.name)
 
     const { accessTokenData } = await auth.session.decodeTokens({ accessToken })
-    if (!accessTokenData) return null
 
-    const user = await auth.session.config.getAccessTokenUser(accessTokenData)
-    if (!user) return null
+    if (!accessTokenData) {
+      return null
+    }
 
+    const user =
+      (await auth.session.config.getAccessTokenUser?.(accessTokenData)) ?? accessTokenData
     return user
   }
 

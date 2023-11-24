@@ -214,6 +214,7 @@ export class OAuthProvider<TProfile> {
       profile,
       tokens,
     )) ?? {
+      user: profile,
       redirect: this.config.pages.callback.redirect,
       status: 302,
     }

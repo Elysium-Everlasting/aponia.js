@@ -12,9 +12,7 @@ export interface CredentialsConfig {
    * Identifies
    */
   id: string
-  onLogin?: (
-    internalRequest: Aponia.InternalRequest,
-  ) => Awaitable<Aponia.InternalResponse | Nullish>
+  onAuth?: (internalRequest: Aponia.InternalRequest) => Awaitable<Aponia.InternalResponse | Nullish>
   onRegister?: (
     internalRequest: Aponia.InternalRequest,
   ) => Awaitable<Aponia.InternalResponse | Nullish>
@@ -73,7 +71,7 @@ export class CredentialsProvider {
   }
 
   async login(request: Aponia.InternalRequest): Promise<Aponia.InternalResponse> {
-    return (await this.config.onLogin?.(request)) ?? {}
+    return (await this.config.onAuth?.(request)) ?? {}
   }
 
   async callback(request: Aponia.InternalRequest): Promise<Aponia.InternalResponse> {

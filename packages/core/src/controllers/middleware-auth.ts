@@ -218,7 +218,10 @@ export class Auth {
      * 3. The provider logged in a user if `user` is defined. Create a new session for the user.
      */
     if (providerResponse.user) {
-      const sessionTokens = await this.session.config.createSession?.(providerResponse.user)
+      const sessionTokens = (await this.session.config.createSession?.(providerResponse.user)) ?? {
+        user: providerResponse.user,
+        accessToken: providerResponse.user,
+      }
 
       if (sessionTokens?.user) {
         providerResponse.user = sessionTokens.user
