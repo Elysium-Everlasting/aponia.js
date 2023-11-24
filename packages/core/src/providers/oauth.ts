@@ -1,4 +1,4 @@
-import type { OAuthConfig } from '@auth/core/providers'
+import type { OAuthConfig, OAuthUserConfig } from '@auth/core/providers'
 import * as oauth from 'oauth4webapi'
 
 import * as checks from '../security/checks'
@@ -227,19 +227,25 @@ const defaultOnAuth = <T>(user: T) => ({ user, session: user })
 /**
  * Merge user and pre-defined default OAuth options.
  */
-export function resolveOAuthConfig(config: OAuthConfig<any>): ResolvedOAuthConfig<any> {
-  const id = config.id ?? ''
-  const clientId = config.clientId ?? ''
-  const clientSecret = config.clientSecret ?? ''
+export function resolveOAuthConfig(
+  config: OAuthConfig<any> & { options?: OAuthUserConfig<any> },
+): ResolvedOAuthConfig<any> {
+  const id = config.id ?? config.options?.id ?? ''
+  const clientId = config.clientId ?? config.options?.clientId ?? ''
+  const clientSecret = config.clientSecret ?? config.options?.clientSecret ?? ''
+  const checks: any = config.checks ?? config.options?.checks ?? ['pkce']
 
   return {
     ...config,
+    ...config.options,
     id,
     client: {
       client_id: clientId,
       client_secret: clientSecret,
+      ...config.client,
+      ...config.options?.client,
     },
-    checks: ['pkce'] as any,
+    checks,
     pages: {
       login: {
         route: `/auth/login/${id}`,
@@ -252,14 +258,17 @@ export function resolveOAuthConfig(config: OAuthConfig<any>): ResolvedOAuthConfi
       },
     },
     endpoints: {
-      token: config.token,
-      userinfo: config.userinfo,
+      token: config.token ?? config.options?.token ?? {},
+      userinfo: config.userinfo ?? config.options?.userinfo ?? {},
       authorization: {
         params: {
-          client_id: config.clientId,
+          client_id: clientId,
           response_type: 'code',
+          ...config.authorization?.params,
+          ...config.options?.authorization?.params,
         },
         ...config.authorization,
+        ...config.options?.authorization,
       },
     },
     onAuth: defaultOnAuth,
