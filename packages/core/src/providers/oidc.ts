@@ -32,7 +32,7 @@ export type ResolvedOIDCConfig<TProfile> = {
     token: Endpoint<OIDCProvider<TProfile>, TokenSet>
     userinfo: Endpoint<{ provider: OIDCProvider<TProfile>; tokens: TokenSet }, TProfile>
   }
-  onAuth: (
+  onAuth?: (
     user: TProfile,
     tokens: oauth.OpenIDTokenEndpointResponse,
   ) => Awaitable<Aponia.InternalResponse | Nullish> | Nullish
@@ -133,8 +133,6 @@ export class OIDCProvider<TProfile> {
     const url = new URL(this.authorizationServer.authorization_endpoint)
 
     const cookies: Cookie[] = []
-
-    console.log('url', url.toString(), this.config, this.config.endpoints.authorization)
 
     Object.entries(this.config.endpoints?.authorization?.params ?? {}).forEach(([key, value]) => {
       if (typeof value === 'string') {
@@ -242,7 +240,10 @@ export class OIDCProvider<TProfile> {
 
     const profile = oauth.getValidatedIdTokenClaims(tokens) as TProfile
 
-    const processedResponse = (await this.config.onAuth(profile, tokens)) ?? {
+    const processedResponse: Aponia.InternalResponse = (await this.config.onAuth?.(
+      profile,
+      tokens,
+    )) ?? {
       redirect: this.config.pages.callback.redirect,
       status: 302,
     }
@@ -253,8 +254,6 @@ export class OIDCProvider<TProfile> {
     return processedResponse
   }
 }
-
-const defaultOnAuth = <T>(user: T) => ({ user, session: user })
 
 /**
  * Merges the user options with the pre-defined default options.
@@ -305,6 +304,6 @@ export function resolveOIDCConfig(
       token: config.token ?? config.options?.token ?? {},
       userinfo: config.userinfo ?? config.options?.userinfo ?? {},
     },
-    onAuth: defaultOnAuth,
+    onAuth: (user) => ({ user, session: user, redirect: '/', status: 302 }),
   }
 }

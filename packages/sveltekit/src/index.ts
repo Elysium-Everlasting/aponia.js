@@ -48,31 +48,27 @@ function getBody(response: Aponia.InternalResponse): BodyInit | null | undefined
   return undefined
 }
 
-function createSetCookiesHeader(cookies: Aponia.InternalResponse['cookies']): string {
-  return (
-    cookies?.map((cookie) => serialize(cookie.name, cookie.value, cookie.options)).join('; ') ?? ''
-  )
+function toInternalRequest(event: RequestEvent): Aponia.InternalRequest {
+  return { ...event, cookies: parse(event.request.headers.get('cookie') ?? '') }
 }
 
 function createResponse(response: Aponia.InternalResponse): Response {
   const body = getBody(response)
-  const headers: HeadersInit = {}
+  const headers = new Headers()
 
-  if (response.cookies) {
-    headers['set-cookie'] = createSetCookiesHeader(response.cookies)
-  }
+  response.cookies?.forEach((cookie) => {
+    headers.append('Set-Cookie', serialize(cookie.name, cookie.value, cookie.options))
+  })
 
   if (response.redirect) {
-    headers['location'] = response.redirect
+    headers.set('Location', response.redirect)
   }
 
   const responseInit: ResponseInit = { status: response.status, headers }
 
-  return new Response(body, responseInit)
-}
+  const res = new Response(body, responseInit)
 
-export function toInternalRequest(event: RequestEvent): Aponia.InternalRequest {
-  return { ...event, cookies: parse(event.request.headers.get('cookie') ?? '') }
+  return res
 }
 
 export function createAuthHelpers(auth: Auth, options: Options = {}) {

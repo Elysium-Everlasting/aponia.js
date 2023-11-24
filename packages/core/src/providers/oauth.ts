@@ -33,7 +33,7 @@ export type ResolvedOAuthConfig<TProfile> = {
     token: Endpoint<OAuthProvider<TProfile>, TokenSet>
     userinfo: Endpoint<{ provider: OAuthProvider<TProfile>; tokens: TokenSet }, TProfile>
   }
-  onAuth: (
+  onAuth?: (
     user: TProfile,
     tokens: oauth.OAuth2TokenEndpointResponse,
   ) => Awaitable<Aponia.InternalResponse | Nullish> | Nullish
@@ -210,7 +210,10 @@ export class OAuthProvider<TProfile> {
       throw new Error('TODO: Handle missing profile')
     }
 
-    const processedResponse = (await this.config.onAuth(profile, tokens)) ?? {
+    const processedResponse: Aponia.InternalResponse = (await this.config.onAuth?.(
+      profile,
+      tokens,
+    )) ?? {
       redirect: this.config.pages.callback.redirect,
       status: 302,
     }
@@ -221,8 +224,6 @@ export class OAuthProvider<TProfile> {
     return processedResponse
   }
 }
-
-const defaultOnAuth = <T>(user: T) => ({ user, session: user })
 
 /**
  * Merge user and pre-defined default OAuth options.
@@ -271,6 +272,5 @@ export function resolveOAuthConfig(
         ...config.options?.authorization,
       },
     },
-    onAuth: defaultOnAuth,
   }
 }
