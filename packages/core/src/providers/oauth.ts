@@ -1,4 +1,4 @@
-import type { OAuthUserConfig } from '@auth/core/providers'
+import type { OAuthUserConfig, OAuthConfig } from '@auth/core/providers'
 import * as oauth from 'oauth4webapi'
 
 import * as checks from '../security/checks'
@@ -9,11 +9,9 @@ import type { Awaitable, Nullish } from '../utils/types'
 
 import type { ProviderPages } from './types'
 
-type OAuthCheck = 'pkce' | 'state' | 'none' | 'nonce'
+export type TokenSet = Partial<oauth.OAuth2TokenEndpointResponse>
 
-type TokenSet = Partial<oauth.OAuth2TokenEndpointResponse>
-
-interface Endpoint<TContext = any, TResponse = any> {
+export interface Endpoint<TContext = any, TResponse = any> {
   url: string
   params?: Record<string, any>
   request?: (context: TContext) => Awaitable<TResponse>
@@ -26,7 +24,7 @@ interface Endpoint<TContext = any, TResponse = any> {
 export interface ResolvedOAuthConfig<TProfile> {
   id: string
   client: oauth.Client
-  checks: OAuthCheck[]
+  checks: OAuthConfig<any>['checks']
   pages: ProviderPages
   endpoints: {
     authorization: Endpoint<OAuthProvider<TProfile>>
@@ -131,12 +129,6 @@ export class OAuthProvider<TProfile> {
       cookies.push(pkceCookie)
     }
 
-    if (this.config.checks?.includes('nonce')) {
-      const [nonce, nonceCookie] = await checks.nonce.create(this.config)
-      url.searchParams.set('nonce', nonce)
-      cookies.push(nonceCookie)
-    }
-
     return { status: 302, redirect: url.toString(), cookies }
   }
 
@@ -234,7 +226,6 @@ export function mergeOAuthOptions(
       client_id: clientId,
       client_secret: clientSecret,
     },
-    onAuth: defaultOnAuth,
     checks: ['pkce'],
     pages: {
       login: {
@@ -257,5 +248,6 @@ export function mergeOAuthOptions(
         },
       },
     },
+    onAuth: defaultOnAuth,
   }
 }

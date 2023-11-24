@@ -1,14 +1,12 @@
 import * as oauth from 'oauth4webapi'
 
-import type { ResolvedOAuthConfig } from '../providers/oauth.js'
-import type { OIDCConfig } from '../providers/oidc.js'
+import type { OAuthCheck } from '../providers/oauth.js'
+import type { OIDCCheck } from '../providers/oidc.js'
 
-import type { Cookie } from './cookie.js'
+import type { Cookie, CookiesOptions } from './cookie.js'
 import { encode, decode, type JWTOptions } from './jwt.js'
 
 type CheckPayload = { value: string }
-
-type AnyOAuthConfig = ResolvedOAuthConfig<any> | OIDCConfig<any>
 
 const FifteenMinutesInSeconds = 60 * 15
 
@@ -18,35 +16,52 @@ const STATE_MAX_AGE = FifteenMinutesInSeconds
 
 const NONCE_MAX_AGE = FifteenMinutesInSeconds
 
+/**
+ * Parameters provided to a seucrity-checking function.
+ *
+ * The security checker will either create a new instance of the check (i.e. a cookie to set),
+ * or validate an existing instance of the check (i.e. reading the cookie value).
+ */
+export type CheckParams = {
+  checks?: OAuthCheck[] | OIDCCheck[]
+  jwt: JWTOptions
+  cookies: CookiesOptions
+}
+
 export const pkce = {
-  create: async (config: AnyOAuthConfig) => {
+  create: async (params: CheckParams) => {
     const code_verifier = oauth.generateRandomCodeVerifier()
 
     const value = await oauth.calculatePKCECodeChallenge(code_verifier)
 
-    const cookie = await signCookie('pkceCodeVerifier', config, code_verifier, {
-      ...config.jwt,
-      maxAge: PKCE_MAX_AGE,
-    })
+    const modifiedParams = {
+      ...params,
+      jwt: {
+        ...params.jwt,
+        maxAge: PKCE_MAX_AGE,
+      },
+    }
+
+    const cookie = await signCookie('pkceCodeVerifier', modifiedParams, code_verifier)
 
     return [value, cookie] as const
   },
 
-  async use(request: Aponia.InternalRequest, config: AnyOAuthConfig) {
-    if (!config.checks?.includes('pkce')) {
+  async use(request: Aponia.InternalRequest, params: CheckParams) {
+    if (!params.checks?.includes('pkce')) {
       return ['auth', null] as const
     }
 
-    const codeVerifier = request.cookies[config.cookies.pkceCodeVerifier.name]
+    const codeVerifier = request.cookies[params.cookies.pkceCodeVerifier.name]
 
     if (!codeVerifier) {
       throw new Error('PKCE code_verifier cookie was missing.')
     }
 
-    const d = config.jwt.decode ?? decode
+    const decodeFn = params.jwt.decode ?? decode
 
-    const value = await d<CheckPayload>({
-      ...config.jwt,
+    const value = await decodeFn<CheckPayload>({
+      ...params.jwt,
       token: codeVerifier,
     })
 
@@ -55,9 +70,9 @@ export const pkce = {
     }
 
     const cookie: Cookie = {
-      name: config.cookies.pkceCodeVerifier.name,
+      name: params.cookies.pkceCodeVerifier.name,
       value: '',
-      options: { ...config.cookies.pkceCodeVerifier.options, maxAge: 0 },
+      options: { ...params.cookies.pkceCodeVerifier.options, maxAge: 0 },
     }
 
     return [value.value, cookie] as const
@@ -65,40 +80,45 @@ export const pkce = {
 }
 
 export const state = {
-  create: async (config: AnyOAuthConfig) => {
+  create: async (params: CheckParams) => {
     const value = oauth.generateRandomState()
 
-    const cookie = await signCookie('state', config, value, {
-      ...config.jwt,
-      maxAge: STATE_MAX_AGE,
-    })
+    const modifiedParams = {
+      ...params,
+      jwt: {
+        ...params.jwt,
+        maxAge: STATE_MAX_AGE,
+      },
+    }
+
+    const cookie = await signCookie('state', modifiedParams, value)
 
     return [value, cookie] as const
   },
 
-  async use(request: Aponia.InternalRequest, config: AnyOAuthConfig) {
-    if (!config.checks?.includes('state')) {
+  async use(request: Aponia.InternalRequest, params: CheckParams) {
+    if (!params.checks?.includes('state')) {
       return [oauth.skipStateCheck, null] as const
     }
 
-    const state = request.cookies[config.cookies.state.name]
+    const state = request.cookies[params.cookies.state.name]
 
     if (!state) {
       throw new Error('State cookie was missing.')
     }
 
-    const d = config.jwt.decode ?? decode
+    const d = params.jwt.decode ?? decode
 
-    const value = await d<CheckPayload>({ ...config.jwt, token: state })
+    const value = await d<CheckPayload>({ ...params.jwt, token: state })
 
     if (!value?.value) {
       throw new Error('State value could not be parsed.')
     }
 
     const cookie: Cookie = {
-      name: config.cookies.state.name,
+      name: params.cookies.state.name,
       value: '',
-      options: { ...config.cookies.state.options, maxAge: 0 },
+      options: { ...params.cookies.state.options, maxAge: 0 },
     }
 
     return [value.value, cookie] as const
@@ -106,56 +126,58 @@ export const state = {
 }
 
 export const nonce = {
-  create: async (config: AnyOAuthConfig) => {
+  create: async (params: CheckParams) => {
     const value = oauth.generateRandomNonce()
-    const cookie = await signCookie('nonce', config, value, {
-      ...config.jwt,
-      maxAge: NONCE_MAX_AGE,
-    })
+
+    const modifiedParams = {
+      ...params,
+      jwt: {
+        ...params.jwt,
+        maxAge: NONCE_MAX_AGE,
+      },
+    }
+
+    const cookie = await signCookie('nonce', modifiedParams, value)
+
     return [value, cookie] as const
   },
 
-  async use(request: Aponia.InternalRequest, config: AnyOAuthConfig) {
-    if (!config.checks?.includes('nonce')) return [oauth.expectNoNonce, null] as const
+  async use(request: Aponia.InternalRequest, params: CheckParams) {
+    if (!params.checks?.includes('nonce')) return [oauth.expectNoNonce, null] as const
 
-    const nonce = request.cookies[config.cookies.nonce.name]
+    const nonce = request.cookies[params.cookies.nonce.name]
 
     if (!nonce) {
       throw new Error('Nonce cookie was missing.')
     }
 
-    const d = config.jwt.decode ?? decode
+    const decodeFn = params.jwt.decode ?? decode
 
-    const value = await d<CheckPayload>({ ...config.jwt, token: nonce })
+    const value = await decodeFn<CheckPayload>({ ...params.jwt, token: nonce })
 
     if (!value?.value) {
       throw new Error('Nonce value could not be parsed.')
     }
 
     const cookie: Cookie = {
-      name: config.cookies.nonce.name,
+      name: params.cookies.nonce.name,
       value: '',
-      options: { ...config.cookies.nonce.options, maxAge: 0 },
+      options: { ...params.cookies.nonce.options, maxAge: 0 },
     }
 
     return [value.value, cookie] as const
   },
 }
 
-async function signCookie(
-  key: Exclude<keyof AnyOAuthConfig['cookies'], 'multiplier'>,
-  config: AnyOAuthConfig,
-  value: string,
-  jwt: JWTOptions,
-) {
-  const e = config.jwt.encode ?? encode
+async function signCookie(key: keyof CookiesOptions, params: CheckParams, value: string) {
+  const encodeFn = params.jwt.encode ?? encode
 
   const signedCookie: Cookie = {
-    name: config.cookies[key].name,
-    value: await e({ ...jwt, token: { value } }),
+    name: params.cookies[key].name,
+    value: await encodeFn({ ...params.jwt, token: { value } }),
     options: {
-      ...config.cookies[key].options,
-      maxAge: jwt.maxAge ?? 60,
+      ...params.cookies[key].options,
+      maxAge: params.jwt.maxAge ?? 60,
     },
   }
 

@@ -1,17 +1,14 @@
-import { defu } from 'defu'
+import type { OIDCUserConfig, OIDCConfig } from '@auth/core/providers'
 import * as oauth from 'oauth4webapi'
 
 import * as checks from '../security/checks'
-import { createCookiesOptions } from '../security/cookie'
-import type { Cookie, CookiesOptions, CreateCookiesOptions } from '../security/cookie'
+import { createCookiesOptions, type Cookie, type CookiesOptions } from '../security/cookie'
 import type { JWTOptions } from '../security/jwt'
-import type { Awaitable, DeepPartial, Nullish } from '../utils/types'
+import type { Awaitable, Nullish } from '../utils/types'
 
 import type { ProviderPages } from './types'
 
-type OIDCCheck = 'pkce' | 'state' | 'none' | 'nonce'
-
-type TokenSet = Partial<oauth.OAuth2TokenEndpointResponse>
+export type TokenSet = Partial<oauth.OAuth2TokenEndpointResponse>
 
 interface Endpoint<TContext = any, TResponse = any> {
   params?: Record<string, any>
@@ -22,15 +19,11 @@ interface Endpoint<TContext = any, TResponse = any> {
 /**
  * Internal OIDC configuration.
  */
-export interface OIDCConfig<TProfile> {
+export interface ResolvedOIDCConfig<TProfile> {
   id: string
   issuer: string
   client: oauth.Client
-  clientId: string
-  clientSecret: string
-  jwt: JWTOptions
-  cookies: CookiesOptions
-  checks: OIDCCheck[]
+  checks: OIDCConfig<any>['checks']
   pages: ProviderPages
   endpoints: {
     authorization: Endpoint<OIDCProvider<TProfile>>
@@ -44,20 +37,10 @@ export interface OIDCConfig<TProfile> {
 }
 
 /**
- * OIDC user configuration.
- */
-export interface OIDCUserConfig<TProfile>
-  extends DeepPartial<Omit<OIDCConfig<TProfile>, 'clientId' | 'clientSecret'>> {
-  clientId: string
-  clientSecret: string
-  createCookiesOptions?: CreateCookiesOptions
-}
-
-/**
  * Pre-defined OIDC default configuration.
  */
 export interface OIDCDefaultConfig<TProfile>
-  extends Pick<OIDCConfig<TProfile>, 'id' | 'issuer'>,
+  extends Pick<ResolvedOIDCConfig<TProfile>, 'id' | 'issuer'>,
     Omit<OIDCUserConfig<TProfile>, 'id' | 'issuer' | 'clientId' | 'clientSecret'> {}
 
 /**
@@ -77,25 +60,29 @@ export class OIDCProvider<TProfile> {
   /**
    * Config.
    */
-  config: OIDCConfig<TProfile>
+  config: ResolvedOIDCConfig<TProfile>
 
   /**
    * Authorization server.
    */
   authorizationServer: oauth.AuthorizationServer
 
-  constructor(options: OIDCConfig<TProfile>) {
+  cookiesOptions: CookiesOptions = createCookiesOptions()
+
+  jwt: JWTOptions = { secret: 'secret' }
+
+  constructor(options: ResolvedOIDCConfig<TProfile>) {
     this.config = options
     this.authorizationServer = { issuer: options.issuer }
   }
 
   setJwtOptions(options: JWTOptions) {
-    this.config.jwt = options
+    this.jwt = options
     return this
   }
 
   setCookiesOptions(options: CookiesOptions) {
-    this.config.cookies = options
+    this.cookiesOptions = options
     return this
   }
 
@@ -112,7 +99,7 @@ export class OIDCProvider<TProfile> {
     const supportsPKCE = authorizationServer.code_challenge_methods_supported?.includes('S256')
 
     if (this.config.checks?.includes('pkce') && !supportsPKCE) {
-      this.config.checks = ['nonce']
+      this.config.checks = ['nonce'] as any
     }
 
     this.authorizationServer = authorizationServer
@@ -252,53 +239,49 @@ export class OIDCProvider<TProfile> {
   }
 }
 
+const defaultOnAuth = <T>(user: T) => ({ user, session: user })
+
 /**
  * Merges the user options with the pre-defined default options.
  */
 export function mergeOIDCOptions(
   userOptions: OIDCUserConfig<any>,
   defaultOptions: OIDCDefaultConfig<any>,
-): OIDCConfig<any> {
+): ResolvedOIDCConfig<any> {
   const id = userOptions.id ?? defaultOptions.id
+  const clientId = userOptions.clientId ?? ''
+  const clientSecret = userOptions.clientSecret ?? ''
+  const issuer = userOptions.issuer ?? defaultOptions.issuer
 
-  const resolvedOptions = defu(
-    userOptions,
-    {
-      id,
-      client: {
-        client_id: userOptions.clientId,
-        client_secret: userOptions.clientSecret,
-      },
-      jwt: {
-        secret: '',
-      },
-      cookies: createCookiesOptions(userOptions.createCookiesOptions),
-      checks: ['pkce'] as OIDCCheck[],
-      pages: {
-        login: {
-          route: `/auth/login/${id}`,
-          methods: ['GET'],
-        },
-        callback: {
-          route: `/auth/callback/${id}`,
-          methods: ['GET'],
-          redirect: '/',
-        },
-      },
-      endpoints: {
-        authorization: {
-          params: {
-            client_id: userOptions.clientId,
-            response_type: 'code',
-          },
-        },
-        token: {},
-        userinfo: {},
-      },
-      onAuth: (user: any) => ({ user, session: user }),
+  return {
+    id,
+    issuer,
+    client: {
+      client_id: clientId,
+      client_secret: clientSecret,
     },
-    defaultOptions,
-  ) as OIDCConfig<any>
-
-  return resolvedOptions
+    checks: ['pkce'] as any,
+    pages: {
+      login: {
+        route: `/auth/login/${id}`,
+        methods: ['GET'],
+      },
+      callback: {
+        route: `/auth/callback/${id}`,
+        methods: ['GET'],
+        redirect: '/',
+      },
+    },
+    endpoints: {
+      authorization: {
+        params: {
+          client_id: userOptions.clientId,
+          response_type: 'code',
+        },
+      },
+      token: {},
+      userinfo: {},
+    },
+    onAuth: defaultOnAuth,
+  }
 }
