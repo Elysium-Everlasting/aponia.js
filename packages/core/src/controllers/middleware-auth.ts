@@ -5,7 +5,7 @@ import type { OIDCProvider } from '../providers/oidc'
 import type { PageEndpoint } from '../providers/types.js'
 import type { Awaitable, Nullish } from '../utils/types'
 
-import type { SessionManager } from './session'
+import type { Session } from './session'
 
 export type AnyProvider =
   | OAuthProvider<any>
@@ -54,7 +54,7 @@ export interface AuthConfig {
   /**
    * Session manager. Handles session creation, validation / decoding, and destruction.
    */
-  session: SessionManager
+  session: Session
 
   /**
    * Providers to use for authentication.
@@ -76,7 +76,7 @@ export interface AuthConfig {
  * Auth framework.
  */
 export class Auth {
-  session: SessionManager
+  session: Session
 
   providers: AnyProvider[]
 
@@ -220,4 +220,4 @@ export class Auth {
 /**
  * Create an auth instance.
  */
-export const AponiaAuth = (config: AuthConfig) => new Auth(config)
+export const createAuth = (config: AuthConfig) => new Auth(config)

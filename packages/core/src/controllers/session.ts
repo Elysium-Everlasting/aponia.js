@@ -19,6 +19,10 @@ const DefaultAccessTokenMaxAge = hourInSeconds
 
 const DefaultRefreshTokenMaxAge = weekInSeconds
 
+const defaultCreateSession = (user: Aponia.User) => ({ user, accessToken: user })
+
+const defaultGetAccessTokenUser = (session: Aponia.AccessToken) => session
+
 /**
  * Ensure a possibly async value is a `Promise`.
  */
@@ -32,8 +36,8 @@ function asPromise<T>(value: Awaitable<T>): Promise<T> {
 interface NewSession {
   /**
    * The user for this request.
-   * If not defined, {@link SessionManager.getUserFromRequest} will need to decode the access token from scratch.
-   * If defined, the user will be saved in the request and {@link SessionManager.getUserFromRequest} won't need to decode the access token.
+   * If not defined, {@link Session.getUserFromRequest} will need to decode the access token from scratch.
+   * If defined, the user will be saved in the request and {@link Session.getUserFromRequest} won't need to decode the access token.
    *
    * TLDR: it might seem redundant to define both access token and user, but it can be more efficient :^) .
    */
@@ -50,9 +54,19 @@ interface NewSession {
   refreshToken?: Aponia.RefreshToken
 }
 
+/**
+ * Session details for an expired or invalid session that contains a refresh token.
+ */
 interface OldSession {
+  /**
+   * The old access token.
+   */
   accessToken?: Aponia.AccessToken | Nullish
-  refreshToken?: Aponia.RefreshToken
+
+  /**
+   * The refresh token that should be handled, i.e. by generating a new session and access/refresh tokens.
+   */
+  refreshToken: Aponia.RefreshToken
 }
 
 /**
@@ -66,20 +80,57 @@ export interface SessionConfig {
    */
   secret: string
 
+  /**
+   */
   pages: {
+    /**
+     * Where to redirect the user after logging out.
+     */
     logoutRedirect: string
   }
 
+  /**
+   * Custom the JWT options.
+   */
   jwt: Required<Omit<JWTOptions, 'maxAge'>>
 
+  /**
+   * Options when generating the options for all the cookies.
+   */
   createCookieOptions?: CreateCookiesOptions
 
+  /**
+   * The options to use for the various cookies set by the session manager.
+   */
   cookieOptions: CookiesOptions
 
+  /**
+   * Given a user that just logged in, create a new session.
+   *
+   * @example
+   * A session might only contain the user ID,
+   * so this function would generate a new access token that only contains the user ID.
+   *
+   * @default
+   * (user) => ({ user, accessToken: user })
+   * i.e. The session is the user itself, and a new access token is created with the user's info.
+   */
   createSession?: (user: Aponia.User) => Awaitable<NewSession | Nullish>
 
+  /**
+   * Given a session, extract the user from it.
+   *
+   * @example If a session only contains the user ID, this function would fetch the user from the database.
+   *
+   * @default
+   * (session) => session
+   * i.e. The session is the user itself.
+   */
   getAccessTokenUser: (session: Aponia.AccessToken) => Awaitable<Aponia.User | Nullish>
 
+  /**
+   * Given the info
+   */
   handleRefresh?: (tokens: OldSession) => Awaitable<NewSession | Nullish>
 
   onInvalidateAccessToken?: (
@@ -96,7 +147,7 @@ export type SessionUserConfig = DeepPartial<SessionConfig>
 /**
  * Session manager.
  */
-export class SessionManager {
+export class Session {
   config: SessionConfig
 
   constructor(config?: SessionUserConfig) {
@@ -106,6 +157,12 @@ export class SessionManager {
     cookieOptions.refreshToken.options.maxAge ??= DefaultRefreshTokenMaxAge
 
     const secret = config?.secret || 'secret'
+
+    // hkdf throws an error if it attempts to encrypt something with a key that's less than 1 character.
+    // Might as well throw the error now instead of later during a request, where it's harder to debug.
+    if (secret.length === 0) {
+      throw new Error('The secret must be at least 1 character long')
+    }
 
     this.config = defu(config, {
       secret,
@@ -122,7 +179,8 @@ export class SessionManager {
         refreshToken: DefaultRefreshTokenMaxAge,
       },
       cookieOptions,
-      getAccessTokenUser: (accessToken: Aponia.AccessToken) => accessToken,
+      createSession: defaultCreateSession,
+      getAccessTokenUser: defaultGetAccessTokenUser,
     })
   }
 
@@ -191,7 +249,10 @@ export class SessionManager {
     const accessToken = request.cookies[this.config.cookieOptions.accessToken.name]
 
     const { accessTokenData: access } = await this.decodeTokens({ accessToken })
-    if (!access) return null
+
+    if (!access) {
+      return null
+    }
 
     const user = await this.config.getAccessTokenUser(access)
     return user ?? null
@@ -206,7 +267,9 @@ export class SessionManager {
 
     // User is logged in or logged out and doesn't need to be refreshed.
 
-    if (accessToken || (!accessToken && !refreshToken)) return {}
+    if (accessToken || (!accessToken && !refreshToken)) {
+      return {}
+    }
 
     // User is logged out, but can be refreshed.
 
@@ -215,7 +278,9 @@ export class SessionManager {
       refreshToken,
     })
 
-    if (!refreshTokenData) return {}
+    if (refreshTokenData == null) {
+      return {}
+    }
 
     const refreshedTokens = await this.config.handleRefresh?.({
       accessToken: accessTokenData,
@@ -276,4 +341,4 @@ export class SessionManager {
 /**
  * Create a new session manager.
  */
-export const AponiaSession = (config: SessionUserConfig) => new SessionManager(config)
+export const createSession = (config: SessionUserConfig) => new Session(config)
