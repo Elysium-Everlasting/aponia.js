@@ -64,8 +64,24 @@ export interface OIDCDefaultConfig<TProfile>
  * OIDC provider.
  */
 export class OIDCProvider<TProfile> {
+  /**
+   * Sets the provider __type__ for all instances.
+   */
+  static type = 'oidc' as const
+
+  /**
+   * Forwards the static provider __type__ to an instance's properties.
+   */
+  type = OIDCProvider.type
+
+  /**
+   * Config.
+   */
   config: OIDCConfig<TProfile>
 
+  /**
+   * Authorization server.
+   */
   authorizationServer: oauth.AuthorizationServer
 
   constructor(options: OIDCConfig<TProfile>) {

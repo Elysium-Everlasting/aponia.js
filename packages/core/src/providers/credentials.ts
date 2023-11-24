@@ -8,6 +8,10 @@ import type { ProviderPages } from './types'
  * Internal configuration for the credentials provider.
  */
 export interface CredentialsConfig {
+  /**
+   * Identifies
+   */
+  id: string
   onLogin?: (
     internalRequest: Aponia.InternalRequest,
   ) => Awaitable<Aponia.InternalResponse | Nullish>
@@ -26,19 +30,33 @@ export interface CredentialsUserConfig extends DeepPartial<CredentialsConfig> {}
  * Credentials provider.
  */
 export class CredentialsProvider {
-  id = 'credentials' as const
+  /**
+   * Sets the provider __type__ for all instances.
+   */
+  static type = 'credentials' as const
 
+  /**
+   * Forwards the static provider __type__ to an instance's properties.
+   */
+  type = CredentialsProvider.type
+
+  /**
+   * Config.
+   */
   config: CredentialsConfig
 
   constructor(config: CredentialsUserConfig) {
+    const id = config.id ?? CredentialsProvider.type
+
     this.config = defu(config, {
+      id,
       pages: {
         login: {
-          route: `/auth/login/${this.id}`,
+          route: `/auth/login/${id}`,
           methods: ['POST'],
         },
         callback: {
-          route: `/auth/register/${this.id}`,
+          route: `/auth/register/${id}`,
           methods: ['POST'],
           redirect: '/',
         },

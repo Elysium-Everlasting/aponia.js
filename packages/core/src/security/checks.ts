@@ -4,8 +4,7 @@ import type { OAuthConfig } from '../providers/oauth.js'
 import type { OIDCConfig } from '../providers/oidc.js'
 
 import type { Cookie } from './cookie.js'
-import { encode, decode } from './jwt.js'
-import type { JWTOptions } from './jwt.js'
+import { encode, decode, type JWTOptions } from './jwt.js'
 
 type CheckPayload = { value: string }
 
@@ -34,11 +33,15 @@ export const pkce = {
   },
 
   async use(request: Aponia.InternalRequest, config: AnyOAuthConfig) {
-    if (!config.checks?.includes('pkce')) return ['auth', null] as const
+    if (!config.checks?.includes('pkce')) {
+      return ['auth', null] as const
+    }
 
     const codeVerifier = request.cookies[config.cookies.pkceCodeVerifier.name]
 
-    if (!codeVerifier) throw new Error('PKCE code_verifier cookie was missing.')
+    if (!codeVerifier) {
+      throw new Error('PKCE code_verifier cookie was missing.')
+    }
 
     const d = config.jwt.decode ?? decode
 
@@ -47,7 +50,9 @@ export const pkce = {
       token: codeVerifier,
     })
 
-    if (!value?.value) throw new Error('PKCE code_verifier value could not be parsed.')
+    if (!value?.value) {
+      throw new Error('PKCE code_verifier value could not be parsed.')
+    }
 
     const cookie: Cookie = {
       name: config.cookies.pkceCodeVerifier.name,
@@ -72,17 +77,23 @@ export const state = {
   },
 
   async use(request: Aponia.InternalRequest, config: AnyOAuthConfig) {
-    if (!config.checks?.includes('state')) return [oauth.skipStateCheck, null] as const
+    if (!config.checks?.includes('state')) {
+      return [oauth.skipStateCheck, null] as const
+    }
 
     const state = request.cookies[config.cookies.state.name]
 
-    if (!state) throw new Error('State cookie was missing.')
+    if (!state) {
+      throw new Error('State cookie was missing.')
+    }
 
     const d = config.jwt.decode ?? decode
 
     const value = await d<CheckPayload>({ ...config.jwt, token: state })
 
-    if (!value?.value) throw new Error('State value could not be parsed.')
+    if (!value?.value) {
+      throw new Error('State value could not be parsed.')
+    }
 
     const cookie: Cookie = {
       name: config.cookies.state.name,
@@ -109,13 +120,17 @@ export const nonce = {
 
     const nonce = request.cookies[config.cookies.nonce.name]
 
-    if (!nonce) throw new Error('Nonce cookie was missing.')
+    if (!nonce) {
+      throw new Error('Nonce cookie was missing.')
+    }
 
     const d = config.jwt.decode ?? decode
 
     const value = await d<CheckPayload>({ ...config.jwt, token: nonce })
 
-    if (!value?.value) throw new Error('Nonce value could not be parsed.')
+    if (!value?.value) {
+      throw new Error('Nonce value could not be parsed.')
+    }
 
     const cookie: Cookie = {
       name: config.cookies.nonce.name,

@@ -28,18 +28,18 @@ export interface CookiesOptions {
 }
 
 export type CreateCookiesOptions = {
-  useSecureCookies?: boolean
-  globalOverrides?: CookieSerializeOptions
+  serializationOptions?: CookieSerializeOptions
   cookieName?: string
   securePrefix?: string
 }
 
 export function createCookiesOptions(options?: CreateCookiesOptions): CookiesOptions {
-  const useSecureCookies = options?.useSecureCookies ?? false
-  const globalOverrides = options?.globalOverrides
+  const secure = options?.serializationOptions?.secure
+
   const cookieName = options?.cookieName ?? defaultCookieName
   const securePrefix = options?.securePrefix ?? defaultSecurePrefix
-  const cookiePrefix = useSecureCookies ? securePrefix : ''
+  const cookiePrefix = secure ? securePrefix : ''
+
   return {
     accessToken: {
       name: `${cookiePrefix}${cookieName}.access-token`,
@@ -47,8 +47,7 @@ export function createCookiesOptions(options?: CreateCookiesOptions): CookiesOpt
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
-        secure: useSecureCookies,
-        ...globalOverrides,
+        ...options?.serializationOptions,
       },
     },
     refreshToken: {
@@ -57,8 +56,7 @@ export function createCookiesOptions(options?: CreateCookiesOptions): CookiesOpt
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
-        secure: useSecureCookies,
-        ...globalOverrides,
+        ...options?.serializationOptions,
       },
     },
     callbackUrl: {
@@ -67,8 +65,7 @@ export function createCookiesOptions(options?: CreateCookiesOptions): CookiesOpt
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
-        secure: useSecureCookies,
-        ...globalOverrides,
+        ...options?.serializationOptions,
       },
     },
     csrfToken: {
@@ -76,13 +73,12 @@ export function createCookiesOptions(options?: CreateCookiesOptions): CookiesOpt
        * Default to __Host- for CSRF token for additional protection if using secure cookies.
        * NB: The `__Host-` prefix is stricter than the `__Secure-` prefix.
        */
-      name: `${useSecureCookies ? '__Host-' : cookiePrefix}${cookieName}.csrf-token`,
+      name: `${secure ? '__Host-' : cookiePrefix}${cookieName}.csrf-token`,
       options: {
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
-        secure: useSecureCookies,
-        ...globalOverrides,
+        ...options?.serializationOptions,
       },
     },
     pkceCodeVerifier: {
@@ -91,9 +87,8 @@ export function createCookiesOptions(options?: CreateCookiesOptions): CookiesOpt
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
-        secure: useSecureCookies,
         maxAge: fifteenMinutesInSeconds,
-        ...globalOverrides,
+        ...options?.serializationOptions,
       },
     },
     state: {
@@ -102,9 +97,8 @@ export function createCookiesOptions(options?: CreateCookiesOptions): CookiesOpt
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
-        secure: useSecureCookies,
         maxAge: fifteenMinutesInSeconds,
-        ...globalOverrides,
+        ...options?.serializationOptions,
       },
     },
     nonce: {
@@ -113,9 +107,8 @@ export function createCookiesOptions(options?: CreateCookiesOptions): CookiesOpt
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
-        secure: useSecureCookies,
         maxAge: fifteenMinutesInSeconds,
-        ...globalOverrides,
+        ...options?.serializationOptions,
       },
     },
   }

@@ -64,8 +64,24 @@ export interface OAuthDefaultConfig<TProfile>
  * OAuth provider.
  */
 export class OAuthProvider<TProfile> {
+  /**
+   * Sets the provider __type__ for all instances.
+   */
+  static type = 'oauth' as const
+
+  /**
+   * Forwards the static provider __type__ to an instance's properties.
+   */
+  type = OAuthProvider.type
+
+  /**
+   * Config.
+   */
   config: OAuthConfig<TProfile>
 
+  /**
+   * Authorization server.
+   */
   authorizationServer: oauth.AuthorizationServer
 
   constructor(options: OAuthConfig<TProfile>) {

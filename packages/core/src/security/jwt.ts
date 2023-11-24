@@ -5,7 +5,7 @@ import type { Awaitable, Nullish } from '../utils/types'
 
 const oneDayInSeconds = 24 * 60 * 60
 
-const DefaultMaxAge = oneDayInSeconds
+const DEFAULT_MAX_AGE = oneDayInSeconds
 
 const now = () => (Date.now() / 1000) | 0
 
@@ -41,7 +41,7 @@ async function getDerivedEncryptionKey(secret: string) {
 export async function encode<T extends Record<string, any> = Record<string, any>>(
   params: JWTEncodeParams<T>,
 ) {
-  const { token = {}, secret, maxAge = DefaultMaxAge } = params
+  const { token = {}, secret, maxAge = DEFAULT_MAX_AGE } = params
 
   const encryptionSecret = await getDerivedEncryptionKey(secret)
 
@@ -60,7 +60,9 @@ export async function decode<T = Record<string, any>>(
 ): Promise<(T & JWTPayload) | Nullish> {
   const { token, secret } = params
 
-  if (token == null) return null
+  if (token == null) {
+    return null
+  }
 
   const encryptionSecret = await getDerivedEncryptionKey(secret)
 

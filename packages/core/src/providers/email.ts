@@ -9,6 +9,7 @@ import type { ProviderPages } from './types.js'
  * Internal configuration for the email provider.
  */
 export interface EmailConfig {
+  id: string
   theme: any
   pages: ProviderPages
   getEmail?: (request: Aponia.InternalRequest) => Awaitable<string | Nullish>
@@ -31,20 +32,31 @@ export interface EmailUserConfig extends DeepPartial<EmailConfig> {}
  * Email provider.
  */
 export class EmailProvider {
-  id = 'email' as const
+  /**
+   * Sets the provider __type__ for all instances.
+   */
+  static type = 'email' as const
+
+  /**
+   * Forwards the static provider __type__ to an instance's properties.
+   */
+  type = EmailProvider.type
 
   config: EmailConfig
 
   constructor(config: EmailUserConfig) {
+    const id = config.id ?? EmailProvider.type
+
     this.config = defu(config, {
+      id,
       theme: config.theme,
       pages: {
         login: {
-          route: `/auth/login/${this.id}`,
+          route: `/auth/login/${id}`,
           methods: ['POST'],
         },
         callback: {
-          route: `/auth/callback/${this.id}`,
+          route: `/auth/callback/${id}`,
           methods: ['GET'],
           redirect: '/',
         },
