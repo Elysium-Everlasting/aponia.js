@@ -1,4 +1,4 @@
-import type { OIDCUserConfig, OIDCConfig } from '@auth/core/providers'
+import type { OIDCConfig } from '@auth/core/providers'
 import * as oauth from 'oauth4webapi'
 
 import * as checks from '../security/checks'
@@ -18,8 +18,10 @@ interface Endpoint<TContext = any, TResponse = any> {
 
 /**
  * Internal OIDC configuration.
+ *
+ * @internal
  */
-export interface ResolvedOIDCConfig<TProfile> {
+export type ResolvedOIDCConfig<TProfile> = {
   id: string
   issuer: string
   client: oauth.Client
@@ -34,14 +36,14 @@ export interface ResolvedOIDCConfig<TProfile> {
     user: TProfile,
     tokens: oauth.OpenIDTokenEndpointResponse,
   ) => Awaitable<Aponia.InternalResponse | Nullish> | Nullish
-}
+} & OIDCConfig<TProfile>
 
 /**
  * Pre-defined OIDC default configuration.
  */
 export interface OIDCDefaultConfig<TProfile>
   extends Pick<ResolvedOIDCConfig<TProfile>, 'id' | 'issuer'>,
-    Omit<OIDCUserConfig<TProfile>, 'id' | 'issuer' | 'clientId' | 'clientSecret'> {}
+    Omit<OIDCConfig<TProfile>, 'id' | 'issuer' | 'clientId' | 'clientSecret'> {}
 
 /**
  * OIDC provider.
@@ -255,16 +257,14 @@ const defaultOnAuth = <T>(user: T) => ({ user, session: user })
 /**
  * Merges the user options with the pre-defined default options.
  */
-export function mergeOIDCOptions(
-  userOptions: OIDCUserConfig<any>,
-  defaultOptions: OIDCDefaultConfig<any>,
-): ResolvedOIDCConfig<any> {
-  const id = userOptions.id ?? defaultOptions.id
-  const clientId = userOptions.clientId ?? ''
-  const clientSecret = userOptions.clientSecret ?? ''
-  const issuer = userOptions.issuer ?? defaultOptions.issuer
+export function resolveOIDCConfig(config: OIDCConfig<any>): ResolvedOIDCConfig<any> {
+  const id = config.id
+  const clientId = config.clientId ?? ''
+  const clientSecret = config.clientSecret ?? ''
+  const issuer = config.issuer ?? ''
 
   return {
+    ...config,
     id,
     issuer,
     client: {
@@ -286,12 +286,13 @@ export function mergeOIDCOptions(
     endpoints: {
       authorization: {
         params: {
-          client_id: userOptions.clientId,
+          client_id: config.clientId,
           response_type: 'code',
         },
+        ...config.authorization,
       },
-      token: {},
-      userinfo: {},
+      token: config.token,
+      userinfo: config.userinfo,
     },
     onAuth: defaultOnAuth,
   }

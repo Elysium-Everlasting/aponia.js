@@ -131,6 +131,9 @@ importers:
       '@aponia.js/sveltekit':
         specifier: workspace:^
         version: link:../../packages/sveltekit
+      '@auth/core':
+        specifier: ^0.18.1
+        version: 0.18.1
       '@prisma/client':
         specifier: ^5.6.0
         version: 5.6.0(prisma@5.6.0)
@@ -487,7 +490,6 @@ packages:
       oauth4webapi: 2.3.0
       preact: 10.11.3
       preact-render-to-string: 5.2.3(preact@10.11.3)
-    dev: true
 
   /@babel/code-frame@7.22.13:
     resolution:
@@ -6185,7 +6187,6 @@ packages:
       {
         integrity: sha512-bfB+lNxowY49LfrBO0ITUn93JbUhxUN8I11K6oI5hJu/G6PO6fEUddVLjqdD0cQ9SXIHWXuWh7eJYwZF7Z0N/g==,
       }
-    dev: true
 
   /joycon@3.1.1:
     resolution:
@@ -7520,14 +7521,12 @@ packages:
     dependencies:
       preact: 10.11.3
       pretty-format: 3.8.0
-    dev: true
 
   /preact@10.11.3:
     resolution:
       {
         integrity: sha512-eY93IVpod/zG3uMF22Unl8h9KkrcKIRs2EGar8hwLZZDU1lkjph303V9HZBwufh2s736U6VXuhD109LYqPoffg==,
       }
-    dev: true
 
   /preact@10.16.0:
     resolution:
@@ -7592,7 +7591,6 @@ packages:
       {
         integrity: sha512-WuxUnVtlWL1OfZFQFuqvnvs6MiAGk9UNsBostyBOB0Is9wb5uRESevA6rnl/rkksXaGX3GzZhPup5d6Vp1nFew==,
       }
-    dev: true
 
   /prisma@5.6.0:
     resolution:

@@ -21,6 +21,7 @@
   "dependencies": {
     "@aponia.js/core": "workspace:^",
     "@aponia.js/sveltekit": "workspace:^",
+    "@auth/core": "^0.18.1",
     "@prisma/client": "^5.6.0"
   }
 }

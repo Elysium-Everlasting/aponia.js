@@ -1,4 +1,4 @@
-import type { OAuthUserConfig, OAuthConfig } from '@auth/core/providers'
+import type { OAuthConfig } from '@auth/core/providers'
 import * as oauth from 'oauth4webapi'
 
 import * as checks from '../security/checks'
@@ -20,8 +20,10 @@ export interface Endpoint<TContext = any, TResponse = any> {
 
 /**
  * Internal OAuth configuration.
+ *
+ * @internal
  */
-export interface ResolvedOAuthConfig<TProfile> {
+export type ResolvedOAuthConfig<TProfile> = {
   id: string
   client: oauth.Client
   checks: OAuthConfig<any>['checks']
@@ -35,14 +37,14 @@ export interface ResolvedOAuthConfig<TProfile> {
     user: TProfile,
     tokens: oauth.OAuth2TokenEndpointResponse,
   ) => Awaitable<Aponia.InternalResponse | Nullish> | Nullish
-}
+} & OAuthConfig<TProfile>
 
 /**
  * Pre-defined OAuth default configuration.
  */
 export interface OAuthDefaultConfig<TProfile>
   extends Pick<ResolvedOAuthConfig<TProfile>, 'id' | 'endpoints'>,
-    Omit<OAuthUserConfig<TProfile>, 'id' | 'endpoints' | 'clientId' | 'clientSecret'> {}
+    Omit<OAuthConfig<TProfile>, 'id' | 'endpoints' | 'clientId' | 'clientSecret'> {}
 
 /**
  * OAuth provider.
@@ -225,21 +227,19 @@ const defaultOnAuth = <T>(user: T) => ({ user, session: user })
 /**
  * Merge user and pre-defined default OAuth options.
  */
-export function mergeOAuthOptions(
-  userOptions: OAuthUserConfig<any>,
-  defaultOptions: OAuthDefaultConfig<any>,
-): ResolvedOAuthConfig<any> {
-  const id = userOptions.id ?? defaultOptions.id
-  const clientId = userOptions.clientId ?? ''
-  const clientSecret = userOptions.clientSecret ?? ''
+export function resolveOAuthConfig(config: OAuthConfig<any>): ResolvedOAuthConfig<any> {
+  const id = config.id ?? ''
+  const clientId = config.clientId ?? ''
+  const clientSecret = config.clientSecret ?? ''
 
   return {
+    ...config,
     id,
     client: {
       client_id: clientId,
       client_secret: clientSecret,
     },
-    checks: ['pkce'],
+    checks: ['pkce'] as any,
     pages: {
       login: {
         route: `/auth/login/${id}`,
@@ -252,13 +252,14 @@ export function mergeOAuthOptions(
       },
     },
     endpoints: {
-      ...defaultOptions.endpoints,
+      token: config.token,
+      userinfo: config.userinfo,
       authorization: {
-        ...defaultOptions.endpoints.authorization,
         params: {
-          client_id: userOptions.clientId,
+          client_id: config.clientId,
           response_type: 'code',
         },
+        ...config.authorization,
       },
     },
     onAuth: defaultOnAuth,

@@ -1,4 +1,4 @@
-import { Google } from '@aponia.js/core/providers/google'
+import Google from '@auth/core/providers/google'
 
 import { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET } from '$env/static/private'
 

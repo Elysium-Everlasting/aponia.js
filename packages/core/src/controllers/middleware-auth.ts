@@ -1,13 +1,23 @@
+import type { OAuthConfig, OIDCConfig } from '@auth/core/providers'
+
 import type { CredentialsProvider } from '../providers/credentials'
 import type { EmailProvider } from '../providers/email'
-import type { OAuthProvider } from '../providers/oauth'
-import type { OIDCProvider } from '../providers/oidc'
+import { OAuthProvider, resolveOAuthConfig } from '../providers/oauth.js'
+import { OIDCProvider, resolveOIDCConfig } from '../providers/oidc.js'
 import type { PageEndpoint } from '../providers/types.js'
 import type { Awaitable, Nullish } from '../utils/types'
 
 import type { Session } from './session'
 
-export type AnyProvider =
+/**
+ * The user can pass in a mix of internal providers and exteneral providers from Auth.js .
+ */
+export type AnyProvider = OAuthConfig<any> | OIDCConfig<any> | CredentialsProvider | EmailProvider
+
+/**
+ * A resolved provider has the correct internal interface.
+ */
+export type AnyResolvedProvider =
   | OAuthProvider<any>
   | OIDCProvider<any>
   | CredentialsProvider
@@ -78,19 +88,33 @@ export interface AuthConfig {
 export class Auth {
   session: Session
 
-  providers: AnyProvider[]
+  providers: AnyResolvedProvider[]
 
   pages: AuthPages
 
   callbacks: Partial<AuthCallbacks>
 
   routes: {
-    login: Map<string, AnyProvider>
-    callback: Map<string, AnyProvider>
+    login: Map<string, AnyResolvedProvider>
+    callback: Map<string, AnyResolvedProvider>
   }
 
   constructor(config: AuthConfig) {
-    this.providers = config.providers
+    this.providers = config.providers.map((provider) => {
+      switch (provider.type) {
+        case 'email':
+          return provider
+
+        case 'credentials':
+          return provider
+
+        case 'oauth':
+          return new OAuthProvider(resolveOAuthConfig(provider))
+
+        case 'oidc':
+          return new OIDCProvider(resolveOIDCConfig(provider))
+      }
+    })
 
     this.session = config.session
 
