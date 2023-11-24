@@ -21,7 +21,7 @@ const DefaultRefreshTokenMaxAge = weekInSeconds
 
 const defaultCreateSession = (user: Aponia.User) => ({ user, accessToken: user })
 
-const defaultGetAccessTokenUser = (session: Aponia.AccessToken) => session
+const defaultGetAccessTokenUser = <T>(session: T) => session
 
 /**
  * Ensure a possibly async value is a `Promise`.

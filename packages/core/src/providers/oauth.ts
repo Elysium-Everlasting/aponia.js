@@ -1,11 +1,11 @@
-import { defu } from 'defu'
+import type { OAuthUserConfig } from '@auth/core/providers'
 import * as oauth from 'oauth4webapi'
 
 import * as checks from '../security/checks'
 import { createCookiesOptions } from '../security/cookie'
-import type { Cookie, CookiesOptions, CreateCookiesOptions } from '../security/cookie'
+import type { Cookie, CookiesOptions } from '../security/cookie'
 import type { JWTOptions } from '../security/jwt'
-import type { Awaitable, DeepPartial, Nullish } from '../utils/types'
+import type { Awaitable, Nullish } from '../utils/types'
 
 import type { ProviderPages } from './types'
 
@@ -23,13 +23,9 @@ interface Endpoint<TContext = any, TResponse = any> {
 /**
  * Internal OAuth configuration.
  */
-export interface OAuthConfig<TProfile> {
+export interface ResolvedOAuthConfig<TProfile> {
   id: string
-  clientId: string
-  clientSecret: string
   client: oauth.Client
-  jwt: JWTOptions
-  cookies: CookiesOptions
   checks: OAuthCheck[]
   pages: ProviderPages
   endpoints: {
@@ -44,20 +40,10 @@ export interface OAuthConfig<TProfile> {
 }
 
 /**
- * OAuth user configuration.
- */
-export interface OAuthUserConfig<TProfile>
-  extends DeepPartial<Omit<OAuthConfig<TProfile>, 'clientId' | 'clientSecret'>> {
-  clientId: string
-  clientSecret: string
-  createCookiesOptions?: CreateCookiesOptions
-}
-
-/**
  * Pre-defined OAuth default configuration.
  */
 export interface OAuthDefaultConfig<TProfile>
-  extends Pick<OAuthConfig<TProfile>, 'id' | 'endpoints'>,
+  extends Pick<ResolvedOAuthConfig<TProfile>, 'id' | 'endpoints'>,
     Omit<OAuthUserConfig<TProfile>, 'id' | 'endpoints' | 'clientId' | 'clientSecret'> {}
 
 /**
@@ -77,14 +63,18 @@ export class OAuthProvider<TProfile> {
   /**
    * Config.
    */
-  config: OAuthConfig<TProfile>
+  config: ResolvedOAuthConfig<TProfile>
 
   /**
    * Authorization server.
    */
   authorizationServer: oauth.AuthorizationServer
 
-  constructor(options: OAuthConfig<TProfile>) {
+  cookiesOptions: CookiesOptions = createCookiesOptions()
+
+  jwt: JWTOptions = { secret: 'secret' }
+
+  constructor(options: ResolvedOAuthConfig<TProfile>) {
     this.config = options
 
     this.authorizationServer = {
@@ -96,12 +86,12 @@ export class OAuthProvider<TProfile> {
   }
 
   setJwtOptions(options: JWTOptions) {
-    this.config.jwt = options
+    this.jwt = options
     return this
   }
 
   setCookiesOptions(options: CookiesOptions) {
-    this.config.cookies = options
+    this.cookiesOptions = options
     return this
   }
 
@@ -200,7 +190,9 @@ export class OAuthProvider<TProfile> {
       codeGrantResponse,
     )
 
-    if (oauth.isOAuth2Error(tokens)) throw new Error('TODO: Handle OAuth 2.0 response body error')
+    if (oauth.isOAuth2Error(tokens)) {
+      throw new Error('TODO: Handle OAuth 2.0 response body error')
+    }
 
     const profile = await (this.config.endpoints.userinfo.request?.({ provider: this, tokens }) ??
       oauth
@@ -223,49 +215,47 @@ export class OAuthProvider<TProfile> {
   }
 }
 
+const defaultOnAuth = <T>(user: T) => ({ user, session: user })
+
 /**
  * Merge user and pre-defined default OAuth options.
  */
 export function mergeOAuthOptions(
   userOptions: OAuthUserConfig<any>,
   defaultOptions: OAuthDefaultConfig<any>,
-): OAuthConfig<any> {
+): ResolvedOAuthConfig<any> {
   const id = userOptions.id ?? defaultOptions.id
+  const clientId = userOptions.clientId ?? ''
+  const clientSecret = userOptions.clientSecret ?? ''
 
-  return defu(
-    userOptions,
-    {
-      id,
-      client: {
-        client_id: userOptions.clientId,
-        client_secret: userOptions.clientSecret,
-      },
-      jwt: {
-        secret: '',
-      },
-      cookies: createCookiesOptions(userOptions.createCookiesOptions),
-      checks: ['pkce'] as OAuthCheck[],
-      pages: {
-        login: {
-          route: `/auth/login/${id}`,
-          methods: ['GET'],
-        },
-        callback: {
-          route: `/auth/callback/${id}`,
-          methods: ['GET'],
-          redirect: '/',
-        },
-      },
-      endpoints: {
-        authorization: {
-          params: {
-            client_id: userOptions.clientId,
-            response_type: 'code',
-          },
-        },
-      },
-      onAuth: (user: any) => ({ user, session: user }),
+  return {
+    id,
+    client: {
+      client_id: clientId,
+      client_secret: clientSecret,
     },
-    defaultOptions,
-  )
+    onAuth: defaultOnAuth,
+    checks: ['pkce'],
+    pages: {
+      login: {
+        route: `/auth/login/${id}`,
+        methods: ['GET'],
+      },
+      callback: {
+        route: `/auth/callback/${id}`,
+        methods: ['GET'],
+        redirect: '/',
+      },
+    },
+    endpoints: {
+      ...defaultOptions.endpoints,
+      authorization: {
+        ...defaultOptions.endpoints.authorization,
+        params: {
+          client_id: userOptions.clientId,
+          response_type: 'code',
+        },
+      },
+    },
+  }
 }

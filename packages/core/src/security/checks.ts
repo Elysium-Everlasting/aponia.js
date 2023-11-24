@@ -1,6 +1,6 @@
 import * as oauth from 'oauth4webapi'
 
-import type { OAuthConfig } from '../providers/oauth.js'
+import type { ResolvedOAuthConfig } from '../providers/oauth.js'
 import type { OIDCConfig } from '../providers/oidc.js'
 
 import type { Cookie } from './cookie.js'
@@ -8,7 +8,7 @@ import { encode, decode, type JWTOptions } from './jwt.js'
 
 type CheckPayload = { value: string }
 
-type AnyOAuthConfig = OAuthConfig<any> | OIDCConfig<any>
+type AnyOAuthConfig = ResolvedOAuthConfig<any> | OIDCConfig<any>
 
 const FifteenMinutesInSeconds = 60 * 15
 
