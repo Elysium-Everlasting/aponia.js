@@ -1,7 +1,6 @@
 import './aponia-sveltekit.d'
 
 import type { Auth } from '@aponia.js/core'
-// import { redirect, error, json } from '@sveltejs/kit'
 import type { Handle, RequestEvent } from '@sveltejs/kit'
 import { parse, serialize } from 'cookie'
 
@@ -33,10 +32,43 @@ export type Options = {
   debug?: boolean
 }
 
+function getBody(response: Aponia.InternalResponse): BodyInit | null | undefined {
+  if (response.body) {
+    return JSON.stringify(response.body)
+  }
+
+  if (response.redirect) {
+    return null
+  }
+
+  if (response.error) {
+    return response.error.message
+  }
+
+  return undefined
+}
+
 function createSetCookiesHeader(cookies: Aponia.InternalResponse['cookies']): string {
   return (
     cookies?.map((cookie) => serialize(cookie.name, cookie.value, cookie.options)).join('; ') ?? ''
   )
+}
+
+function createResponse(response: Aponia.InternalResponse): Response {
+  const body = getBody(response)
+  const headers: HeadersInit = {}
+
+  if (response.cookies) {
+    headers['set-cookie'] = createSetCookiesHeader(response.cookies)
+  }
+
+  if (response.redirect) {
+    headers['location'] = response.redirect
+  }
+
+  const responseInit: ResponseInit = { status: response.status, headers }
+
+  return new Response(body, responseInit)
 }
 
 export function toInternalRequest(event: RequestEvent): Aponia.InternalRequest {
@@ -68,34 +100,17 @@ export function createAuthHelpers(auth: Auth, options: Options = {}) {
 
     const internalResponse = await auth.handle(toInternalRequest(event))
 
-    locals[localsUserKey] = internalResponse.user
-    locals[localsGetUserKey] = () => getUser(event)
+    let cachedUser: Aponia.User
 
-    if (internalResponse.redirect != null) {
-      return new Response(null, {
-        status: internalResponse.status,
-        headers: {
-          location: internalResponse.redirect,
-          'set-cookie': createSetCookiesHeader(internalResponse.cookies),
-        },
-      })
-    }
+    locals[localsUserKey] = internalResponse.user
+    locals[localsGetUserKey] = () => (cachedUser ??= getUser(event))
 
     if (options.debug) {
       locals[localsAuthKey] = internalResponse
     }
 
-    if (internalResponse.error) {
-      return new Response('Error', {
-        status: internalResponse.status ?? 500,
-        headers: {
-          'set-cookie': createSetCookiesHeader(internalResponse.cookies),
-        },
-      })
-    }
-
-    if (internalResponse.body) {
-      return new Response(JSON.stringify(internalResponse.body), internalResponse)
+    if (internalResponse.redirect || internalResponse.error || internalResponse.body) {
+      return createResponse(internalResponse)
     }
 
     internalResponse.cookies?.forEach((cookie) => {

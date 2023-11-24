@@ -5,13 +5,14 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "postinstall": "svelte-kit sync",
+    "postinstall": "prisma generate && svelte-kit sync",
     "dev": "vite"
   },
   "devDependencies": {
     "@sveltejs/adapter-auto": "^2.1.1",
     "@sveltejs/kit": "^1.27.6",
     "eslint-plugin-svelte": "^2.35.1",
+    "prisma": "^5.6.0",
     "svelte": "^4.2.7",
     "typescript": "^5.1.6",
     "typescript-svelte-plugin": "^0.3.35",
@@ -19,6 +20,7 @@
   },
   "dependencies": {
     "@aponia.js/core": "workspace:^",
-    "@aponia.js/sveltekit": "workspace:^"
+    "@aponia.js/sveltekit": "workspace:^",
+    "@prisma/client": "^5.6.0"
   }
 }
