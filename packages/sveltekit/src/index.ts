@@ -1,9 +1,9 @@
 import './aponia-sveltekit.d'
 
 import type { Auth } from '@aponia.js/core'
-import { redirect, error, json } from '@sveltejs/kit'
+// import { redirect, error, json } from '@sveltejs/kit'
 import type { Handle, RequestEvent } from '@sveltejs/kit'
-import { parse } from 'cookie'
+import { parse, serialize } from 'cookie'
 
 const defaultLocalsGetUserKey = 'getUser'
 
@@ -33,8 +33,11 @@ export type Options = {
   debug?: boolean
 }
 
-const validRedirect = (status?: number): status is Parameters<typeof redirect>[0] =>
-  status != null && status >= 300 && status <= 308
+function createSetCookiesHeader(cookies: Aponia.InternalResponse['cookies']): string {
+  return (
+    cookies?.map((cookie) => serialize(cookie.name, cookie.value, cookie.options)).join('; ') ?? ''
+  )
+}
 
 export function toInternalRequest(event: RequestEvent): Aponia.InternalRequest {
   return { ...event, cookies: parse(event.request.headers.get('cookie') ?? '') }
@@ -68,12 +71,14 @@ export function createAuthHelpers(auth: Auth, options: Options = {}) {
     locals[localsUserKey] = internalResponse.user
     locals[localsGetUserKey] = () => getUser(event)
 
-    internalResponse.cookies?.forEach((cookie) => {
-      event.cookies.set(cookie.name, cookie.value, cookie.options)
-    })
-
-    if (internalResponse.redirect != null && validRedirect(internalResponse.status)) {
-      throw redirect(internalResponse.status, internalResponse.redirect)
+    if (internalResponse.redirect != null) {
+      return new Response(null, {
+        status: internalResponse.status,
+        headers: {
+          location: internalResponse.redirect,
+          'set-cookie': createSetCookiesHeader(internalResponse.cookies),
+        },
+      })
     }
 
     if (options.debug) {
@@ -81,21 +86,21 @@ export function createAuthHelpers(auth: Auth, options: Options = {}) {
     }
 
     if (internalResponse.error) {
-      throw error(internalResponse.status ?? 404, internalResponse.error)
+      return new Response('Error', {
+        status: internalResponse.status ?? 500,
+        headers: {
+          'set-cookie': createSetCookiesHeader(internalResponse.cookies),
+        },
+      })
     }
 
     if (internalResponse.body) {
-      const response = json(internalResponse.body, internalResponse)
-
-      internalResponse.cookies?.forEach((cookie) => {
-        response.headers.append(
-          'Set-Cookie',
-          event.cookies.serialize(cookie.name, cookie.value, cookie.options),
-        )
-      })
-
-      return response
+      return new Response(JSON.stringify(internalResponse.body), internalResponse)
     }
+
+    internalResponse.cookies?.forEach((cookie) => {
+      event.cookies.set(cookie.name, cookie.value, cookie.options)
+    })
 
     return await resolve(event)
   }
