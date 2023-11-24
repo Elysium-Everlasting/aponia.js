@@ -1,16 +1,8 @@
-import { SessionManager } from '@aponia.js/core/session'
+import { Session } from '@aponia.js/core/session'
 
-export const session = new SessionManager({
+export const session = new Session({
   secret: 'secret',
-
-  async createSession(user) {
-    return {
-      user,
-      accessToken: user,
-    }
-  },
-
-  onInvalidateAccessToken() {
-    return { redirect: '/', status: 302 }
+  pages: {
+    logoutRedirect: '/',
   },
 })

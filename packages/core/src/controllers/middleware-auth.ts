@@ -148,26 +148,30 @@ export class Auth {
     if (
       url.pathname === this.pages.logout.route &&
       this.pages.logout.methods.includes(request.method)
-    )
+    ) {
       return (await this.callbacks.logout?.(internalRequest)) ?? this.session.logout(request)
+    }
 
     if (
       url.pathname === this.pages.update.route &&
       this.pages.update.methods.includes(request.method)
-    )
+    ) {
       return (await this.callbacks.update?.(internalRequest)) ?? sessionResponse
+    }
 
     if (
       url.pathname === this.pages.forgot.route &&
       this.pages.forgot.methods.includes(request.method)
-    )
+    ) {
       return (await this.callbacks.forgot?.(internalRequest)) ?? sessionResponse
+    }
 
     if (
       url.pathname === this.pages.reset.route &&
       this.pages.reset.methods.includes(request.method)
-    )
+    ) {
       return (await this.callbacks.reset?.(internalRequest)) ?? sessionResponse
+    }
 
     const loginHandler = this.routes.login.get(url.pathname)
     const callbackHandler = this.routes.callback.get(url.pathname)
