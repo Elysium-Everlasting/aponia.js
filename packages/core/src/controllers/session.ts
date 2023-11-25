@@ -1,6 +1,5 @@
 import type { User } from '@auth/core/types'
 import { parse } from 'cookie'
-import { defu } from 'defu'
 
 import {
   createCookiesOptions,
@@ -162,22 +161,21 @@ export class Session {
       throw new Error('The secret must be at least 1 character long')
     }
 
-    this.config = defu(config, {
+    this.config = {
+      ...config,
       secret,
       pages: {
+        ...config?.pages,
         logoutRedirect: '/auth/login',
       },
       jwt: {
         secret,
         encode,
         decode,
-      },
-      maxAge: {
-        accessToken: DefaultAccessTokenMaxAge,
-        refreshToken: DefaultRefreshTokenMaxAge,
+        ...config?.jwt,
       },
       cookieOptions,
-    })
+    }
   }
 
   /**
