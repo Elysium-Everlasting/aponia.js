@@ -31,7 +31,7 @@ export type ResolvedOAuthConfig<TProfile> = {
   endpoints: {
     authorization: Endpoint<OAuthProvider<TProfile>>
     token: Endpoint<OAuthProvider<TProfile>, TokenSet>
-    userinfo: Endpoint<{ provider: OAuthProvider<TProfile>; tokens: TokenSet }, TProfile>
+    userinfo: Endpoint<{ provider: OAuthConfig<TProfile>; tokens: TokenSet }, TProfile>
   }
   onAuth?: (
     user: TProfile,
@@ -168,7 +168,9 @@ export class OAuthProvider<TProfile> {
 
     const [pkce, pkceCookie] = await checks.pkce.use(request, this.checkParams)
 
-    if (pkceCookie) cookies.push(pkceCookie)
+    if (pkceCookie) {
+      cookies.push(pkceCookie)
+    }
 
     const initialCodeGrantResponse = await oauth.authorizationCodeGrantRequest(
       this.authorizationServer,
@@ -201,7 +203,10 @@ export class OAuthProvider<TProfile> {
       throw new Error('TODO: Handle OAuth 2.0 response body error')
     }
 
-    const profile = await (this.config.endpoints.userinfo.request?.({ provider: this, tokens }) ??
+    const profile = await (this.config.endpoints.userinfo.request?.({
+      provider: this.config,
+      tokens,
+    }) ??
       oauth
         .userInfoRequest(this.authorizationServer, this.config.client, tokens.access_token)
         .then((response) => response.json()))
@@ -236,16 +241,18 @@ export function resolveOAuthConfig(
   const clientId = config.clientId ?? config.options?.clientId ?? ''
   const clientSecret = config.clientSecret ?? config.options?.clientSecret ?? ''
   const checks: any = config.checks ?? config.options?.checks ?? ['pkce']
+  const token = config.token ?? config.options?.token ?? {}
+  const userinfo = config.userinfo ?? config.options?.userinfo ?? {}
 
   return {
     ...config,
     ...config.options,
     id,
     client: {
-      client_id: clientId,
-      client_secret: clientSecret,
       ...config.client,
       ...config.options?.client,
+      client_id: clientId,
+      client_secret: clientSecret,
     },
     checks,
     pages: {
@@ -260,18 +267,18 @@ export function resolveOAuthConfig(
       },
     },
     endpoints: {
-      token: config.token ?? config.options?.token ?? {},
-      userinfo: config.userinfo ?? config.options?.userinfo ?? {},
       authorization: {
+        ...config.authorization,
+        ...config.options?.authorization,
         params: {
           client_id: clientId,
           response_type: 'code',
           ...config.authorization?.params,
           ...config.options?.authorization?.params,
         },
-        ...config.authorization,
-        ...config.options?.authorization,
       },
+      token: typeof token === 'string' ? { url: token } : token,
+      userinfo: typeof userinfo === 'string' ? { url: userinfo } : userinfo,
     },
   }
 }

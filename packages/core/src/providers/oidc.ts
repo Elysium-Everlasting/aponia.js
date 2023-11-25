@@ -30,7 +30,7 @@ export type ResolvedOIDCConfig<TProfile> = {
   endpoints: {
     authorization: Endpoint<OIDCProvider<TProfile>>
     token: Endpoint<OIDCProvider<TProfile>, TokenSet>
-    userinfo: Endpoint<{ provider: OIDCProvider<TProfile>; tokens: TokenSet }, TProfile>
+    userinfo: Endpoint<{ provider: OIDCConfig<TProfile>; tokens: TokenSet }, TProfile>
   }
   onAuth?: (
     user: TProfile,
@@ -267,6 +267,8 @@ export function resolveOIDCConfig(
   const clientSecret = config.clientSecret ?? config.options?.clientSecret ?? ''
   const issuer = config.issuer ?? config.options?.issuer ?? ''
   const checks: any = config.checks ?? config.options?.checks ?? ['pkce']
+  const token = config.token ?? config.options?.token ?? {}
+  const userinfo = config.userinfo ?? config.options?.userinfo ?? {}
 
   return {
     ...config,
@@ -293,17 +295,17 @@ export function resolveOIDCConfig(
     },
     endpoints: {
       authorization: {
+        ...config.authorization,
+        ...config.options?.authorization,
         params: {
           client_id: clientId,
           response_type: 'code',
           ...config.authorization?.params,
           ...config.options?.authorization?.params,
         },
-        ...config.authorization,
-        ...config.options?.authorization,
       },
-      token: config.token ?? config.options?.token ?? {},
-      userinfo: config.userinfo ?? config.options?.userinfo ?? {},
+      token,
+      userinfo,
     },
   }
 }
