@@ -2,8 +2,6 @@ import Cookies from 'universal-cookie'
 
 import { Auth, type AuthConfig } from './middleware-auth'
 
-export const cookieStore = new Cookies()
-
 export class ClientAuth {
   auth: Auth
 
@@ -15,6 +13,8 @@ export class ClientAuth {
    * Handle the client page load.
    */
   async handle() {
+    const cookieStore = new Cookies()
+
     const url = new URL(window.location.href)
 
     const request = new Request(url)

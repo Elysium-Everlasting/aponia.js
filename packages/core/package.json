@@ -31,29 +31,11 @@
       "default": "./src/index.ts",
       "import": "./src/index.ts"
     },
-    "./client": {
-      "types": "./src/controllers/client-auth.ts",
-      "require": "./src/controllers/client-auth.ts",
-      "default": "./src/controllers/client-auth.ts",
-      "import": "./src/controllers/client-auth.ts"
-    },
     "./session": {
       "types": "./src/controllers/session.ts",
       "require": "./src/controllers/session.ts",
       "default": "./src/controllers/session.ts",
       "import": "./src/controllers/session.ts"
-    },
-    "./providers/credentials": {
-      "types": "./src/providers/credentials.ts",
-      "require": "./src/providers/credentials.ts",
-      "default": "./src/providers/credentials.js",
-      "import": "./src/providers/credentials.js"
-    },
-    "./providers/email": {
-      "types": "./src/providers/email.ts",
-      "require": "./src/providers/email.ts",
-      "default": "./src/providers/email.ts",
-      "import": "./src/providers/email.ts"
     },
     "./providers/*": {
       "types": "./providers/*.ts",
@@ -67,20 +49,11 @@
       ".": [
         "src/index.ts"
       ],
-      "client": [
-        "./src/controllers/client-auth.ts"
-      ],
       "session": [
         "./src/controllers/session.ts"
       ],
-      "providers/credentials": [
-        "./src/providers/credentials.ts"
-      ],
-      "providers/email": [
-        "./src/providers/email.ts"
-      ],
       "providers/*": [
-        "./providers/*.ts"
+        "./src/providers/*.ts"
       ]
     }
   },
@@ -93,7 +66,6 @@
   "dependencies": {
     "@panva/hkdf": "^1.1.1",
     "cookie": "^0.5.0",
-    "defu": "^6.1.3",
     "jose": "^4.14.4",
     "oauth4webapi": "^2.3.0",
     "universal-cookie": "^6.1.1"

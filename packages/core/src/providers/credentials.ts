@@ -1,5 +1,3 @@
-import { defu } from 'defu'
-
 import type { InternalRequest, InternalResponse } from '../types'
 import type { Awaitable, DeepPartial, Nullish } from '../utils/types'
 
@@ -45,20 +43,23 @@ export class CredentialsProvider {
   constructor(config: CredentialsUserConfig) {
     const id = config.id ?? CredentialsProvider.type
 
-    this.config = defu(config, {
+    this.config = {
+      ...config,
       id,
       pages: {
         login: {
           route: `/auth/login/${id}`,
           methods: ['POST'],
+          ...config?.pages?.login,
         },
         callback: {
           route: `/auth/register/${id}`,
           methods: ['POST'],
           redirect: '/',
+          ...config?.pages?.callback,
         },
       },
-    })
+    }
   }
 
   setJwtOptions() {

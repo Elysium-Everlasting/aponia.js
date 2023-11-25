@@ -1,5 +1,3 @@
-import { defu } from 'defu'
-
 import { randomString } from '../security/csrf.js'
 import type { InternalRequest, InternalResponse } from '../types'
 import type { Awaitable, DeepPartial, Nullish } from '../utils/types.js'
@@ -42,21 +40,24 @@ export class EmailProvider {
   constructor(config: EmailUserConfig) {
     const id = config.id ?? EmailProvider.type
 
-    this.config = defu(config, {
+    this.config = {
+      ...config,
       id,
       theme: config.theme,
       pages: {
         login: {
           route: `/auth/login/${id}`,
           methods: ['POST'],
+          ...config?.pages?.login,
         },
         callback: {
           route: `/auth/callback/${id}`,
           methods: ['GET'],
           redirect: '/',
+          ...config?.pages?.callback,
         },
       },
-    })
+    }
   }
 
   setJwtOptions() {
