@@ -10,7 +10,7 @@ import {
 } from '../security/cookie'
 import { encode, decode } from '../security/jwt'
 import type { JWTOptions } from '../security/jwt'
-import type { InternalRequest, InternalResponse } from '../types'
+import type { InternalRequest, InternalResponse, AccessToken, RefreshToken } from '../types'
 import type { Awaitable, DeepPartial, Nullish } from '../utils/types'
 
 const hourInSeconds = 60 * 60
@@ -44,12 +44,12 @@ export interface NewSession {
   /**
    * The new access token.
    */
-  accessToken: Aponia.AccessToken
+  accessToken: AccessToken
 
   /**
    * The new refresh token.
    */
-  refreshToken?: Aponia.RefreshToken
+  refreshToken?: RefreshToken
 }
 
 /**
@@ -59,12 +59,12 @@ export interface OldSession {
   /**
    * The old access token.
    */
-  accessToken?: Aponia.AccessToken | Nullish
+  accessToken?: AccessToken | Nullish
 
   /**
    * The refresh token that should be handled, i.e. by generating a new session and access/refresh tokens.
    */
-  refreshToken: Aponia.RefreshToken
+  refreshToken: RefreshToken
 }
 
 /**
@@ -124,7 +124,7 @@ export interface SessionConfig {
    * (session) => session
    * i.e. The session is the user itself.
    */
-  getAccessTokenUser?: (session: Aponia.AccessToken) => Awaitable<User | Nullish>
+  getAccessTokenUser?: (session: AccessToken) => Awaitable<User | Nullish>
 
   /**
    * Given the info
@@ -132,8 +132,8 @@ export interface SessionConfig {
   handleRefresh?: (tokens: OldSession) => Awaitable<NewSession | Nullish>
 
   onInvalidateAccessToken?: (
-    accessToken: Aponia.AccessToken,
-    refreshToken: Aponia.RefreshToken | Nullish,
+    accessToken: AccessToken,
+    refreshToken: RefreshToken | Nullish,
   ) => Awaitable<InternalResponse | Nullish>
 }
 
@@ -185,7 +185,7 @@ export class Session {
    */
   async decodeTokens(tokens: { accessToken?: string; refreshToken?: string }) {
     const accessTokenData = await asPromise(
-      this.config.jwt.decode<Aponia.AccessToken>({
+      this.config.jwt.decode<AccessToken>({
         secret: this.config.secret,
         token: tokens.accessToken,
       }),
@@ -194,7 +194,7 @@ export class Session {
     })
 
     const refreshTokenData = await asPromise(
-      this.config.jwt.decode<Aponia.RefreshToken>({
+      this.config.jwt.decode<RefreshToken>({
         secret: this.config.secret,
         token: tokens.refreshToken,
       }),
