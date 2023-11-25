@@ -1,6 +1,8 @@
 import { Auth } from '@aponia.js/core'
 import type { NewSession, OldSession } from '@aponia.js/core/session'
 
+import { fromDate } from './utils'
+
 type PsuedoPrismaClient = { $transaction: (...args: any) => any } & Record<string, any>
 
 /**
@@ -282,13 +284,4 @@ export function adapt<T extends TableMappings = DefaultTableMappings>(
   new PrismaAdapter(auth, prisma, options)
 
   return auth
-}
-
-/**
- * Takes a number in seconds and returns the date in the future.
- * Optionally takes a second date parameter. In that case
- * the date in the future will be calculated from that date instead of now.
- */
-export function fromDate(time = 0, date = Date.now()) {
-  return new Date(date + time * 1000)
 }
