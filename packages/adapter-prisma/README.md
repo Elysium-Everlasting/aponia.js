@@ -43,6 +43,8 @@ model Session {
   But ChatGPT mentions the concept of "identifier and token separation" that's
   presumably applicable. So we'll just keep them separate :shrug:
 
+  Oh, but ZotMeet doesn't have it. Ok so we won't do it.
+
   userId String Associates the session with a user, allowing them to login. REQUIRED
 
   expires DateTime Indicates when the session is no longer valid. The user must create a new session in order to login.
@@ -50,10 +52,8 @@ model Session {
 
 model User {
   id String @id @default(cuid())
-  name          String?
-  image         String?
-  accounts      Account[]
-  sessions      Session[]
+  name String? Descriptive info about the user. OPTIONAL.
+  image String? Descriptive info about the user. OPTIONAL.
 }
 
 # Notes
