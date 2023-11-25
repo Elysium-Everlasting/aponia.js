@@ -29,7 +29,7 @@ function asPromise<T>(value: Awaitable<T>): Promise<T> {
 /**
  * Create a new session.
  */
-interface NewSession {
+export interface NewSession {
   /**
    * The user for this request.
    * If not defined, {@link Session.getUserFromRequest} will need to decode the access token from scratch.
@@ -53,7 +53,7 @@ interface NewSession {
 /**
  * Session details for an expired or invalid session that contains a refresh token.
  */
-interface OldSession {
+export interface OldSession {
   /**
    * The old access token.
    */

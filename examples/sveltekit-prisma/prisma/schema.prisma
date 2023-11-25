@@ -26,9 +26,9 @@ model Account {
 }
 
 model Session {
-  id      String @id @default(cuid())
+  id      String   @id @default(cuid())
   user_id String
-  expires BigInt
+  expires DateTime
 
   user User @relation(references: [id], fields: [user_id], onDelete: Cascade)
 }
