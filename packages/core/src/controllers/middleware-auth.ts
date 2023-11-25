@@ -5,6 +5,7 @@ import type { EmailProvider } from '../providers/email'
 import { OAuthProvider, resolveOAuthConfig } from '../providers/oauth.js'
 import { OIDCProvider, resolveOIDCConfig } from '../providers/oidc.js'
 import type { PageEndpoint } from '../providers/types.js'
+import type { InternalRequest, InternalResponse } from '../types'
 import type { Awaitable, Nullish } from '../utils/types'
 
 import type { Session } from './session'
@@ -52,9 +53,7 @@ export interface AuthPages {
  * Callbacks for static auth pages.
  */
 export type AuthCallbacks = {
-  [k in keyof AuthPages]?: (
-    request: Aponia.InternalRequest,
-  ) => Awaitable<Aponia.InternalResponse | Nullish>
+  [k in keyof AuthPages]?: (request: InternalRequest) => Awaitable<InternalResponse | Nullish>
 }
 
 /**
@@ -145,7 +144,7 @@ export class Auth {
   /**
    * Handle an incoming `InternalRequest`.
    */
-  async handle(internalRequest: Aponia.InternalRequest): Promise<Aponia.InternalResponse> {
+  async handle(internalRequest: InternalRequest): Promise<InternalResponse> {
     const internalResponse = await this.generateInternalResponse(internalRequest).catch(
       (error) => ({ error }),
     )
@@ -156,9 +155,7 @@ export class Auth {
   /**
    * Generate an `InternalResponse` from an `InternalRequest`.
    */
-  async generateInternalResponse(
-    internalRequest: Aponia.InternalRequest,
-  ): Promise<Aponia.InternalResponse> {
+  async generateInternalResponse(internalRequest: InternalRequest): Promise<InternalResponse> {
     const { url, request } = internalRequest
 
     /**
@@ -221,7 +218,7 @@ export class Auth {
       const sessionTokens = (await this.session.config.createSession?.(providerResponse.user)) ?? {
         user: providerResponse.user,
         accessToken: providerResponse.user,
-        refreshToken: { user: providerResponse.user },
+        refreshToken: providerResponse.user,
       }
 
       if (sessionTokens?.user) {
