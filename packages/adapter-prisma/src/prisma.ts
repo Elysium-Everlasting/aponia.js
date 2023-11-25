@@ -17,7 +17,7 @@ export const DEFAULT_TABLE_MAPPINGS = {
      */
     name: 'user',
 
-    findUnique: 'userId',
+    findUnique: 'id',
 
     delete: 'id',
   },
@@ -35,11 +35,16 @@ export const DEFAULT_TABLE_MAPPINGS = {
 
     delete: 'id',
 
-    findUnique: ['provider', 'accountProviderId'],
+    findUnique: {
+      combinationKey: 'provider_providerAccountId',
+      provider: 'provider',
+      providerAccountId: 'providerAccountId',
+      userId: 'user_id',
+    },
 
     findMany: 'userId',
 
-    deleteMany: 'userId',
+    deleteMany: 'user_id',
   },
 
   /**
@@ -55,11 +60,11 @@ export const DEFAULT_TABLE_MAPPINGS = {
 
     findUnique: 'id',
 
-    findMany: 'userId',
+    findMany: 'user_id',
 
     delete: 'id',
 
-    deleteMany: 'userId',
+    deleteMany: 'user_id',
   },
 } as const
 
@@ -105,20 +110,22 @@ export class PrismaAdapter<T extends TableMappings = DefaultTableMappings> {
       }
 
       provider.config.onAuth ??= async (user: any, tokens: any) => {
-        const profile = await provider.config.profile?.(user, tokens)
+        const profile = (await provider.config.profile?.(user, tokens)) ?? user
 
-        if (profile == null) {
-          return
-        }
+        profile.id ??= profile.sub
 
         const existingAccount = await prisma[this.options.mappings.account.name].findUnique({
           where: {
-            [this.options.mappings.account.findUnique[0]]: provider.type,
-            [this.options.mappings.account.findUnique[1]]: profile.id,
+            [this.options.mappings.account.findUnique.combinationKey]: {
+              [this.options.mappings.account.findUnique.provider]: provider.type,
+              [this.options.mappings.account.findUnique.providerAccountId]: profile.id,
+            },
           },
         })
 
-        if (existingAccount == null) {
+        if (existingAccount !== null) {
+          console.log({ existingAccount })
+
           return {
             user: existingAccount,
 
@@ -128,9 +135,48 @@ export class PrismaAdapter<T extends TableMappings = DefaultTableMappings> {
           }
         }
 
-        const newAccount = await prisma[this.options.mappings.account.name].create({
-          data: profile,
+        const existingUser = await prisma[this.options.mappings.user.name].findUnique({
+          where: {
+            [this.options.mappings.user.findUnique]: profile.id,
+          },
         })
+
+        if (existingUser !== null) {
+          const newAccount = await prisma[this.options.mappings.account.name].create({
+            data: {
+              [this.options.mappings.account.findUnique.provider]: provider.type,
+              [this.options.mappings.account.findUnique.providerAccountId]: profile.id,
+              [this.options.mappings.account.findUnique.userId]:
+                existingUser[this.options.mappings.user.findUnique],
+            },
+          })
+
+          console.log({ newAccount })
+
+          return {
+            user: newAccount,
+            // TODO: how to configure this behavior? It may seem unintuitive to redirect to the callback page?
+            redirect: provider.config.pages.callback.redirect,
+            status: 302,
+          }
+        }
+
+        const newUser = await prisma[this.options.mappings.user.name].create({
+          data: {
+            [this.options.mappings.user.findUnique]: profile.id,
+          },
+        })
+
+        const newAccount = await prisma[this.options.mappings.account.name].create({
+          data: {
+            [this.options.mappings.account.findUnique.provider]: provider.type,
+            [this.options.mappings.account.findUnique.providerAccountId]: profile.id,
+            [this.options.mappings.account.findUnique.userId]:
+              newUser[this.options.mappings.user.findUnique],
+          },
+        })
+
+        console.log({ newUser, newAccount })
 
         return {
           user: newAccount,
@@ -148,4 +194,14 @@ export class PrismaAdapter<T extends TableMappings = DefaultTableMappings> {
 
     // this.auth.session.config.onInvalidateAccessToken ??= async (accessToken, refreshToken) => { }
   }
+}
+
+export function adapt<T extends TableMappings = DefaultTableMappings>(
+  auth: Auth,
+  prisma: PsuedoPrismaClient,
+  options: PrismaAdapterOptions<T> = {},
+): Auth {
+  new PrismaAdapter(auth, prisma, options)
+
+  return auth
 }

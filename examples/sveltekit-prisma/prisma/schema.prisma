@@ -15,20 +15,20 @@ model User {
 }
 
 model Account {
-  id                String @id @unique
+  id                String @id @default(cuid())
   provider          String
   providerAccountId String
   user_id           String
-  user              User   @relation(references: [id], fields: [user_id], onDelete: Cascade)
 
-  @@index([user_id])
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
 }
 
 model Session {
-  id      String @id @unique
+  id      String @id @default(cuid())
   user_id String
   expires BigInt
-  user    User   @relation(references: [id], fields: [user_id], onDelete: Cascade)
 
-  @@index([user_id])
+  user User @relation(references: [id], fields: [user_id], onDelete: Cascade)
 }
