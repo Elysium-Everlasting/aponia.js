@@ -21,8 +21,6 @@ export class ClientAuth {
 
     const result = await this.auth.handle({ request, url, cookies: cookieStore.getAll() })
 
-    console.log('handle result: ', result)
-
     result.cookies?.forEach((c) => {
       cookieStore.set(c.name, c.value, c.options)
     })

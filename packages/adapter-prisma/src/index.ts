@@ -140,9 +140,9 @@ export class PrismaAdapter<T extends TableMappings = DefaultTableMappings> {
       provider.config.onAuth ??= async (user: any, tokens: any) => {
         const profile = (await provider.config.profile?.(user, tokens)) ?? {
           id: `${user.sub ?? user.id}`,
-          // name: user.name ?? user.nickname ?? user.preferred_username,
-          // email: user.email,
-          // image: user.picture,
+          name: user.name ?? user.nickname ?? user.preferred_username,
+          email: user.email,
+          image: user.picture,
         }
 
         const existingAccount = await prisma[this.options.mappings.account.name].findUnique({
@@ -160,7 +160,7 @@ export class PrismaAdapter<T extends TableMappings = DefaultTableMappings> {
         // User attempted to login with an account, and the user entry was found.
         // This confirms that the existing account exists as well as the user it's mapped to.
 
-        if (existingAccount.user != null) {
+        if (existingAccount?.user != null) {
           return {
             user: existingAccount.user,
 
@@ -200,8 +200,6 @@ export class PrismaAdapter<T extends TableMappings = DefaultTableMappings> {
     // Whereas the same session manager will always be used afterwards.
 
     this.auth.session.config.createSession ??= async (user) => {
-      console.log('createSession', user)
-
       const newSession = await prisma[this.options.mappings.session.name].create({
         data: {
           [this.options.mappings.session.id]: this.options.generateSessionToken(),
@@ -216,12 +214,10 @@ export class PrismaAdapter<T extends TableMappings = DefaultTableMappings> {
         return await this.options.transformSession(newSession)
       }
 
-      const data = { user: newSession }
-
       return {
-        user: data,
-        accessToken: data,
-        refreshToken: data,
+        user: newSession,
+        accessToken: newSession,
+        refreshToken: newSession,
       }
     }
 
@@ -235,7 +231,7 @@ export class PrismaAdapter<T extends TableMappings = DefaultTableMappings> {
       const refreshedSession = await prisma[this.options.mappings.session.name].create({
         data: {
           [this.options.mappings.session.id]: this.options.generateSessionToken(),
-          [this.options.mappings.session.userId]: user[this.options.mappings.session.id],
+          [this.options.mappings.session.userId]: user[this.options.mappings.session.userId],
           [this.options.mappings.session.expires]: fromDate(
             this.auth.session.config.cookieOptions.accessToken.options.maxAge,
           ),
@@ -246,12 +242,10 @@ export class PrismaAdapter<T extends TableMappings = DefaultTableMappings> {
         return await this.options.transformSession(refreshedSession)
       }
 
-      const data = { user: refreshedSession }
-
       return {
-        user: data,
-        accessToken: data,
-        refreshToken: data,
+        user: refreshedSession,
+        accessToken: refreshedSession,
+        refreshToken: refreshedSession,
       }
     }
 

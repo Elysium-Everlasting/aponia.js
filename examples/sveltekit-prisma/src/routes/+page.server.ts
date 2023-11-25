@@ -13,8 +13,6 @@ export const actions: Actions = {
   deleteUsers: async () => {
     const result = await prisma.user.deleteMany()
 
-    console.log({ result })
-
     return { result }
   },
 }
