@@ -1,5 +1,6 @@
 import { defu } from 'defu'
 
+import type { InternalRequest, InternalResponse } from '../types'
 import type { Awaitable, DeepPartial, Nullish } from '../utils/types'
 
 import type { ProviderPages } from './types'
@@ -12,10 +13,8 @@ export interface CredentialsConfig {
    * Identifies
    */
   id: string
-  onAuth?: (internalRequest: Aponia.InternalRequest) => Awaitable<Aponia.InternalResponse | Nullish>
-  onRegister?: (
-    internalRequest: Aponia.InternalRequest,
-  ) => Awaitable<Aponia.InternalResponse | Nullish>
+  onAuth?: (internalRequest: InternalRequest) => Awaitable<InternalResponse | Nullish>
+  onRegister?: (internalRequest: InternalRequest) => Awaitable<InternalResponse | Nullish>
   pages: ProviderPages
 }
 
@@ -70,11 +69,11 @@ export class CredentialsProvider {
     return this
   }
 
-  async login(request: Aponia.InternalRequest): Promise<Aponia.InternalResponse> {
+  async login(request: InternalRequest): Promise<InternalResponse> {
     return (await this.config.onAuth?.(request)) ?? {}
   }
 
-  async callback(request: Aponia.InternalRequest): Promise<Aponia.InternalResponse> {
+  async callback(request: InternalRequest): Promise<InternalResponse> {
     return (await this.config.onRegister?.(request)) ?? {}
   }
 }

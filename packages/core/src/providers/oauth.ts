@@ -5,6 +5,7 @@ import * as checks from '../security/checks'
 import { defaultCookiesOptions } from '../security/cookie'
 import type { Cookie, CookiesOptions } from '../security/cookie'
 import { defaultJWTOptions, type JWTOptions } from '../security/jwt'
+import type { InternalRequest, InternalResponse } from '../types'
 import type { Awaitable, Nullish } from '../utils/types'
 
 import type { ProviderPages } from './types'
@@ -36,7 +37,7 @@ export type ResolvedOAuthConfig<TProfile> = {
   onAuth?: (
     user: TProfile,
     tokens: oauth.OAuth2TokenEndpointResponse,
-  ) => Awaitable<Aponia.InternalResponse | Nullish> | Nullish
+  ) => Awaitable<InternalResponse | Nullish> | Nullish
 } & OAuthConfig<TProfile>
 
 /**
@@ -109,7 +110,7 @@ export class OAuthProvider<TProfile> {
   /**
    * Handle OAuth login request.
    */
-  async login(request: Aponia.InternalRequest): Promise<Aponia.InternalResponse> {
+  async login(request: InternalRequest): Promise<InternalResponse> {
     const url = new URL(this.config.endpoints.authorization.url)
 
     const cookies: Cookie[] = []
@@ -148,7 +149,7 @@ export class OAuthProvider<TProfile> {
   /**
    * Handle OAuth callback request.
    */
-  async callback(request: Aponia.InternalRequest): Promise<Aponia.InternalResponse> {
+  async callback(request: InternalRequest): Promise<InternalResponse> {
     const cookies: Cookie[] = []
 
     const [state, stateCookie] = await checks.state.use(request, this.checkParams)
@@ -215,10 +216,7 @@ export class OAuthProvider<TProfile> {
       throw new Error('TODO: Handle missing profile')
     }
 
-    const processedResponse: Aponia.InternalResponse = (await this.config.onAuth?.(
-      profile,
-      tokens,
-    )) ?? {
+    const processedResponse: InternalResponse = (await this.config.onAuth?.(profile, tokens)) ?? {
       user: ((await this.config.profile?.(profile, tokens)) ?? profile) as any,
       redirect: this.config.pages.callback.redirect,
       status: 302,

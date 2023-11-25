@@ -1,3 +1,4 @@
+import type { User } from '@auth/core/types'
 import { parse } from 'cookie'
 import { defu } from 'defu'
 
@@ -9,6 +10,7 @@ import {
 } from '../security/cookie'
 import { encode, decode } from '../security/jwt'
 import type { JWTOptions } from '../security/jwt'
+import type { InternalRequest, InternalResponse } from '../types'
 import type { Awaitable, DeepPartial, Nullish } from '../utils/types'
 
 const hourInSeconds = 60 * 60
@@ -37,7 +39,7 @@ export interface NewSession {
    *
    * TLDR: it might seem redundant to define both access token and user, but it can be more efficient :^) .
    */
-  user?: Aponia.User
+  user?: User
 
   /**
    * The new access token.
@@ -111,7 +113,7 @@ export interface SessionConfig {
    * (user) => ({ user, accessToken: user })
    * i.e. The session is the user itself, and a new access token is created with the user's info.
    */
-  createSession?: (user: Aponia.User) => Awaitable<NewSession | Nullish>
+  createSession?: (user: User) => Awaitable<NewSession | Nullish>
 
   /**
    * Given a session, extract the user from it.
@@ -122,7 +124,7 @@ export interface SessionConfig {
    * (session) => session
    * i.e. The session is the user itself.
    */
-  getAccessTokenUser?: (session: Aponia.AccessToken) => Awaitable<Aponia.User | Nullish>
+  getAccessTokenUser?: (session: Aponia.AccessToken) => Awaitable<User | Nullish>
 
   /**
    * Given the info
@@ -132,7 +134,7 @@ export interface SessionConfig {
   onInvalidateAccessToken?: (
     accessToken: Aponia.AccessToken,
     refreshToken: Aponia.RefreshToken | Nullish,
-  ) => Awaitable<Aponia.InternalResponse | Nullish>
+  ) => Awaitable<InternalResponse | Nullish>
 }
 
 /**
@@ -239,7 +241,7 @@ export class Session {
   /**
    * Get the user from a request.
    */
-  async getUserFromRequest(request: Aponia.InternalRequest): Promise<Aponia.User | null> {
+  async getUserFromRequest(request: InternalRequest): Promise<User | null> {
     const encodedAccessToken = request.cookies[this.config.cookieOptions.accessToken.name]
 
     const { accessTokenData: accessToken } = await this.decodeTokens({
@@ -257,7 +259,7 @@ export class Session {
   /**
    * Handle a request by refreshing the user's session if necessary and possible.
    */
-  async handleRequest(request: Aponia.InternalRequest): Promise<Aponia.InternalResponse> {
+  async handleRequest(request: InternalRequest): Promise<InternalResponse> {
     const accessToken = request.cookies[this.config.cookieOptions.accessToken.name]
     const refreshToken = request.cookies[this.config.cookieOptions.refreshToken.name]
 
@@ -292,7 +294,7 @@ export class Session {
   /**
    * Log a user out.
    */
-  async logout(request: Request): Promise<Aponia.InternalResponse> {
+  async logout(request: Request): Promise<InternalResponse> {
     const cookies = parse(request.headers.get('cookie') ?? '')
 
     const accessToken = cookies[this.config.cookieOptions.accessToken.name]
@@ -303,7 +305,7 @@ export class Session {
       refreshToken,
     })
 
-    let response: Aponia.InternalResponse = {}
+    let response: InternalResponse = {}
 
     if (accessTokenData) {
       const invalidateResponse = await this.config.onInvalidateAccessToken?.(

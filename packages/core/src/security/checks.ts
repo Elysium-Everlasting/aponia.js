@@ -1,6 +1,8 @@
 import type { OAuthConfig, OIDCConfig } from '@auth/core/providers/oauth'
 import * as oauth from 'oauth4webapi'
 
+import type { InternalRequest } from '../types'
+
 import type { Cookie, CookiesOptions } from './cookie.js'
 import { encode, decode, type JWTOptions } from './jwt.js'
 
@@ -45,7 +47,7 @@ export const pkce = {
     return [value, cookie] as const
   },
 
-  async use(request: Aponia.InternalRequest, params: CheckParams) {
+  async use(request: InternalRequest, params: CheckParams) {
     if (!params.checks?.includes('pkce')) {
       return ['auth', null] as const
     }
@@ -94,7 +96,7 @@ export const state = {
     return [value, cookie] as const
   },
 
-  async use(request: Aponia.InternalRequest, params: CheckParams) {
+  async use(request: InternalRequest, params: CheckParams) {
     if (!params.checks?.includes('state')) {
       return [oauth.skipStateCheck, null] as const
     }
@@ -140,7 +142,7 @@ export const nonce = {
     return [value, cookie] as const
   },
 
-  async use(request: Aponia.InternalRequest, params: CheckParams) {
+  async use(request: InternalRequest, params: CheckParams) {
     if (!params.checks?.includes('nonce' as any)) {
       return [oauth.expectNoNonce, null] as const
     }

@@ -1,14 +1,9 @@
 // This is an ambient declaration file, so it can't do any exports. Or something.
 
+type User = import('@auth/core/types').User
+
 declare global {
   namespace Aponia {
-    /**
-     * The user that can be __identified__ by a session.
-     *
-     * @example username, email, profile picture, etc.
-     */
-    interface User {}
-
     /**
      * The data stored in a JWT, encrypted access token, and then into a cookie.
      * Should be short-lived and contain minimal data needed to identify the user.
@@ -28,63 +23,7 @@ declare global {
      * @example User ID: Look up the user in the database, create new tokens with new expiration dates.
      * @example User: Just create new tokens with new expiration dates.
      */
-    interface RefreshToken {}
-
-    /**
-     * Request object used internally.
-     */
-    interface InternalRequest {
-      /**
-       * The original request.
-       */
-      request: Request
-
-      /**
-       * The request's parsed url.
-       */
-      url: URL
-
-      /**
-       * The request's cookies.
-       */
-      cookies: Record<string, string>
-    }
-
-    /**
-     * An internally generated response.
-     * Should be handled accordingly depending on the context of the usage.
-     */
-    interface InternalResponse {
-      /**
-       * The decoded user.
-       */
-      user?: Aponia.User | null
-
-      /**
-       * HTTP status code.
-       */
-      status?: number
-
-      /**
-       * The response redirect url.
-       */
-      redirect?: string
-
-      /**
-       * Cookies to set.
-       */
-      cookies?: import('./security/cookie').Cookie[]
-
-      /**
-       * Any error that occurred.
-       */
-      error?: Error
-
-      /**
-       * Response body.
-       */
-      body?: unknown
-    }
+    interface RefreshToken extends User {}
   }
 }
 

@@ -1,6 +1,7 @@
 import { defu } from 'defu'
 
 import { randomString } from '../security/csrf.js'
+import type { InternalRequest, InternalResponse } from '../types'
 import type { Awaitable, DeepPartial, Nullish } from '../utils/types.js'
 
 import type { ProviderPages } from './types.js'
@@ -12,15 +13,9 @@ export interface EmailConfig {
   id: string
   theme: any
   pages: ProviderPages
-  getEmail?: (request: Aponia.InternalRequest) => Awaitable<string | Nullish>
-  onAuth?: (
-    request: Aponia.InternalRequest,
-    args: any,
-  ) => Awaitable<Aponia.InternalResponse | Nullish>
-  onVerify?: (
-    request: Aponia.InternalRequest,
-    args: any,
-  ) => Awaitable<Aponia.InternalResponse | Nullish>
+  getEmail?: (request: InternalRequest) => Awaitable<string | Nullish>
+  onAuth?: (request: InternalRequest, args: any) => Awaitable<InternalResponse | Nullish>
+  onVerify?: (request: InternalRequest, args: any) => Awaitable<InternalResponse | Nullish>
 }
 
 /**
@@ -72,7 +67,7 @@ export class EmailProvider {
     return this
   }
 
-  async login(request: Aponia.InternalRequest): Promise<Aponia.InternalResponse> {
+  async login(request: InternalRequest): Promise<InternalResponse> {
     const email = await this.config.getEmail?.(request)
 
     // TODO: error
@@ -136,7 +131,7 @@ export class EmailProvider {
     return (await this.config.onAuth?.(request, { html, email, token, provider: this })) ?? {}
   }
 
-  async callback(request: Aponia.InternalRequest): Promise<Aponia.InternalResponse> {
+  async callback(request: InternalRequest): Promise<InternalResponse> {
     const token = request.url.searchParams.get('token')
     const email = request.url.searchParams.get('email')
     return (await this.config.onVerify?.(request, { token, email })) ?? {}

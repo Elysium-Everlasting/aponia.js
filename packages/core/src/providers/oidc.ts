@@ -4,6 +4,7 @@ import * as oauth from 'oauth4webapi'
 import * as checks from '../security/checks'
 import { defaultCookiesOptions, type Cookie, type CookiesOptions } from '../security/cookie'
 import { defaultJWTOptions, type JWTOptions } from '../security/jwt'
+import type { InternalRequest, InternalResponse } from '../types'
 import type { Awaitable, Nullish } from '../utils/types'
 
 import type { ProviderPages } from './types'
@@ -35,7 +36,7 @@ export type ResolvedOIDCConfig<TProfile> = {
   onAuth?: (
     user: TProfile,
     tokens: oauth.OpenIDTokenEndpointResponse,
-  ) => Awaitable<Aponia.InternalResponse | Nullish> | Nullish
+  ) => Awaitable<InternalResponse | Nullish> | Nullish
 } & OIDCConfig<TProfile>
 
 /**
@@ -121,7 +122,7 @@ export class OIDCProvider<TProfile> {
   /**
    * Handle OAuth login request.
    */
-  async login(request: Aponia.InternalRequest): Promise<Aponia.InternalResponse> {
+  async login(request: InternalRequest): Promise<InternalResponse> {
     await this.initialize()
 
     if (!this.authorizationServer.authorization_endpoint) {
@@ -176,7 +177,7 @@ export class OIDCProvider<TProfile> {
   /**
    * Handle OAuth callback request.
    */
-  async callback(request: Aponia.InternalRequest): Promise<Aponia.InternalResponse> {
+  async callback(request: InternalRequest): Promise<InternalResponse> {
     await this.initialize()
 
     const cookies: Cookie[] = []
@@ -240,10 +241,7 @@ export class OIDCProvider<TProfile> {
 
     const profile = oauth.getValidatedIdTokenClaims(tokens) as TProfile
 
-    const processedResponse: Aponia.InternalResponse = (await this.config.onAuth?.(
-      profile,
-      tokens,
-    )) ?? {
+    const processedResponse: InternalResponse = (await this.config.onAuth?.(profile, tokens)) ?? {
       user: ((await this.config.profile?.(profile, tokens)) ?? profile) as any,
       redirect: this.config.pages.callback.redirect,
       status: 302,
