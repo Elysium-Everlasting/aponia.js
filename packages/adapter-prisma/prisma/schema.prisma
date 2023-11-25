@@ -22,6 +22,7 @@ model Account {
   user              User   @relation(references: [id], fields: [user_id], onDelete: Cascade)
 
   @@index([user_id])
+  @@unique([provider, providerAccountId])
 }
 
 model Session {
