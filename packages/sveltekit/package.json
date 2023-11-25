@@ -47,6 +47,7 @@
   },
   "dependencies": {
     "@aponia.js/core": "workspace:^",
+    "@auth/core": "^0.18.1",
     "cookie": "^0.5.0",
     "universal-cookie": "^6.1.1"
   },
