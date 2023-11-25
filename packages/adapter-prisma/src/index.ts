@@ -5,104 +5,38 @@ import { fromDate } from './utils'
 
 type PsuedoPrismaClient = { $transaction: (...args: any) => any } & Record<string, any>
 
-/**
- * Description of the default tables.
- */
 export const DEFAULT_TABLE_MAPPINGS = {
-  /**
-   * The User table contains the user's information.
-   * A user is the most atomic entity in the authentication system.
-   * Each individual user will have one entry in this table.
-   */
   user: {
-    /**
-     * Table name.
-     */
     name: 'user',
-
     id: 'id',
-
     email: 'email',
   },
-
-  /**
-   * A user can have multiple accounts.
-   * Each account provides a different way to authenticate the user.
-   * Accounts are associated with a provider, which performs the actual authentication.
-   */
   account: {
-    /**
-     * Table name.
-     */
     name: 'account',
-
     id: 'id',
-
     providerProviderAccountId: 'provider_providerAccountId',
-
     provider: 'provider',
-
     providerAccountId: 'providerAccountId',
-
     user: 'user',
-
     userId: 'user_id',
   },
-
-  /**
-   * Each session represents a user's authenticated session.
-   * Users can have multiple sessions simultaneously.
-   * A user can obtain a session by successfully authenticating through one of their accounts.
-   */
   session: {
-    /**
-     * Table name.
-     */
     name: 'session',
-
     id: 'id',
-
     userId: 'user_id',
-
     expires: 'expires',
   },
 } as const
 
 export type DefaultTableMappings = typeof DEFAULT_TABLE_MAPPINGS
 
-/**
- * A custom table mapping can be provided to the Prisma adapter.
- */
 export type TableMappings = { [K in keyof DefaultTableMappings]: DefaultTableMappings[K] }
 
-/**
- * Options to configure the adapter.
- */
 export type PrismaAdapterOptions<T extends TableMappings = DefaultTableMappings> = {
-  /**
-   * Mappings.
-   */
   mappings?: T
-
-  /**
-   * The default session manager doesn't need to identify each session with its own unique ID;
-   * it only needs to encode the user data into the session token.
-   *
-   * Database sessions need to be connected with an entry in the database.
-   */
   generateSessionToken?: () => string
-
-  /**
-   * Converts a user retrieved from an access token to a session of the same shape as the database.
-   */
   userToSession?: (user: any) => any | Promise<any>
-
-  /**
-   */
   transformSession?: (session: any) => NewSession | Promise<NewSession>
-
-  /**
-   */
   getUserFromOldSession?: (session: OldSession) => any | Promise<any>
 }
 
@@ -133,10 +67,6 @@ export class PrismaAdapter<T extends TableMappings = DefaultTableMappings> {
       ...options,
     }
 
-    // All providers are given a custom onAuth handler if they haven't already been defined.
-    // The handler will interact with the database and return a __user__.
-    // Immediately after the provider returns the __user__, the session manager will create a new __session__.
-
     this.auth.providers.forEach((provider) => {
       if (provider.type === 'email' || provider.type === 'credentials') {
         return
@@ -162,21 +92,13 @@ export class PrismaAdapter<T extends TableMappings = DefaultTableMappings> {
           },
         })
 
-        // User attempted to login with an account, and the user entry was found.
-        // This confirms that the existing account exists as well as the user it's mapped to.
-
         if (existingAccount?.user != null) {
           return {
             user: existingAccount.user,
-
-            // TODO: how to configure this behavior? It may seem unintuitive to redirect to the callback page?
             redirect: provider.config.pages.callback.redirect,
             status: 302,
           }
         }
-
-        // User attempts to login with an account, but no account was found.
-        // Check if the email exists, if it does, then error.
 
         const existingUser = await prisma[this.options.mappings.user.name].findUnique({
           where: {
@@ -190,10 +112,6 @@ export class PrismaAdapter<T extends TableMappings = DefaultTableMappings> {
           }
         }
 
-        // User attempted to login with an account, but the user entry was not found.
-        // Since the verification was done by an external OAuth provider,
-        // we'll trust them and create a new user and account under that provider.
-
         const newUser = await prisma[this.options.mappings.user.name].create({ data: profile })
 
         await prisma[this.options.mappings.account.name].create({
@@ -206,18 +124,11 @@ export class PrismaAdapter<T extends TableMappings = DefaultTableMappings> {
 
         return {
           user: newUser,
-
-          // TODO: how to configure this behavior? It may seem unexpected to redirect to the callback page?
           redirect: provider.config.pages.callback.redirect,
           status: 302,
         }
       }
     })
-
-    // This callback should run immediately after the onAuth callback for the provider runs.
-    // There's a layer of abstraction between these two functions
-    // because all the providers are scanned to find the correct onAuth handler to actually execute.
-    // Whereas the same session manager will always be used afterwards.
 
     this.auth.session.config.createSession ??= async (user) => {
       const newSession = await prisma[this.options.mappings.session.name].create({
