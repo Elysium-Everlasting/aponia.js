@@ -221,6 +221,7 @@ export class Auth {
       const sessionTokens = (await this.session.config.createSession?.(providerResponse.user)) ?? {
         user: providerResponse.user,
         accessToken: providerResponse.user,
+        refreshToken: { user: providerResponse.user },
       }
 
       if (sessionTokens?.user) {
