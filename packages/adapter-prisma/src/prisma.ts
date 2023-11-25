@@ -124,8 +124,6 @@ export class PrismaAdapter<T extends TableMappings = DefaultTableMappings> {
         })
 
         if (existingAccount !== null) {
-          console.log({ existingAccount })
-
           return {
             user: existingAccount,
 
@@ -151,8 +149,6 @@ export class PrismaAdapter<T extends TableMappings = DefaultTableMappings> {
             },
           })
 
-          console.log({ newAccount })
-
           return {
             user: newAccount,
             // TODO: how to configure this behavior? It may seem unintuitive to redirect to the callback page?
@@ -175,8 +171,6 @@ export class PrismaAdapter<T extends TableMappings = DefaultTableMappings> {
               newUser[this.options.mappings.user.findUnique],
           },
         })
-
-        console.log({ newUser, newAccount })
 
         return {
           user: newAccount,
