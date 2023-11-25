@@ -29,7 +29,7 @@ function asPromise<T>(value: Awaitable<T>): Promise<T> {
 /**
  * Create a new session.
  */
-interface NewSession {
+export interface NewSession {
   /**
    * The user for this request.
    * If not defined, {@link Session.getUserFromRequest} will need to decode the access token from scratch.
@@ -53,7 +53,7 @@ interface NewSession {
 /**
  * Session details for an expired or invalid session that contains a refresh token.
  */
-interface OldSession {
+export interface OldSession {
   /**
    * The old access token.
    */
@@ -261,13 +261,9 @@ export class Session {
     const accessToken = request.cookies[this.config.cookieOptions.accessToken.name]
     const refreshToken = request.cookies[this.config.cookieOptions.refreshToken.name]
 
-    // User is logged in or logged out and doesn't need to be refreshed.
-
     if (accessToken || (!accessToken && !refreshToken)) {
       return {}
     }
-
-    // User is logged out, but can be refreshed.
 
     const { accessTokenData, refreshTokenData } = await this.decodeTokens({
       accessToken,
@@ -278,10 +274,14 @@ export class Session {
       return {}
     }
 
-    const refreshedTokens = await this.config.handleRefresh?.({
+    const refreshedTokens = (await this.config.handleRefresh?.({
       accessToken: accessTokenData,
       refreshToken: refreshTokenData,
-    })
+    })) ?? {
+      user: refreshTokenData,
+      accessToken: refreshTokenData,
+      refreshToken: refreshTokenData,
+    }
 
     return {
       user: refreshedTokens?.user,
