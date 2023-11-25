@@ -1,4 +1,5 @@
-import { Auth, type NewSession, type OldSession } from '@aponia.js/core'
+import { Auth } from '@aponia.js/core'
+import type { NewSession, OldSession } from '@aponia.js/core/session'
 
 type PsuedoPrismaClient = { $transaction: (...args: any) => any } & Record<string, any>
 
