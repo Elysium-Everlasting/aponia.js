@@ -1,14 +1,6 @@
 import { Auth } from '@aponia.js/core'
 
-/**
- * The minimum description of a table.
- */
-export type Table = {
-  /**
-   * The name of the table.
-   */
-  name: string
-} & Record<string, string>
+type PsuedoPrismaClient = { $transaction: (...args: any) => any } & { [K: string]: any }
 
 /**
  * Description of the default tables.
@@ -42,6 +34,8 @@ export const DEFAULT_TABLE_MAPPINGS = {
     name: 'account',
 
     delete: 'id',
+
+    findUnique: ['provider', 'accountProviderId'],
 
     findMany: 'userId',
 
@@ -90,46 +84,20 @@ export type ResolvedPrismaAdapterOptions<T extends TableMappings = DefaultTableM
   PrismaAdapterOptions<T>
 >
 
-export type MapTable<T extends Record<string, unknown>> = {
-  [K in keyof T as T[K] extends Table ? T[K]['name'] : never]: T[K]
-}
-
-export type PrismaTable<T> = {
-  findUnique: HasKey<T, 'findUnique'> extends true ? string : never
-  findMany: HasKey<T, 'findMany'> extends true ? string : never
-  delete: HasKey<T, 'delete'> extends true ? string : never
-  deleteMany: HasKey<T, 'deleteMany'> extends true ? string : never
-}
-
-/**
- * Attempts to parse the Prisma mapping.
- */
-export type ParsePrismaClient<
-  T extends TableMappings = DefaultTableMappings,
-  TMappedTables extends MapTable<T> = MapTable<T>,
-> = {
-  mappedTables: TMappedTables
-  tableNames: keyof TMappedTables
-}
-
-export type PrismaClient<
-  T extends TableMappings = DefaultTableMappings,
-  TParsed extends ParsePrismaClient<T> = ParsePrismaClient<T>,
-> = {
-  [K in keyof TParsed['mappedTables']]: TrimNever<PrismaTable<TParsed['mappedTables'][K]>>
-}
-
 export class PrismaAdapter<T extends TableMappings = DefaultTableMappings> {
   auth: Auth
 
-  prisma: PrismaClient<T>
+  prisma: PsuedoPrismaClient
 
   options: ResolvedPrismaAdapterOptions<T>
 
-  constructor(auth: Auth, prisma: PrismaClient<T>, options: PrismaAdapterOptions<T> = {}) {
+  constructor(auth: Auth, prisma: PsuedoPrismaClient, options: PrismaAdapterOptions<T> = {}) {
     this.auth = auth
     this.prisma = prisma
-    this.options = options as any
+    this.options = {
+      mappings: DEFAULT_TABLE_MAPPINGS as T,
+      ...options,
+    }
 
     this.auth.providers.forEach((provider) => {
       if (provider.type === 'email' || provider.type === 'credentials') {
@@ -143,12 +111,33 @@ export class PrismaAdapter<T extends TableMappings = DefaultTableMappings> {
           return
         }
 
-        const k = this.options.mappings.user.name as keyof PrismaClient<T>
+        const existingAccount = await prisma[this.options.mappings.account.name].findUnique({
+          where: {
+            [this.options.mappings.account.findUnique[0]]: provider.type,
+            [this.options.mappings.account.findUnique[1]]: profile.id,
+          },
+        })
 
-        const n = this.prisma[k]
+        if (existingAccount == null) {
+          return {
+            user: existingAccount,
 
-        if ('findMany' in n) {
-          n.findMany
+            // TODO: how to configure this behavior? It may seem unintuitive to redirect to the callback page?
+            redirect: provider.config.pages.callback.redirect,
+            status: 302,
+          }
+        }
+
+        const newAccount = await prisma[this.options.mappings.account.name].create({
+          data: profile,
+        })
+
+        return {
+          user: newAccount,
+
+          // TODO: how to configure this behavior? It may seem unexpected to redirect to the callback page?
+          redirect: provider.config.pages.callback.redirect,
+          status: 302,
         }
       }
     })
@@ -160,6 +149,3 @@ export class PrismaAdapter<T extends TableMappings = DefaultTableMappings> {
     // this.auth.session.config.onInvalidateAccessToken ??= async (accessToken, refreshToken) => { }
   }
 }
-
-export type HasKey<T, K> = K extends keyof T ? true : false
-export type TrimNever<T> = Pick<T, { [K in keyof T]: T[K] extends never ? never : K }[keyof T]>

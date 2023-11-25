@@ -244,7 +244,7 @@ export class OIDCProvider<TProfile> {
       profile,
       tokens,
     )) ?? {
-      user: profile as any,
+      user: ((await this.config.profile?.(profile, tokens)) ?? profile) as any,
       redirect: this.config.pages.callback.redirect,
       status: 302,
     }

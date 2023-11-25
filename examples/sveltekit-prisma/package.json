@@ -19,6 +19,7 @@
     "vite": "^5.0.0"
   },
   "dependencies": {
+    "@aponia.js/adapter-prisma": "workspace:^",
     "@aponia.js/core": "workspace:^",
     "@aponia.js/sveltekit": "workspace:^",
     "@auth/core": "^0.18.1",

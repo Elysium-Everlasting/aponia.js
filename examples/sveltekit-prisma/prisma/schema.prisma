@@ -8,7 +8,27 @@ datasource db {
 }
 
 model User {
-  id    Int     @id @default(autoincrement())
-  email String  @unique
-  name  String
+  id String @id @default(cuid())
+
+  session Session[]
+  account Account[]
+}
+
+model Account {
+  id                String @id @unique
+  provider          String
+  providerAccountId String
+  user_id           String
+  user              User   @relation(references: [id], fields: [user_id], onDelete: Cascade)
+
+  @@index([user_id])
+}
+
+model Session {
+  id      String @id @unique
+  user_id String
+  expires BigInt
+  user    User   @relation(references: [id], fields: [user_id], onDelete: Cascade)
+
+  @@index([user_id])
 }
