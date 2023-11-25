@@ -24,6 +24,10 @@ export const DEFAULT_TABLE_MAPPINGS = {
      * Table name.
      */
     name: 'user',
+
+    findUnique: 'userId',
+
+    delete: 'id',
   },
 
   /**
@@ -37,27 +41,11 @@ export const DEFAULT_TABLE_MAPPINGS = {
      */
     name: 'account',
 
-    /**
-     * Name of column for the account's unique identifier.
-     */
-    id: 'id',
+    delete: 'id',
 
-    /**
-     * Name of foreign key to the User table.
-     */
-    userId: 'userId',
+    findMany: 'userId',
 
-    /**
-     * Name of column for the provider type.
-     */
-    provider: 'provider',
-
-    /**
-     * Name of column for the provider's account ID.
-     *
-     * i.e. The ID that the provider recognizes the account as.
-     */
-    providerAccountId: 'providerAccountId',
+    deleteMany: 'userId',
   },
 
   /**
@@ -71,20 +59,13 @@ export const DEFAULT_TABLE_MAPPINGS = {
      */
     name: 'session',
 
-    /**
-     * Name of column for the session's unique identifier.
-     */
-    id: 'id',
+    findUnique: 'id',
 
-    /**
-     * Name of the foreign key to the User table.
-     */
-    userId: 'userId',
+    findMany: 'userId',
 
-    /**
-     * Name of column for the session's access token expiry date.
-     */
-    expires: 'expires',
+    delete: 'id',
+
+    deleteMany: 'userId',
   },
 } as const
 
@@ -105,12 +86,19 @@ export type PrismaAdapterOptions<T extends TableMappings = DefaultTableMappings>
   mappings?: T
 }
 
+export type ResolvedPrismaAdapterOptions<T extends TableMappings = DefaultTableMappings> = Required<
+  PrismaAdapterOptions<T>
+>
+
 export type MapTable<T extends Record<string, unknown>> = {
   [K in keyof T as T[K] extends Table ? T[K]['name'] : never]: T[K]
 }
 
 export type PrismaTable<T> = {
-  findMany: T
+  findUnique: HasKey<T, 'findUnique'> extends true ? string : never
+  findMany: HasKey<T, 'findMany'> extends true ? string : never
+  delete: HasKey<T, 'delete'> extends true ? string : never
+  deleteMany: HasKey<T, 'deleteMany'> extends true ? string : never
 }
 
 /**
@@ -128,7 +116,7 @@ export type PrismaClient<
   T extends TableMappings = DefaultTableMappings,
   TParsed extends ParsePrismaClient<T> = ParsePrismaClient<T>,
 > = {
-  [K in keyof TParsed['mappedTables']]: PrismaTable<TParsed['mappedTables'][K]>
+  [K in keyof TParsed['mappedTables']]: TrimNever<PrismaTable<TParsed['mappedTables'][K]>>
 }
 
 export class PrismaAdapter<T extends TableMappings = DefaultTableMappings> {
@@ -136,12 +124,12 @@ export class PrismaAdapter<T extends TableMappings = DefaultTableMappings> {
 
   prisma: PrismaClient<T>
 
-  options: PrismaAdapterOptions
+  options: ResolvedPrismaAdapterOptions<T>
 
   constructor(auth: Auth, prisma: PrismaClient<T>, options: PrismaAdapterOptions<T> = {}) {
     this.auth = auth
     this.prisma = prisma
-    this.options = options
+    this.options = options as any
 
     this.auth.providers.forEach((provider) => {
       if (provider.type === 'email' || provider.type === 'credentials') {
@@ -155,7 +143,13 @@ export class PrismaAdapter<T extends TableMappings = DefaultTableMappings> {
           return
         }
 
-        this.prisma
+        const k = this.options.mappings.user.name as keyof PrismaClient<T>
+
+        const n = this.prisma[k]
+
+        if ('findMany' in n) {
+          n.findMany
+        }
       }
     })
 
@@ -166,3 +160,6 @@ export class PrismaAdapter<T extends TableMappings = DefaultTableMappings> {
     // this.auth.session.config.onInvalidateAccessToken ??= async (accessToken, refreshToken) => { }
   }
 }
+
+export type HasKey<T, K> = K extends keyof T ? true : false
+export type TrimNever<T> = Pick<T, { [K in keyof T]: T[K] extends never ? never : K }[keyof T]>
