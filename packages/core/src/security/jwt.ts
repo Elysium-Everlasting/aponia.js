@@ -1,13 +1,9 @@
 import { hkdf } from '@panva/hkdf'
 import { EncryptJWT, jwtDecrypt, type JWTPayload } from 'jose'
 
+import { DAY_IN_SECONDS, KEY_INFO, SALT } from '../constants'
+import { getTimestamp } from '../utils/get-timestamp'
 import type { Awaitable, Nullish } from '../utils/types'
-
-const oneDayInSeconds = 24 * 60 * 60
-
-const DEFAULT_MAX_AGE = oneDayInSeconds
-
-const now = () => (Date.now() / 1000) | 0
 
 export interface JWTEncodeParams<T = Record<string, any>> {
   token?: T
@@ -28,27 +24,21 @@ export interface JWTOptions {
 }
 
 async function getDerivedEncryptionKey(secret: string) {
-  const derivedEncryptionKey = await hkdf(
-    'sha256',
-    secret,
-    '',
-    'Auth.js Generated Encryption Key',
-    32,
-  )
+  const derivedEncryptionKey = await hkdf('sha256', secret, SALT, KEY_INFO, 32)
   return derivedEncryptionKey
 }
 
 export async function encode<T extends Record<string, any> = Record<string, any>>(
   params: JWTEncodeParams<T>,
 ) {
-  const { token = {}, secret, maxAge = DEFAULT_MAX_AGE } = params
+  const { token = {}, secret, maxAge = DAY_IN_SECONDS } = params
 
   const encryptionSecret = await getDerivedEncryptionKey(secret)
 
   const encodedToken = await new EncryptJWT(token)
     .setProtectedHeader({ alg: 'dir', enc: 'A256GCM' })
     .setIssuedAt()
-    .setExpirationTime(now() + maxAge)
+    .setExpirationTime(getTimestamp() + maxAge)
     .setJti(crypto.randomUUID())
     .encrypt(encryptionSecret)
 

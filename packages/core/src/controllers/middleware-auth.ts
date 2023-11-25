@@ -1,11 +1,17 @@
 import type { OAuthConfig, OIDCConfig } from '@auth/core/providers'
 
+import {
+  DEFAULT_FORGOT_ROUTE,
+  DEFAULT_LOGOUT_REDIRECT,
+  DEFAULT_LOGOUT_ROUTE,
+  DEFAULT_RESET_ROUTE,
+  DEFAULT_UPDATE_ROUTE,
+} from '../constants'
 import type { CredentialsProvider } from '../providers/credentials'
 import type { EmailProvider } from '../providers/email'
 import { OAuthProvider, resolveOAuthConfig } from '../providers/oauth.js'
 import { OIDCProvider, resolveOIDCConfig } from '../providers/oidc.js'
-import type { PageEndpoint } from '../providers/types.js'
-import type { InternalRequest, InternalResponse } from '../types'
+import type { InternalRequest, InternalResponse, PageEndpoint } from '../types'
 import type { Awaitable, Nullish } from '../utils/types'
 
 import type { Session } from './session'
@@ -47,6 +53,11 @@ export interface AuthPages {
    * Reset a user's password, i.e. after receiving a "forgot password" response.
    */
   reset: PageEndpoint
+
+  /**
+   * Where to redirect the user after logging in.
+   */
+  logoutRedirect?: string
 }
 
 /**
@@ -117,11 +128,14 @@ export class Auth {
 
     this.session = config.session
 
+    this.session.config.pages.logoutRedirect ??=
+      config.pages?.logoutRedirect ?? DEFAULT_LOGOUT_REDIRECT
+
     this.pages = {
-      logout: config.pages?.logout ?? { route: '/auth/logout', methods: ['POST'] },
-      update: config.pages?.update ?? { route: '/auth/update', methods: ['POST'] },
-      forgot: config.pages?.forgot ?? { route: '/auth/forgot', methods: ['POST'] },
-      reset: config.pages?.reset ?? { route: '/auth/reset', methods: ['POST'] },
+      logout: config.pages?.logout ?? { route: DEFAULT_LOGOUT_ROUTE, methods: ['POST'] },
+      update: config.pages?.update ?? { route: DEFAULT_UPDATE_ROUTE, methods: ['POST'] },
+      forgot: config.pages?.forgot ?? { route: DEFAULT_FORGOT_ROUTE, methods: ['POST'] },
+      reset: config.pages?.reset ?? { route: DEFAULT_RESET_ROUTE, methods: ['POST'] },
     }
 
     this.callbacks = config.callbacks ?? {}

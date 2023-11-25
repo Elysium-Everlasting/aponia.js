@@ -2,6 +2,12 @@ import type { User } from '@auth/core/types'
 import { parse } from 'cookie'
 
 import {
+  DEFAULT_ACCESS_TOKEN_AGE,
+  DEFAULT_LOGOUT_REDIRECT,
+  DEFAULT_REFRESH_TOKEN_AGE,
+  DEFAULT_SECRET,
+} from '../constants'
+import {
   createCookiesOptions,
   type Cookie,
   type CookiesOptions,
@@ -10,22 +16,8 @@ import {
 import { encode, decode } from '../security/jwt'
 import type { JWTOptions } from '../security/jwt'
 import type { InternalRequest, InternalResponse, AccessToken, RefreshToken } from '../types'
+import { asPromise } from '../utils/as-promise'
 import type { Awaitable, DeepPartial, Nullish } from '../utils/types'
-
-const hourInSeconds = 60 * 60
-
-const weekInSeconds = 7 * 24 * hourInSeconds
-
-const DefaultAccessTokenMaxAge = hourInSeconds
-
-const DefaultRefreshTokenMaxAge = weekInSeconds
-
-/**
- * Ensure a possibly async value is a `Promise`.
- */
-function asPromise<T>(value: Awaitable<T>): Promise<T> {
-  return value instanceof Promise ? value : Promise.resolve(value)
-}
 
 /**
  * Create a new session.
@@ -150,10 +142,10 @@ export class Session {
   constructor(config?: SessionUserConfig) {
     const cookieOptions = createCookiesOptions(config?.createCookieOptions)
 
-    cookieOptions.accessToken.options.maxAge ??= DefaultAccessTokenMaxAge
-    cookieOptions.refreshToken.options.maxAge ??= DefaultRefreshTokenMaxAge
+    cookieOptions.accessToken.options.maxAge ??= DEFAULT_ACCESS_TOKEN_AGE
+    cookieOptions.refreshToken.options.maxAge ??= DEFAULT_REFRESH_TOKEN_AGE
 
-    const secret = config?.secret || 'secret'
+    const secret = config?.secret || DEFAULT_SECRET
 
     // hkdf throws an error if it attempts to encrypt something with a key that's less than 1 character.
     // Might as well throw the error now instead of later during a request, where it's harder to debug.
@@ -165,8 +157,8 @@ export class Session {
       ...config,
       secret,
       pages: {
+        logoutRedirect: DEFAULT_LOGOUT_REDIRECT,
         ...config?.pages,
-        logoutRedirect: '/auth/login',
       },
       jwt: {
         secret,

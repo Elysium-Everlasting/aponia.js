@@ -1,7 +1,6 @@
-import type { InternalRequest, InternalResponse } from '../types'
+import { DEFAULT_CALLBACK_REDIRECT, DEFAULT_LOGIN_ROUTE } from '../constants'
+import type { InternalRequest, InternalResponse, ProviderPages } from '../types'
 import type { Awaitable, DeepPartial, Nullish } from '../utils/types'
-
-import type { ProviderPages } from './types'
 
 /**
  * Internal configuration for the credentials provider.
@@ -48,14 +47,14 @@ export class CredentialsProvider {
       id,
       pages: {
         login: {
-          route: `/auth/login/${id}`,
+          route: `${DEFAULT_LOGIN_ROUTE}/${id}`,
           methods: ['POST'],
           ...config?.pages?.login,
         },
         callback: {
-          route: `/auth/register/${id}`,
+          route: `${DEFAULT_LOGIN_ROUTE}/${id}`,
           methods: ['POST'],
-          redirect: '/',
+          redirect: DEFAULT_CALLBACK_REDIRECT,
           ...config?.pages?.callback,
         },
       },
