@@ -25,7 +25,7 @@ export class ClientAuth {
       cookieStore.set(c.name, c.value, c.options)
     })
 
-    if (result.user) {
+    if (result.session) {
       // TODO
     }
 

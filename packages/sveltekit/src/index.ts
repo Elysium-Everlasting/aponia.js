@@ -1,15 +1,14 @@
-import type {
+import {
   Auth,
-  InternalRequest as CoreInternalRequest,
-  InternalResponse,
+  type AuthConfig,
+  type InternalRequest as CoreInternalRequest,
+  type InternalResponse,
 } from '@aponia.js/core'
-import type { User } from '@auth/core/types'
+import type { Session } from '@auth/core/types'
 import type { Handle, RequestEvent } from '@sveltejs/kit'
 import { parse, serialize } from 'cookie'
 
-const defaultLocalsGetUserKey = 'getUser'
-
-const defaultLocalsUserKey = 'user'
+const defaultLocalsGetSessionKey = 'getSession'
 
 const defaultLocalsAuthKey = 'aponia-auth'
 
@@ -22,13 +21,7 @@ interface InternalRequest extends Omit<RequestEvent, 'cookies'>, CoreInternalReq
 export type Options = {
   /**
    */
-  localsGetUserKey?: keyof App.Locals
-
-  /**
-   * Key to store the user in locals.
-   * User will only be defined if the session was refreshed or provider action occurred during the current request.
-   */
-  localsUserKey?: keyof App.Locals
+  localsGetSessionKey?: keyof App.Locals
 
   /**
    * Key to store the internally generated auth response in locals if debugging.
@@ -81,28 +74,22 @@ function createResponse(response: InternalResponse): Response {
 }
 
 export function createAuthHelpers(auth: Auth, options: Options = {}) {
-  const localsGetUserKey = options.localsGetUserKey ?? defaultLocalsGetUserKey
-  const localsUserKey = options.localsUserKey ?? defaultLocalsUserKey
+  const localsGetUserKey = options.localsGetSessionKey ?? defaultLocalsGetSessionKey
   const localsAuthKey = options.localsAuthKey ?? defaultLocalsAuthKey
 
-  const getUser = async (event: RequestEvent): Promise<User | null> => {
-    const cachedUser = (event.locals as any)[localsUserKey]
-
-    if (cachedUser) {
-      return cachedUser
-    }
-
+  const getSession = async (event: RequestEvent): Promise<Session | undefined> => {
     const accessToken = event.cookies.get(auth.session.config.cookieOptions.accessToken.name)
 
     const { accessTokenData } = await auth.session.decodeTokens({ accessToken })
 
     if (!accessTokenData) {
-      return null
+      return
     }
 
-    const user =
-      (await auth.session.config.getAccessTokenUser?.(accessTokenData)) ?? accessTokenData
-    return user
+    const session =
+      (await auth.session.config.transformSession?.(accessTokenData)) ?? accessTokenData
+
+    return session
   }
 
   const handle: Handle = async ({ event, resolve }) => {
@@ -110,10 +97,9 @@ export function createAuthHelpers(auth: Auth, options: Options = {}) {
 
     const internalResponse = await auth.handle(toInternalRequest(event))
 
-    let cachedUser: User | null
+    let cachedSession: Session | undefined
 
-    locals[localsUserKey] = internalResponse.user
-    locals[localsGetUserKey] = async () => (cachedUser ??= await getUser(event))
+    locals[localsGetUserKey] = async () => (cachedSession ??= await getSession(event))
 
     if (options.debug) {
       locals[localsAuthKey] = internalResponse
@@ -133,4 +119,21 @@ export function createAuthHelpers(auth: Auth, options: Options = {}) {
   return handle
 }
 
-export default createAuthHelpers
+/**
+ * TODO: handle callback.
+ */
+export type SvelteKitAuthCallback = (event: RequestEvent) => Auth | AuthConfig
+
+export function SvelteKitAuth(sveltekitAuthConfig: Auth | AuthConfig) {
+  if (typeof sveltekitAuthConfig === 'function') {
+    return
+  }
+
+  if (sveltekitAuthConfig instanceof Auth) {
+    return createAuthHelpers(sveltekitAuthConfig)
+  }
+
+  const auth = new Auth(sveltekitAuthConfig)
+
+  return createAuthHelpers(auth)
+}

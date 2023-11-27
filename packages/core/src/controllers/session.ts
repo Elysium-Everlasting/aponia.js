@@ -1,4 +1,4 @@
-import type { User } from '@auth/core/types'
+import type { Session, User } from '@auth/core/types'
 import { parse } from 'cookie'
 
 import {
@@ -15,53 +15,24 @@ import {
 } from '../security/cookie'
 import { encode, decode } from '../security/jwt'
 import type { JWTOptions } from '../security/jwt'
-import type { InternalRequest, InternalResponse, AccessToken, RefreshToken } from '../types'
+import type { InternalRequest, InternalResponse, RefreshToken } from '../types'
 import { asPromise } from '../utils/as-promise'
 import type { Awaitable, DeepPartial, Nullish } from '../utils/types'
 
-/**
- * Create a new session.
- */
-export interface NewSession {
-  /**
-   * The user for this request.
-   * If not defined, {@link Session.getUserFromRequest} will need to decode the access token from scratch.
-   * If defined, the user will be saved in the request and {@link Session.getUserFromRequest} won't need to decode the access token.
-   *
-   * TLDR: it might seem redundant to define both access token and user, but it can be more efficient :^) .
-   */
-  user?: User
-
-  /**
-   * The new access token.
-   */
-  accessToken: AccessToken
-
-  /**
-   * The new refresh token.
-   */
+export interface NewSessionTokens {
+  accessToken: Session
   refreshToken?: RefreshToken
 }
 
-/**
- * Session details for an expired or invalid session that contains a refresh token.
- */
-export interface OldSession {
-  /**
-   * The old access token.
-   */
-  accessToken?: AccessToken | Nullish
-
-  /**
-   * The refresh token that should be handled, i.e. by generating a new session and access/refresh tokens.
-   */
+export interface OldSessionTokens {
+  accessToken?: Session | Nullish
   refreshToken: RefreshToken
 }
 
 /**
  * Internal session configuration.
  */
-export interface SessionConfig {
+export interface SessionManagerConfig {
   /**
    * The secret used to sign the JWT. Must be at least 1 character long.
    *
@@ -104,26 +75,20 @@ export interface SessionConfig {
    * (user) => ({ user, accessToken: user })
    * i.e. The session is the user itself, and a new access token is created with the user's info.
    */
-  createSession?: (user: User) => Awaitable<NewSession | Nullish>
+  createSession?: (user: User) => Awaitable<NewSessionTokens | Nullish>
 
   /**
-   * Given a session, extract the user from it.
-   *
-   * @example If a session only contains the user ID, this function would fetch the user from the database.
-   *
-   * @default
-   * (session) => session
-   * i.e. The session is the user itself.
+   * Transform a session.
    */
-  getAccessTokenUser?: (session: AccessToken) => Awaitable<User | Nullish>
+  transformSession?: (session: Session) => Awaitable<Session | Nullish>
 
   /**
    * Given the info
    */
-  handleRefresh?: (tokens: OldSession) => Awaitable<NewSession | Nullish>
+  handleRefresh?: (tokens: OldSessionTokens) => Awaitable<NewSessionTokens | Nullish>
 
   onInvalidateAccessToken?: (
-    accessToken: AccessToken,
+    accessToken: Session,
     refreshToken: RefreshToken | Nullish,
   ) => Awaitable<InternalResponse | Nullish>
 }
@@ -131,15 +96,15 @@ export interface SessionConfig {
 /**
  * Session user configuration.
  */
-export type SessionUserConfig = DeepPartial<SessionConfig>
+export type SessionMangerUserConfig = DeepPartial<SessionManagerConfig>
 
 /**
  * Session manager.
  */
-export class Session {
-  config: SessionConfig
+export class SessionManager {
+  config: SessionManagerConfig
 
-  constructor(config?: SessionUserConfig) {
+  constructor(config?: SessionMangerUserConfig) {
     const cookieOptions = createCookiesOptions(config?.createCookieOptions)
 
     cookieOptions.accessToken.options.maxAge ??= DEFAULT_ACCESS_TOKEN_AGE
@@ -175,7 +140,7 @@ export class Session {
    */
   async decodeTokens(tokens: { accessToken?: string; refreshToken?: string }) {
     const accessTokenData = await asPromise(
-      this.config.jwt.decode<AccessToken>({
+      this.config.jwt.decode<Session>({
         secret: this.config.secret,
         token: tokens.accessToken,
       }),
@@ -198,7 +163,7 @@ export class Session {
   /**
    * Create cookies from a new session.
    */
-  async createCookies(newSession: NewSession): Promise<Cookie[]> {
+  async createCookies(newSession: NewSessionTokens): Promise<Cookie[]> {
     const cookies: Cookie[] = []
 
     if (newSession?.accessToken) {
@@ -231,7 +196,7 @@ export class Session {
   /**
    * Get the user from a request.
    */
-  async getUserFromRequest(request: InternalRequest): Promise<User | null> {
+  async getSessionFromRequest(request: InternalRequest): Promise<Session | Nullish> {
     const encodedAccessToken = request.cookies[this.config.cookieOptions.accessToken.name]
 
     const { accessTokenData: accessToken } = await this.decodeTokens({
@@ -242,8 +207,8 @@ export class Session {
       return null
     }
 
-    const user = (await this.config.getAccessTokenUser?.(accessToken)) ?? accessToken
-    return user ?? null
+    const session = (await this.config.transformSession?.(accessToken)) ?? accessToken
+    return session ?? null
   }
 
   /**
@@ -270,13 +235,18 @@ export class Session {
       accessToken: accessTokenData,
       refreshToken: refreshTokenData,
     })) ?? {
-      user: refreshTokenData,
-      accessToken: refreshTokenData,
-      refreshToken: refreshTokenData,
+      accessToken: {
+        expires: refreshTokenData.expires,
+        user: refreshTokenData.user,
+      },
+      refreshToken: {
+        expires: refreshTokenData.expires,
+        user: refreshTokenData.user,
+      },
     }
 
     return {
-      user: refreshedTokens?.user,
+      session: refreshedTokens?.accessToken,
       cookies: refreshedTokens ? await this.createCookies(refreshedTokens) : undefined,
     }
   }
@@ -329,4 +299,4 @@ export class Session {
 /**
  * Create a new session manager.
  */
-export const createSession = (config: SessionUserConfig) => new Session(config)
+export const createSessionManager = (config: SessionMangerUserConfig) => new SessionManager(config)

@@ -1,5 +1,5 @@
-import { Auth } from '@aponia.js/core'
-import type { NewSession, OldSession } from '@aponia.js/core/session'
+import { Auth, type NewSessionTokens, type OldSessionTokens } from '@aponia.js/core'
+import type { User, Session } from '@auth/core/types'
 
 import { fromDate } from './utils'
 
@@ -35,9 +35,9 @@ export type TableMappings = { [K in keyof DefaultTableMappings]: DefaultTableMap
 export type PrismaAdapterOptions<T extends TableMappings = DefaultTableMappings> = {
   mappings?: T
   generateSessionToken?: () => string
-  userToSession?: (user: any) => any | Promise<any>
-  transformSession?: (session: any) => NewSession | Promise<NewSession>
-  getUserFromOldSession?: (session: OldSession) => any | Promise<any>
+  userToSession?: (user: User) => any | Promise<any>
+  transformSession?: (session: Session, user: User) => NewSessionTokens | Promise<NewSessionTokens>
+  getUserFromOldSession?: (session: OldSessionTokens) => any | Promise<any>
 }
 
 export type ResolvedPrismaAdapterOptions<T extends TableMappings = DefaultTableMappings> = Required<
@@ -57,11 +57,15 @@ export class PrismaAdapter<T extends TableMappings = DefaultTableMappings> {
     this.options = {
       mappings: DEFAULT_TABLE_MAPPINGS as T,
       generateSessionToken: () => crypto.randomUUID(),
-      transformSession: (session) => ({
-        user: session,
-        accessToken: session,
-        refreshToken: session,
-      }),
+      transformSession: async (session, user) => {
+        const sessionData = { ...session, user }
+
+        return {
+          user,
+          accessToken: sessionData,
+          refreshToken: sessionData,
+        }
+      },
       userToSession: (user) => user,
       getUserFromOldSession: (session) => session.refreshToken,
       ...options,
@@ -141,17 +145,7 @@ export class PrismaAdapter<T extends TableMappings = DefaultTableMappings> {
         },
       })
 
-      if (this.options.transformSession) {
-        return await this.options.transformSession(newSession)
-      }
-
-      const sessionData = { ...user, ...newSession }
-
-      return {
-        user: sessionData,
-        accessToken: sessionData,
-        refreshToken: sessionData,
-      }
+      return await this.options.transformSession(newSession, user)
     }
 
     this.auth.session.config.handleRefresh ??= async (oldSession) => {
@@ -171,15 +165,7 @@ export class PrismaAdapter<T extends TableMappings = DefaultTableMappings> {
         },
       })
 
-      if (this.options.transformSession) {
-        return await this.options.transformSession(refreshedSession)
-      }
-
-      return {
-        user: refreshedSession,
-        accessToken: refreshedSession,
-        refreshToken: refreshedSession,
-      }
+      return await this.options.transformSession(refreshedSession, user)
     }
 
     // this.auth.session.config.onInvalidateAccessToken ??= async (accessToken, refreshToken) => { }

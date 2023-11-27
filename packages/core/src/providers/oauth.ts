@@ -222,7 +222,10 @@ export class OAuthProvider<TProfile> {
     }
 
     const processedResponse: InternalResponse = (await this.config.onAuth?.(profile, tokens)) ?? {
-      user: ((await this.config.profile?.(profile, tokens)) ?? profile) as any,
+      session: {
+        expires: '',
+        user: (await this.config.profile?.(profile, tokens)) ?? profile,
+      },
       redirect: this.config.pages.callback.redirect,
       status: 302,
     }

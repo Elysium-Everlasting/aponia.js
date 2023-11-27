@@ -14,7 +14,7 @@ import { OIDCProvider, resolveOIDCConfig } from '../providers/oidc.js'
 import type { InternalRequest, InternalResponse, PageEndpoint } from '../types'
 import type { Awaitable, Nullish } from '../utils/types'
 
-import type { Session } from './session'
+import { SessionManager, type SessionMangerUserConfig } from './session'
 
 /**
  * The user can pass in a mix of internal providers and exteneral providers from Auth.js .
@@ -74,7 +74,7 @@ export interface AuthConfig {
   /**
    * Session manager. Handles session creation, validation / decoding, and destruction.
    */
-  session: Session
+  session: SessionManager | SessionMangerUserConfig
 
   /**
    * Providers to use for authentication.
@@ -96,7 +96,7 @@ export interface AuthConfig {
  * Auth framework.
  */
 export class Auth {
-  session: Session
+  session: SessionManager
 
   providers: AnyResolvedProvider[]
 
@@ -126,7 +126,8 @@ export class Auth {
       }
     })
 
-    this.session = config.session
+    this.session =
+      config.session instanceof SessionManager ? config.session : new SessionManager(config.session)
 
     this.session.config.pages.logoutRedirect ??=
       config.pages?.logoutRedirect ?? DEFAULT_LOGOUT_REDIRECT
@@ -228,15 +229,22 @@ export class Auth {
     /**
      * 3. The provider logged in a user if `user` is defined. Create a new session for the user.
      */
-    if (providerResponse.user) {
-      const sessionTokens = (await this.session.config.createSession?.(providerResponse.user)) ?? {
-        user: providerResponse.user,
-        accessToken: providerResponse.user,
-        refreshToken: providerResponse.user,
+    if (providerResponse.session?.user) {
+      const sessionTokens = (await this.session.config.createSession?.(
+        providerResponse.session.user,
+      )) ?? {
+        accessToken: {
+          expires: providerResponse.session.expires,
+          user: providerResponse.session.user,
+        },
+        refreshToken: {
+          expires: providerResponse.session.expires,
+          user: providerResponse.session.user,
+        },
       }
 
-      if (sessionTokens?.user) {
-        providerResponse.user = sessionTokens.user
+      if (sessionTokens?.accessToken) {
+        providerResponse.session = sessionTokens.accessToken
       }
 
       if (sessionTokens) {
@@ -254,7 +262,7 @@ export class Auth {
      * User may be defined as a result of a provider login, or a session refresh.
      * Otherwise call `session.getUserFromRequest(request)` to get the user for the current request.
      */
-    providerResponse.user ||= sessionResponse.user
+    providerResponse.session ||= sessionResponse.session
 
     return providerResponse
   }
