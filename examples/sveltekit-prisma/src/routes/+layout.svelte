@@ -11,9 +11,9 @@
     </div>
 
     <div>
-      {#if $page.data.user}
+      {#if $page.data.session}
         <div>
-          <pre>Logged in as {JSON.stringify($page.data.user, undefined, 2)}</pre>
+          <pre>Logged in as {JSON.stringify($page.data.session, undefined, 2)}</pre>
         </div>
         <div style="display: flex; justify-content: center; gap: 16px">
           <form action="/auth/logout" method="POST">

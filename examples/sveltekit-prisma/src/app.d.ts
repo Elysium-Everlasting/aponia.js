@@ -1,5 +1,5 @@
-import '@aponia/sveltekit'
 import '@sveltejs/kit'
+import type { Session } from '@auth/core/types'
 
 declare global {
   // namespace Aponia {
@@ -13,14 +13,11 @@ declare global {
       /**
        * Helper function to get the user for the current request.
        */
-      getUser: () => Promise<Aponia.User | null>
+      getSession: () => Promise<Session | null>
     }
 
     interface PageData {
-      /**
-       * User parsed from session / cookies. `isAdmin` is added to the user.
-       */
-      user?: Aponia.User & { isAdmin: boolean }
+      session?: Session
     }
   }
 }

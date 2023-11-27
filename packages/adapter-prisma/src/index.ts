@@ -1,4 +1,4 @@
-import { Auth, type NewSessionTokens, type OldSessionTokens } from '@aponia.js/core'
+import { Auth, type Adapter, type NewSessionTokens, type OldSessionTokens } from '@aponia.js/core'
 import type { User, Session } from '@auth/core/types'
 
 import { fromDate } from './utils'
@@ -98,7 +98,10 @@ export class PrismaAdapter<T extends TableMappings = DefaultTableMappings> {
 
         if (existingAccount?.user != null) {
           return {
-            user: existingAccount.user,
+            session: {
+              expires: '',
+              user: existingAccount.user,
+            },
             redirect: provider.config.pages.callback.redirect,
             status: 302,
           }
@@ -127,7 +130,10 @@ export class PrismaAdapter<T extends TableMappings = DefaultTableMappings> {
         })
 
         return {
-          user: newUser,
+          session: {
+            expires: '',
+            user: newUser,
+          },
           redirect: provider.config.pages.callback.redirect,
           status: 302,
         }
@@ -175,12 +181,14 @@ export class PrismaAdapter<T extends TableMappings = DefaultTableMappings> {
 /**
  * Adapts base {@link Auth} class to use Prisma by defining custom handlers on the providers and session manager.
  */
-export function adapt<T extends TableMappings = DefaultTableMappings>(
-  auth: Auth,
+export function prismaAdapter<T extends TableMappings = DefaultTableMappings>(
   prisma: PsuedoPrismaClient,
   options: PrismaAdapterOptions<T> = {},
-): Auth {
-  new PrismaAdapter(auth, prisma, options)
-
-  return auth
+): Adapter {
+  return (auth: Auth) => {
+    new PrismaAdapter(auth, prisma, options)
+    return auth
+  }
 }
+
+export default prismaAdapter

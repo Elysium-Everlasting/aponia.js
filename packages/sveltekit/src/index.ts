@@ -124,9 +124,9 @@ export function createAuthHelpers(auth: Auth, options: Options = {}) {
  */
 export type SvelteKitAuthCallback = (event: RequestEvent) => Auth | AuthConfig
 
-export function SvelteKitAuth(sveltekitAuthConfig: Auth | AuthConfig) {
+export function SvelteKitAuth(sveltekitAuthConfig: Auth | AuthConfig): Handle {
   if (typeof sveltekitAuthConfig === 'function') {
-    return
+    // TODO
   }
 
   if (sveltekitAuthConfig instanceof Auth) {

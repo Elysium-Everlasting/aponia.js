@@ -6,7 +6,7 @@
 
 <div>Home Page</div>
 
-{#if data.user}
+{#if data.session}
   <div>
     <div>
       <span>You're logged in! Viewing all other users:</span>

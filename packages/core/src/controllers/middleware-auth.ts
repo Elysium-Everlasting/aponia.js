@@ -71,6 +71,8 @@ export type AuthCallbacks = {
  * Auth configuration.
  */
 export interface AuthConfig {
+  adapter?: Adapter | Adapter[]
+
   /**
    * Session manager. Handles session creation, validation / decoding, and destruction.
    */
@@ -154,6 +156,16 @@ export class Auth {
       this.routes.login.set(provider.config.pages.login.route, provider)
       this.routes.callback.set(provider.config.pages.callback.route, provider)
     })
+
+    if (config.adapter == null) {
+      return
+    }
+
+    if (Array.isArray(config.adapter)) {
+      config.adapter.forEach((adapter) => adapter(this))
+    } else {
+      config.adapter(this)
+    }
   }
 
   /**
@@ -272,3 +284,8 @@ export class Auth {
  * Create an auth instance.
  */
 export const createAuth = (config: AuthConfig) => new Auth(config)
+
+/**
+ * An adapter takes in an auth instance and modifies its behavior.
+ */
+export type Adapter = (auth: Auth) => Auth
