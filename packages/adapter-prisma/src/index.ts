@@ -145,11 +145,7 @@ export class PrismaAdapter<T extends TableMappings = DefaultTableMappings> {
         },
       })
 
-      if (this.options.transformSession) {
-        return await this.options.transformSession(newSession)
-      }
-
-      const sessionData = {
+      const sessionData: any = this.options.transformSession?.(newSession) ?? {
         ...newSession,
         id: newSession[this.options.mappings.session.user].id,
         name: newSession[this.options.mappings.session.user].name,
