@@ -25,7 +25,6 @@ export const DEFAULT_TABLE_MAPPINGS = {
     id: 'id',
     userId: 'user_id',
     expires: 'expires',
-    user: 'user',
   },
 } as const
 
@@ -140,22 +139,13 @@ export class PrismaAdapter<T extends TableMappings = DefaultTableMappings> {
             this.auth.session.config.cookieOptions.accessToken.options.maxAge,
           ),
         },
-        include: {
-          [this.options.mappings.session.user]: true,
-        },
       })
 
       if (this.options.transformSession) {
         return await this.options.transformSession(newSession)
       }
 
-      const sessionData = {
-        ...newSession,
-        id: newSession[this.options.mappings.session.user].id,
-        name: newSession[this.options.mappings.session.user].name,
-        email: newSession[this.options.mappings.session.user].email,
-        image: newSession[this.options.mappings.session.user].image,
-      }
+      const sessionData = { ...user, ...newSession }
 
       return {
         user: sessionData,
