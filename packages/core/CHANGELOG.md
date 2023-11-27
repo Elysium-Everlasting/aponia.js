@@ -1,5 +1,11 @@
 # @aponia.js/core
 
+## 0.2.0
+
+### Minor Changes
+
+- b4d15b1: refactor: migrate to storing session in access tokens
+
 ## 0.1.2
 
 ### Patch Changes

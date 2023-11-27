@@ -1,5 +1,14 @@
 # @examples/sveltekit-prisma
 
+## 0.1.4
+
+### Patch Changes
+
+- Updated dependencies [b4d15b1]
+  - @aponia.js/adapter-prisma@0.2.0
+  - @aponia.js/core@0.2.0
+  - @aponia.js/sveltekit@0.2.0
+
 ## 0.1.3
 
 ### Patch Changes
