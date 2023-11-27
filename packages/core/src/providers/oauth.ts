@@ -1,14 +1,19 @@
 import type { OAuthConfig, OAuthUserConfig } from '@auth/core/providers'
 import * as oauth from 'oauth4webapi'
 
+import {
+  DEFAULT_CALLBACK_REDIRECT,
+  DEFAULT_CALLBACK_ROUTE,
+  DEFAULT_CHECKS,
+  DEFAULT_LOGIN_ROUTE,
+  ISSUER,
+} from '../constants'
 import * as checks from '../security/checks'
 import { defaultCookiesOptions } from '../security/cookie'
 import type { Cookie, CookiesOptions } from '../security/cookie'
 import { defaultJWTOptions, type JWTOptions } from '../security/jwt'
-import type { InternalRequest, InternalResponse } from '../types'
+import type { InternalRequest, InternalResponse, ProviderPages } from '../types'
 import type { Awaitable, Nullish } from '../utils/types'
-
-import type { ProviderPages } from './types'
 
 export type TokenSet = Partial<oauth.OAuth2TokenEndpointResponse>
 
@@ -79,7 +84,7 @@ export class OAuthProvider<TProfile> {
     this.config = options
 
     this.authorizationServer = {
-      issuer: 'auth.js',
+      issuer: ISSUER,
       authorization_endpoint: options.endpoints.authorization.url,
       token_endpoint: options.endpoints.token.url,
       userinfo_endpoint: options.endpoints.userinfo.url,
@@ -238,7 +243,7 @@ export function resolveOAuthConfig(
   const id = config.id ?? config.options?.id ?? ''
   const clientId = config.clientId ?? config.options?.clientId ?? ''
   const clientSecret = config.clientSecret ?? config.options?.clientSecret ?? ''
-  const checks: any = config.checks ?? config.options?.checks ?? ['pkce']
+  const checks: any = config.checks ?? config.options?.checks ?? DEFAULT_CHECKS
   const token = config.token ?? config.options?.token ?? {}
   const userinfo = config.userinfo ?? config.options?.userinfo ?? {}
 
@@ -255,13 +260,13 @@ export function resolveOAuthConfig(
     checks,
     pages: {
       login: {
-        route: `/auth/login/${id}`,
+        route: `${DEFAULT_LOGIN_ROUTE}/${id}`,
         methods: ['GET'],
       },
       callback: {
-        route: `/auth/callback/${id}`,
+        route: `${DEFAULT_CALLBACK_ROUTE}/${id}`,
         methods: ['GET'],
-        redirect: '/',
+        redirect: DEFAULT_CALLBACK_REDIRECT,
       },
     },
     endpoints: {

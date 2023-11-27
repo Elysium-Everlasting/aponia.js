@@ -1,13 +1,17 @@
 import type { OIDCConfig, OIDCUserConfig } from '@auth/core/providers'
 import * as oauth from 'oauth4webapi'
 
+import {
+  DEFAULT_CALLBACK_REDIRECT,
+  DEFAULT_CALLBACK_ROUTE,
+  DEFAULT_CHECKS,
+  DEFAULT_LOGIN_ROUTE,
+} from '../constants'
 import * as checks from '../security/checks'
 import { defaultCookiesOptions, type Cookie, type CookiesOptions } from '../security/cookie'
 import { defaultJWTOptions, type JWTOptions } from '../security/jwt'
-import type { InternalRequest, InternalResponse } from '../types'
+import type { InternalRequest, InternalResponse, ProviderPages } from '../types'
 import type { Awaitable, Nullish } from '../utils/types'
-
-import type { ProviderPages } from './types'
 
 export type TokenSet = Partial<oauth.OAuth2TokenEndpointResponse>
 
@@ -264,7 +268,7 @@ export function resolveOIDCConfig(
   const clientId = config.clientId ?? config.options?.clientId ?? ''
   const clientSecret = config.clientSecret ?? config.options?.clientSecret ?? ''
   const issuer = config.issuer ?? config.options?.issuer ?? ''
-  const checks: any = config.checks ?? config.options?.checks ?? ['pkce']
+  const checks: any = config.checks ?? config.options?.checks ?? DEFAULT_CHECKS
   const token = config.token ?? config.options?.token ?? {}
   const userinfo = config.userinfo ?? config.options?.userinfo ?? {}
 
@@ -282,13 +286,13 @@ export function resolveOIDCConfig(
     checks,
     pages: {
       login: {
-        route: `/auth/login/${id}`,
+        route: `${DEFAULT_LOGIN_ROUTE}/${id}`,
         methods: ['GET'],
       },
       callback: {
-        route: `/auth/callback/${id}`,
+        route: `${DEFAULT_CALLBACK_ROUTE}/${id}`,
         methods: ['GET'],
-        redirect: '/',
+        redirect: DEFAULT_CALLBACK_REDIRECT,
       },
     },
     endpoints: {

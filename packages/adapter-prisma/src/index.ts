@@ -19,6 +19,8 @@ export const DEFAULT_TABLE_MAPPINGS = {
     name: 'user',
 
     id: 'id',
+
+    email: 'email',
   },
 
   /**
@@ -168,6 +170,21 @@ export class PrismaAdapter<T extends TableMappings = DefaultTableMappings> {
             // TODO: how to configure this behavior? It may seem unintuitive to redirect to the callback page?
             redirect: provider.config.pages.callback.redirect,
             status: 302,
+          }
+        }
+
+        // User attempts to login with an account, but no account was found.
+        // Check if the email exists, if it does, then error.
+
+        const existingUser = await prisma[this.options.mappings.user.name].findUnique({
+          where: {
+            [this.options.mappings.user.email]: profile.email,
+          },
+        })
+
+        if (existingUser != null) {
+          return {
+            error: new Error('An account with that email already exists.'),
           }
         }
 

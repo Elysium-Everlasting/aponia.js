@@ -1,20 +1,13 @@
 import type { OAuthConfig, OIDCConfig } from '@auth/core/providers/oauth'
 import * as oauth from 'oauth4webapi'
 
+import { NONCE_MAX_AGE, PKCE_MAX_AGE, STATE_MAX_AGE } from '../constants'
 import type { InternalRequest } from '../types'
 
 import type { Cookie, CookiesOptions } from './cookie.js'
 import { encode, decode, type JWTOptions } from './jwt.js'
 
 type CheckPayload = { value: string }
-
-const FifteenMinutesInSeconds = 60 * 15
-
-const PKCE_MAX_AGE = FifteenMinutesInSeconds
-
-const STATE_MAX_AGE = FifteenMinutesInSeconds
-
-const NONCE_MAX_AGE = FifteenMinutesInSeconds
 
 /**
  * Parameters provided to a seucrity-checking function.

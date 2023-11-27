@@ -1,8 +1,11 @@
+import {
+  DEFAULT_CALLBACK_REDIRECT,
+  DEFAULT_CALLBACK_ROUTE,
+  DEFAULT_LOGIN_ROUTE,
+} from '../constants.js'
 import { randomString } from '../security/csrf.js'
-import type { InternalRequest, InternalResponse } from '../types'
+import type { InternalRequest, InternalResponse, ProviderPages } from '../types'
 import type { Awaitable, DeepPartial, Nullish } from '../utils/types.js'
-
-import type { ProviderPages } from './types.js'
 
 /**
  * Internal configuration for the email provider.
@@ -46,14 +49,14 @@ export class EmailProvider {
       theme: config.theme,
       pages: {
         login: {
-          route: `/auth/login/${id}`,
+          route: `${DEFAULT_LOGIN_ROUTE}/${id}`,
           methods: ['POST'],
           ...config?.pages?.login,
         },
         callback: {
-          route: `/auth/callback/${id}`,
+          route: `${DEFAULT_CALLBACK_ROUTE}/${id}`,
           methods: ['GET'],
-          redirect: '/',
+          redirect: DEFAULT_CALLBACK_REDIRECT,
           ...config?.pages?.callback,
         },
       },

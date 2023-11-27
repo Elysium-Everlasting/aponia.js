@@ -1,16 +1,11 @@
 import type { CookieSerializeOptions } from 'cookie'
 
-const defaultCookieName = 'aponia-auth'
-
-const defaultSecurePrefix = '__Secure-'
-
-const fifteenMinutesInSeconds = 60 * 15
-
-const defaultSerializationOptions: CookieSerializeOptions = {
-  httpOnly: true,
-  sameSite: 'lax',
-  path: '/',
-}
+import {
+  DEFAULT_COOKIE_NAME,
+  DEFAULT_COOKIE_SERIALIZE_OPTIONS,
+  DEFAULT_SECURE_PREFIX,
+  FIFTEEN_MINUTES_IN_SECONDS,
+} from '../constants'
 
 /**
  * Internal representation of a cookie before it's serialized.
@@ -93,29 +88,29 @@ export type CreateCookiesOptions = {
 export function createCookiesOptions(options?: CreateCookiesOptions): CookiesOptions {
   const secure = options?.serializationOptions?.secure
 
-  const cookieName = options?.cookieName ?? defaultCookieName
-  const securePrefix = options?.securePrefix ?? defaultSecurePrefix
+  const cookieName = options?.cookieName ?? DEFAULT_COOKIE_NAME
+  const securePrefix = options?.securePrefix ?? DEFAULT_SECURE_PREFIX
   const cookiePrefix = secure ? securePrefix : ''
 
   return {
     accessToken: {
       name: `${cookiePrefix}${cookieName}.access-token`,
       options: {
-        ...defaultSerializationOptions,
+        ...DEFAULT_COOKIE_SERIALIZE_OPTIONS,
         ...options?.serializationOptions,
       },
     },
     refreshToken: {
       name: `${cookiePrefix}${cookieName}.refresh-token`,
       options: {
-        ...defaultSerializationOptions,
+        ...DEFAULT_COOKIE_SERIALIZE_OPTIONS,
         ...options?.serializationOptions,
       },
     },
     callbackUrl: {
       name: `${cookiePrefix}${cookieName}.callback-url`,
       options: {
-        ...defaultSerializationOptions,
+        ...DEFAULT_COOKIE_SERIALIZE_OPTIONS,
         ...options?.serializationOptions,
       },
     },
@@ -126,31 +121,31 @@ export function createCookiesOptions(options?: CreateCookiesOptions): CookiesOpt
        */
       name: `${secure ? '__Host-' : cookiePrefix}${cookieName}.csrf-token`,
       options: {
-        ...defaultSerializationOptions,
+        ...DEFAULT_COOKIE_SERIALIZE_OPTIONS,
         ...options?.serializationOptions,
       },
     },
     pkceCodeVerifier: {
       name: `${cookiePrefix}${cookieName}.pkce.code_verifier`,
       options: {
-        ...defaultSerializationOptions,
-        maxAge: fifteenMinutesInSeconds,
+        ...DEFAULT_COOKIE_SERIALIZE_OPTIONS,
+        maxAge: FIFTEEN_MINUTES_IN_SECONDS,
         ...options?.serializationOptions,
       },
     },
     state: {
       name: `${cookiePrefix}${cookieName}.state`,
       options: {
-        ...defaultSerializationOptions,
-        maxAge: fifteenMinutesInSeconds,
+        ...DEFAULT_COOKIE_SERIALIZE_OPTIONS,
+        maxAge: FIFTEEN_MINUTES_IN_SECONDS,
         ...options?.serializationOptions,
       },
     },
     nonce: {
       name: `${cookiePrefix}${cookieName}.nonce`,
       options: {
-        ...defaultSerializationOptions,
-        maxAge: fifteenMinutesInSeconds,
+        ...DEFAULT_COOKIE_SERIALIZE_OPTIONS,
+        maxAge: FIFTEEN_MINUTES_IN_SECONDS,
         ...options?.serializationOptions,
       },
     },
