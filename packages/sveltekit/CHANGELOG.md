@@ -1,5 +1,13 @@
 # @aponia.js/sveltekit
 
+## 0.1.2
+
+### Patch Changes
+
+- 4b66f26: feat: sensible default for augmenting the session, can customize with `transformSession` option
+- Updated dependencies [4b66f26]
+  - @aponia.js/core@0.1.2
+
 ## 0.1.1
 
 ### Patch Changes

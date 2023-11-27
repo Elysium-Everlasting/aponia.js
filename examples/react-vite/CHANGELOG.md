@@ -1,5 +1,12 @@
 # @examples/react-vite
 
+## 0.1.5
+
+### Patch Changes
+
+- Updated dependencies [4b66f26]
+  - @aponia.js/core@0.1.2
+
 ## 0.1.4
 
 ### Patch Changes
