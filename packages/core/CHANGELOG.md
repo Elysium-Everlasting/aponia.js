@@ -1,5 +1,11 @@
 # @aponia.js/core
 
+## 0.1.1
+
+### Patch Changes
+
+- bd9de40: feat: export the session from the index of core
+
 ## 0.1.0
 
 ### Minor Changes
