@@ -1,5 +1,16 @@
 # @aponia.js/adapter-prisma
 
+## 0.2.0
+
+### Minor Changes
+
+- b4d15b1: refactor: migrate to storing session in access tokens
+
+### Patch Changes
+
+- Updated dependencies [b4d15b1]
+  - @aponia.js/core@0.2.0
+
 ## 0.1.2
 
 ### Patch Changes
