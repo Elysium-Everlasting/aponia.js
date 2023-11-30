@@ -7,14 +7,13 @@ import {
   DEFAULT_RESET_ROUTE,
   DEFAULT_UPDATE_ROUTE,
 } from '../constants'
+import { SessionController, type SessionControllerUserConfig } from '../controllers/session'
 import type { CredentialsProvider } from '../providers/credentials'
 import type { EmailProvider } from '../providers/email'
 import { OAuthProvider, resolveOAuthConfig } from '../providers/oauth.js'
 import { OIDCProvider, resolveOIDCConfig } from '../providers/oidc.js'
 import type { InternalRequest, InternalResponse, PageEndpoint } from '../types'
 import type { Awaitable, Nullish } from '../utils/types'
-
-import { SessionManager, type SessionMangerUserConfig } from './session'
 
 /**
  * The user can pass in a mix of internal providers and exteneral providers from Auth.js .
@@ -76,7 +75,7 @@ export interface AuthConfig {
   /**
    * Session manager. Handles session creation, validation / decoding, and destruction.
    */
-  session: SessionManager | SessionMangerUserConfig
+  session: SessionController | SessionControllerUserConfig
 
   /**
    * Providers to use for authentication.
@@ -98,7 +97,7 @@ export interface AuthConfig {
  * Auth framework.
  */
 export class Auth {
-  session: SessionManager
+  session: SessionController
 
   providers: AnyResolvedProvider[]
 
@@ -129,7 +128,9 @@ export class Auth {
     })
 
     this.session =
-      config.session instanceof SessionManager ? config.session : new SessionManager(config.session)
+      config.session instanceof SessionController
+        ? config.session
+        : new SessionController(config.session)
 
     this.session.config.pages.logoutRedirect ??=
       config.pages?.logoutRedirect ?? DEFAULT_LOGOUT_REDIRECT

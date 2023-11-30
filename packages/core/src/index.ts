@@ -1,4 +1,4 @@
-export * from './controllers/client-auth'
-export * from './controllers/middleware-auth'
+export * from './auth/client'
+export * from './auth/middleware'
 export * from './controllers/session'
 export * from './types'

@@ -1,6 +1,6 @@
 import Cookies from 'universal-cookie'
 
-import { Auth, type AuthConfig } from './middleware-auth'
+import { Auth, type AuthConfig } from './middleware'
 
 export class ClientAuth {
   auth: Auth

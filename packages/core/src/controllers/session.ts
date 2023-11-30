@@ -32,7 +32,7 @@ export interface OldSessionTokens {
 /**
  * Internal session configuration.
  */
-export interface SessionManagerConfig {
+export interface SessionControllerConfig {
   /**
    * The secret used to sign the JWT. Must be at least 1 character long.
    *
@@ -96,15 +96,15 @@ export interface SessionManagerConfig {
 /**
  * Session user configuration.
  */
-export type SessionMangerUserConfig = DeepPartial<SessionManagerConfig>
+export type SessionControllerUserConfig = DeepPartial<SessionControllerConfig>
 
 /**
  * Session manager.
  */
-export class SessionManager {
-  config: SessionManagerConfig
+export class SessionController {
+  config: SessionControllerConfig
 
-  constructor(config?: SessionMangerUserConfig) {
+  constructor(config?: SessionControllerUserConfig) {
     const cookieOptions = createCookiesOptions(config?.createCookieOptions)
 
     cookieOptions.accessToken.options.maxAge ??= DEFAULT_ACCESS_TOKEN_AGE
@@ -299,4 +299,5 @@ export class SessionManager {
 /**
  * Create a new session manager.
  */
-export const createSessionManager = (config: SessionMangerUserConfig) => new SessionManager(config)
+export const createSessionController = (config: SessionControllerUserConfig) =>
+  new SessionController(config)
