@@ -24,11 +24,6 @@ export interface Endpoint<TContext = any, TResponse = any> {
   conform?: (response: Response) => Awaitable<Response | Nullish>
 }
 
-/**
- * Internal OAuth configuration.
- *
- * @internal
- */
 export type ResolvedOAuthConfig<TProfile> = {
   id: string
   client: oauth.Client
@@ -45,35 +40,17 @@ export type ResolvedOAuthConfig<TProfile> = {
   ) => Awaitable<InternalResponse | Nullish> | Nullish
 } & OAuthConfig<TProfile>
 
-/**
- * Pre-defined OAuth default configuration.
- */
 export interface OAuthDefaultConfig<TProfile>
   extends Pick<ResolvedOAuthConfig<TProfile>, 'id' | 'endpoints'>,
     Omit<OAuthConfig<TProfile>, 'id' | 'endpoints' | 'clientId' | 'clientSecret'> {}
 
-/**
- * OAuth provider.
- */
 export class OAuthProvider<TProfile> {
-  /**
-   * Sets the provider __type__ for all instances.
-   */
   static type = 'oauth' as const
 
-  /**
-   * Forwards the static provider __type__ to an instance's properties.
-   */
   type = OAuthProvider.type
 
-  /**
-   * Config.
-   */
   config: ResolvedOAuthConfig<TProfile>
 
-  /**
-   * Authorization server.
-   */
   authorizationServer: oauth.AuthorizationServer
 
   cookiesOptions = defaultCookiesOptions
@@ -91,9 +68,6 @@ export class OAuthProvider<TProfile> {
     }
   }
 
-  /**
-   * The provider configures the behavior of the OAuth checks.
-   */
   get checkParams(): checks.CheckParams {
     return {
       checks: this.config.checks,
@@ -112,9 +86,6 @@ export class OAuthProvider<TProfile> {
     return this
   }
 
-  /**
-   * Handle OAuth login request.
-   */
   async login(request: InternalRequest): Promise<InternalResponse> {
     const url = new URL(this.config.endpoints.authorization.url)
 
@@ -151,9 +122,6 @@ export class OAuthProvider<TProfile> {
     return { status: 302, redirect: url.toString(), cookies }
   }
 
-  /**
-   * Handle OAuth callback request.
-   */
   async callback(request: InternalRequest): Promise<InternalResponse> {
     const cookies: Cookie[] = []
 
@@ -237,9 +205,6 @@ export class OAuthProvider<TProfile> {
   }
 }
 
-/**
- * Merge user and pre-defined default OAuth options.
- */
 export function resolveOAuthConfig(
   config: OAuthConfig<any> & { options?: OAuthUserConfig<any> },
 ): ResolvedOAuthConfig<any> {

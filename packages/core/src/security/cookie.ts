@@ -7,81 +7,30 @@ import {
   FIFTEEN_MINUTES_IN_SECONDS,
 } from '../constants'
 
-/**
- * Internal representation of a cookie before it's serialized.
- */
 export interface Cookie {
   name: string
   value: string
   options?: CookieSerializeOptions
 }
 
-/**
- * This framework sets various cookies, each with a specific name and options.
- */
 export interface CookieOption {
   name: string
   options: CookieSerializeOptions
 }
 
 export interface CookiesOptions {
-  /**
-   * Access token cookie stores the session information.
-   */
   accessToken: CookieOption
-
-  /**
-   * Refresh token cookie stores information needed to refresh a user's session,
-   * i.e. granting new access and refresh tokens.
-   */
   refreshToken: CookieOption
-
-  /**
-   * State cokie stores a random string used to protect against CSRF attacks.
-   */
   state: CookieOption
-
-  /**
-   * Nonce cookie stores a random string used to protect against replay attacks.
-   */
   nonce: CookieOption
-
-  /**
-   * CSRF token cookie stores a random string used to protect against CSRF attacks.
-   */
   csrfToken: CookieOption
-
-  /**
-   * PKCE code verifier cookie stores a random string used to protect against CSRF attacks.
-   */
   pkceCodeVerifier: CookieOption
-
-  /**
-   * Callback URL cookie stores the URL to redirect to after a successful authentication.
-   */
   callbackUrl: CookieOption
 }
 
-/**
- */
 export type CreateCookiesOptions = {
-  /**
-   * The name of the cookie.
-   *
-   * @default 'aponia-auth'
-   */
   cookieName?: string
-
-  /**
-   * Prefix for secure cookies.
-   *
-   * @default '__Secure-' for secure cookies, otherwise ''
-   */
   securePrefix?: string
-
-  /**
-   * General serialization options for all auth-related cookies.
-   */
   serializationOptions?: CookieSerializeOptions
 }
 

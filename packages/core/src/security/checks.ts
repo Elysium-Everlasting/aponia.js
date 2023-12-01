@@ -1,22 +1,17 @@
-import type { OAuthConfig, OIDCConfig } from '@auth/core/providers/oauth'
 import * as oauth from 'oauth4webapi'
 
 import { NONCE_MAX_AGE, PKCE_MAX_AGE, STATE_MAX_AGE } from '../constants'
-import type { InternalRequest } from '../types'
+import type { Check, InternalRequest } from '../types'
 
 import type { Cookie, CookiesOptions } from './cookie.js'
 import { encode, decode, type JWTOptions } from './jwt.js'
 
-type CheckPayload = { value: string }
+interface CheckPayload {
+  value: string
+}
 
-/**
- * Parameters provided to a seucrity-checking function.
- *
- * The security checker will either create a new instance of the check (i.e. a cookie to set),
- * or validate an existing instance of the check (i.e. reading the cookie value).
- */
 export type CheckParams = {
-  checks?: OAuthConfig<any>['checks'] | OIDCConfig<any>['checks']
+  checks?: Check
   jwt: JWTOptions
   cookies: CookiesOptions
 }

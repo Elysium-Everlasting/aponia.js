@@ -7,9 +7,6 @@ import { randomString } from '../security/csrf.js'
 import type { InternalRequest, InternalResponse, ProviderPages } from '../types'
 import type { Awaitable, DeepPartial, Nullish } from '../utils/types.js'
 
-/**
- * Internal configuration for the email provider.
- */
 export interface EmailConfig {
   id: string
   theme: any
@@ -19,23 +16,11 @@ export interface EmailConfig {
   onVerify?: (request: InternalRequest, args: any) => Awaitable<InternalResponse | Nullish>
 }
 
-/**
- * User configuration for the email provider.
- */
 export interface EmailUserConfig extends DeepPartial<EmailConfig> {}
 
-/**
- * Email provider.
- */
 export class EmailProvider {
-  /**
-   * Sets the provider __type__ for all instances.
-   */
   static type = 'email' as const
 
-  /**
-   * Forwards the static provider __type__ to an instance's properties.
-   */
   type = EmailProvider.type
 
   config: EmailConfig
@@ -142,7 +127,4 @@ export class EmailProvider {
   }
 }
 
-/**
- * Create a new email provider.
- */
 export const Email = (config: EmailUserConfig) => new EmailProvider(config)

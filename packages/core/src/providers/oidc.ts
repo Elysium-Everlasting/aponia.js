@@ -23,11 +23,6 @@ interface Endpoint<TContext = any, TResponse = any> {
   conform?: (response: Response) => Awaitable<Response | Nullish>
 }
 
-/**
- * Internal OIDC configuration.
- *
- * @internal
- */
 export type ResolvedOIDCConfig<TProfile> = {
   id: string
   issuer: string
@@ -45,35 +40,17 @@ export type ResolvedOIDCConfig<TProfile> = {
   ) => Awaitable<InternalResponse | Nullish> | Nullish
 } & OIDCConfig<TProfile>
 
-/**
- * Pre-defined OIDC default configuration.
- */
 export interface OIDCDefaultConfig<TProfile>
   extends Pick<ResolvedOIDCConfig<TProfile>, 'id' | 'issuer'>,
     Omit<OIDCConfig<TProfile>, 'id' | 'issuer' | 'clientId' | 'clientSecret'> {}
 
-/**
- * OIDC provider.
- */
 export class OIDCProvider<TProfile> {
-  /**
-   * Sets the provider __type__ for all instances.
-   */
   static type = 'oidc' as const
 
-  /**
-   * Forwards the static provider __type__ to an instance's properties.
-   */
   type = OIDCProvider.type
 
-  /**
-   * Config.
-   */
   config: ResolvedOIDCConfig<TProfile>
 
-  /**
-   * Authorization server.
-   */
   authorizationServer: oauth.AuthorizationServer
 
   cookiesOptions = defaultCookiesOptions
@@ -85,9 +62,6 @@ export class OIDCProvider<TProfile> {
     this.authorizationServer = { issuer: options.issuer }
   }
 
-  /**
-   * The provider configures the behavior of the OAuth checks.
-   */
   get checkParams(): checks.CheckParams {
     return {
       checks: this.config.checks,
@@ -106,9 +80,6 @@ export class OIDCProvider<TProfile> {
     return this
   }
 
-  /**
-   * Dynamically initialize OIDC authorization server.
-   */
   async initialize() {
     const issuer = new URL(this.authorizationServer.issuer)
 
@@ -125,9 +96,6 @@ export class OIDCProvider<TProfile> {
     this.authorizationServer = authorizationServer
   }
 
-  /**
-   * Handle OAuth login request.
-   */
   async login(request: InternalRequest): Promise<InternalResponse> {
     await this.initialize()
 
@@ -164,12 +132,12 @@ export class OIDCProvider<TProfile> {
       cookies.push(stateCookie)
     }
 
-    // if (this.config.checks?.includes('pkce')) {
-    //   const [pkce, pkceCookie] = await checks.pkce.create(this.checkParams)
-    //   url.searchParams.set('code_challenge', pkce)
-    //   url.searchParams.set('code_challenge_method', 'S256')
-    //   cookies.push(pkceCookie)
-    // }
+    if (this.config.checks?.includes('pkce')) {
+      const [pkce, pkceCookie] = await checks.pkce.create(this.checkParams)
+      url.searchParams.set('code_challenge', pkce)
+      url.searchParams.set('code_challenge_method', 'S256')
+      cookies.push(pkceCookie)
+    }
 
     if (this.config.checks?.includes('nonce')) {
       const [nonce, nonceCookie] = await checks.nonce.create(this.checkParams)
@@ -180,9 +148,6 @@ export class OIDCProvider<TProfile> {
     return { status: 302, redirect: url.toString(), cookies }
   }
 
-  /**
-   * Handle OAuth callback request.
-   */
   async callback(request: InternalRequest): Promise<InternalResponse> {
     await this.initialize()
 
@@ -194,16 +159,12 @@ export class OIDCProvider<TProfile> {
       cookies.push(stateCookie)
     }
 
-    console.log('rqe: ', request)
-
     const codeGrantParams = await oauth.validateJwtAuthResponse(
       this.authorizationServer,
       this.config.client,
       request.url.searchParams,
       state,
     )
-
-    console.log({ codeGrantParams })
 
     if (oauth.isOAuth2Error(codeGrantParams)) {
       throw new Error(codeGrantParams.error_description)
@@ -222,8 +183,6 @@ export class OIDCProvider<TProfile> {
       `${request.url.origin}${this.config.pages.callback.route}`,
       pkce,
     )
-
-    console.log({ initialCodeGrantResponse })
 
     const codeGrantResponse =
       (await this.config.endpoints?.token?.conform?.(initialCodeGrantResponse.clone())) ??
@@ -273,9 +232,6 @@ export class OIDCProvider<TProfile> {
   }
 }
 
-/**
- * Merges the user options with the pre-defined default options.
- */
 export function resolveOIDCConfig(
   config: OIDCConfig<any> & { options?: OIDCUserConfig<any> },
 ): ResolvedOIDCConfig<any> {

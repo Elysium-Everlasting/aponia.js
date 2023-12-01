@@ -1,6 +1,11 @@
 import type { Session, User } from '@auth/core/types'
 
-import { DEFAULT_ACCESS_TOKEN_AGE, DEFAULT_REFRESH_TOKEN_AGE, DEFAULT_SECRET } from '../constants'
+import {
+  DEFAULT_ACCESS_TOKEN_AGE,
+  DEFAULT_LOGOUT_REDIRECT,
+  DEFAULT_REFRESH_TOKEN_AGE,
+  DEFAULT_SECRET,
+} from '../constants'
 import {
   createCookiesOptions,
   type Cookie,
@@ -31,6 +36,7 @@ export interface RawSessionTokens {
 export interface SessionControllerConfig {
   secret: string
   jwt: Required<Omit<JWTOptions, 'maxAge'>>
+  logoutRedirect?: string
   createCookieOptions?: CreateCookiesOptions
   cookieOptions: CookiesOptions
   createSession?: (user: User) => Awaitable<SessionTokens | Nullish>
@@ -57,6 +63,7 @@ export class SessionController {
     }
 
     this.config = {
+      logoutRedirect: DEFAULT_LOGOUT_REDIRECT,
       ...config,
       secret,
       jwt: {
@@ -170,6 +177,8 @@ export class SessionController {
 
     const response = (await this.config.onInvalidateTokens?.(tokens)) ?? {}
 
+    response.status = 302
+    response.redirect = this.config.logoutRedirect
     response.cookies ??= [
       {
         name: this.config.cookieOptions.accessToken.name,
