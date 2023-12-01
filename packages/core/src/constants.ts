@@ -68,6 +68,8 @@ export const DAY_IN_SECONDS = 24 * HOUR_IN_SECONDS
 
 export const WEEK_IN_SECONDS = 7 * DAY_IN_SECONDS
 
+export const IS_BROWSER = typeof window !== 'undefined'
+
 //----------------------------------------------------------------------------------------
 // Logistical.
 //----------------------------------------------------------------------------------------
@@ -104,7 +106,9 @@ export const DEFAULT_COOKIE_NAME = 'aponia-auth'
 export const DEFAULT_SECURE_PREFIX = '__Secure-'
 
 export const DEFAULT_COOKIE_SERIALIZE_OPTIONS: CookieSerializeOptions = {
-  httpOnly: true,
+  httpOnly: !IS_BROWSER,
   sameSite: 'lax',
   path: '/',
 }
+
+export const DEFAULT_RESPONSE_TYPE = 'code'

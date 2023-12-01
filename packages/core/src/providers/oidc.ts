@@ -6,6 +6,8 @@ import {
   DEFAULT_CALLBACK_ROUTE,
   DEFAULT_CHECKS,
   DEFAULT_LOGIN_ROUTE,
+  DEFAULT_RESPONSE_TYPE,
+  IS_BROWSER,
 } from '../constants'
 import * as checks from '../security/checks'
 import { defaultCookiesOptions, type Cookie, type CookiesOptions } from '../security/cookie'
@@ -162,12 +164,12 @@ export class OIDCProvider<TProfile> {
       cookies.push(stateCookie)
     }
 
-    if (this.config.checks?.includes('pkce')) {
-      const [pkce, pkceCookie] = await checks.pkce.create(this.checkParams)
-      url.searchParams.set('code_challenge', pkce)
-      url.searchParams.set('code_challenge_method', 'S256')
-      cookies.push(pkceCookie)
-    }
+    // if (this.config.checks?.includes('pkce')) {
+    //   const [pkce, pkceCookie] = await checks.pkce.create(this.checkParams)
+    //   url.searchParams.set('code_challenge', pkce)
+    //   url.searchParams.set('code_challenge_method', 'S256')
+    //   cookies.push(pkceCookie)
+    // }
 
     if (this.config.checks?.includes('nonce')) {
       const [nonce, nonceCookie] = await checks.nonce.create(this.checkParams)
@@ -188,14 +190,20 @@ export class OIDCProvider<TProfile> {
 
     const [state, stateCookie] = await checks.state.use(request, this.checkParams)
 
-    if (stateCookie) cookies.push(stateCookie)
+    if (stateCookie) {
+      cookies.push(stateCookie)
+    }
 
-    const codeGrantParams = oauth.validateAuthResponse(
+    console.log('rqe: ', request)
+
+    const codeGrantParams = await oauth.validateJwtAuthResponse(
       this.authorizationServer,
       this.config.client,
       request.url.searchParams,
       state,
     )
+
+    console.log({ codeGrantParams })
 
     if (oauth.isOAuth2Error(codeGrantParams)) {
       throw new Error(codeGrantParams.error_description)
@@ -203,7 +211,9 @@ export class OIDCProvider<TProfile> {
 
     const [pkce, pkceCookie] = await checks.pkce.use(request, this.checkParams)
 
-    if (pkceCookie) cookies.push(pkceCookie)
+    if (pkceCookie) {
+      cookies.push(pkceCookie)
+    }
 
     const initialCodeGrantResponse = await oauth.authorizationCodeGrantRequest(
       this.authorizationServer,
@@ -212,6 +222,8 @@ export class OIDCProvider<TProfile> {
       `${request.url.origin}${this.config.pages.callback.route}`,
       pkce,
     )
+
+    console.log({ initialCodeGrantResponse })
 
     const codeGrantResponse =
       (await this.config.endpoints?.token?.conform?.(initialCodeGrantResponse.clone())) ??
@@ -267,9 +279,9 @@ export class OIDCProvider<TProfile> {
 export function resolveOIDCConfig(
   config: OIDCConfig<any> & { options?: OIDCUserConfig<any> },
 ): ResolvedOIDCConfig<any> {
-  const id = config.id ?? config.options?.id ?? ''
+  const id = config.id ?? config.options?.id
   const clientId = config.clientId ?? config.options?.clientId ?? ''
-  const clientSecret = config.clientSecret ?? config.options?.clientSecret ?? ''
+  const clientSecret = config.clientSecret ?? config.options?.clientSecret
   const issuer = config.issuer ?? config.options?.issuer ?? ''
   const checks: any = config.checks ?? config.options?.checks ?? DEFAULT_CHECKS
   const token = config.token ?? config.options?.token ?? {}
@@ -285,6 +297,7 @@ export function resolveOIDCConfig(
       client_secret: clientSecret,
       ...config.client,
       ...config.options?.client,
+      ...(IS_BROWSER && { token_endpoint_auth_method: 'none' }),
     },
     checks,
     pages: {
@@ -304,7 +317,7 @@ export function resolveOIDCConfig(
         ...config.options?.authorization,
         params: {
           client_id: clientId,
-          response_type: 'code',
+          response_type: DEFAULT_RESPONSE_TYPE,
           ...config.authorization?.params,
           ...config.options?.authorization?.params,
         },

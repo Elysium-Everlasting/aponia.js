@@ -70,7 +70,7 @@ export type AuthCallbacks = {
  * Auth configuration.
  */
 export interface AuthConfig {
-  adapter?: Adapter | Adapter[]
+  adapter?: MiddlwareAuthAdapter | MiddlwareAuthAdapter[]
 
   /**
    * Session manager. Handles session creation, validation / decoding, and destruction.
@@ -96,7 +96,7 @@ export interface AuthConfig {
 /**
  * Auth framework.
  */
-export class Auth {
+export class MiddlewareAuth {
   session: SessionController
 
   providers: AnyResolvedProvider[]
@@ -284,9 +284,9 @@ export class Auth {
 /**
  * Create an auth instance.
  */
-export const createAuth = (config: AuthConfig) => new Auth(config)
+export const createMiddlewareAuth = (config: AuthConfig) => new MiddlewareAuth(config)
 
 /**
  * An adapter takes in an auth instance and modifies its behavior.
  */
-export type Adapter = (auth: Auth) => Auth
+export type MiddlwareAuthAdapter = (auth: MiddlewareAuth) => MiddlewareAuth

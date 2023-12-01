@@ -1,6 +1,23 @@
+import { ClientAuth, SessionController } from '@aponia.js/core'
+import Google from '@auth/core/providers/google'
 import { createContext, useEffect } from 'react'
 
-import { auth } from './client'
+export const google: ReturnType<typeof Google> = Google({
+  clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+  // clientSecret: import.meta.env.VITE_GOOGLE_CLIENT_SECRET,
+  authorization: {
+    params: {
+      response_type: 'token',
+    },
+  },
+})
+
+const session = new SessionController()
+
+export const auth = new ClientAuth({
+  session,
+  providers: [google],
+})
 
 const authContext = createContext(auth)
 

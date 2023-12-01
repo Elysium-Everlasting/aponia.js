@@ -1,28 +1,48 @@
 import Cookies from 'universal-cookie'
 
-import { Auth, type AuthConfig } from './middleware'
+import type { AnyProvider, InternalRequest } from '..'
+
+import { MiddlewareAuth, type AuthConfig } from './middleware'
 
 export class ClientAuth {
-  auth: Auth
+  auth: MiddlewareAuth
 
   constructor(config: AuthConfig) {
-    this.auth = new Auth(config)
+    this.auth = new MiddlewareAuth(config)
+  }
+
+  generateInternalRequest(cookies = new Cookies()): InternalRequest {
+    const url = new URL(window.location.href)
+
+    const request = new Request(url)
+
+    if (url.hash) {
+      new URLSearchParams(url.hash.slice(1)).forEach((value, key) => {
+        url.searchParams.append(key, value)
+      })
+    }
+
+    return {
+      request,
+      url,
+      cookies: cookies.getAll(),
+    }
   }
 
   /**
    * Handle the client page load.
    */
   async handle() {
-    const cookieStore = new Cookies()
+    const cookies = new Cookies()
 
-    const url = new URL(window.location.href)
+    const internalRequest = this.generateInternalRequest(cookies)
 
-    const request = new Request(url)
+    const result = await this.auth.handle(internalRequest)
 
-    const result = await this.auth.handle({ request, url, cookies: cookieStore.getAll() })
+    console.log('result: ', result)
 
     result.cookies?.forEach((c) => {
-      cookieStore.set(c.name, c.value, c.options)
+      cookies.set(c.name, c.value, c.options)
     })
 
     if (result.session) {
@@ -36,9 +56,16 @@ export class ClientAuth {
   }
 
   /**
-   * TODO
+   * Given a provider, login.
    */
-  async login() {
+  async login(provider: AnyProvider) {
+    // TODO: email and credentials login.
+    if (provider.type === 'email' || provider.type === 'credentials') {
+      return
+    }
+
     window.location.href = '/auth/login/google'
+
+    // await provider.login()
   }
 }

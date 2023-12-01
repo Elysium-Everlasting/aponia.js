@@ -94,6 +94,8 @@ export const state = {
       return [oauth.skipStateCheck, null] as const
     }
 
+    console.log(request, params)
+
     const state = request.cookies[params.cookies.state.name]
 
     if (!state) {

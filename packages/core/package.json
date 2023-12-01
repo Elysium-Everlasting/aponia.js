@@ -30,30 +30,12 @@
       "require": "./src/index.ts",
       "default": "./src/index.ts",
       "import": "./src/index.ts"
-    },
-    "./session": {
-      "types": "./src/controllers/session.ts",
-      "require": "./src/controllers/session.ts",
-      "default": "./src/controllers/session.ts",
-      "import": "./src/controllers/session.ts"
-    },
-    "./providers/*": {
-      "types": "./providers/*.ts",
-      "require": "./providers/*.ts",
-      "default": "./providers/*.ts",
-      "import": "./providers/*.ts"
     }
   },
   "typesVersions": {
     "*": {
       ".": [
         "src/index.ts"
-      ],
-      "session": [
-        "./src/controllers/session.ts"
-      ],
-      "providers/*": [
-        "./src/providers/*.ts"
       ]
     }
   },
@@ -64,6 +46,7 @@
     "test": "vitest"
   },
   "dependencies": {
+    "@auth/core": "^0.18.1",
     "@panva/hkdf": "^1.1.1",
     "cookie": "^0.5.0",
     "jose": "^4.14.4",
@@ -71,7 +54,6 @@
     "universal-cookie": "^6.1.1"
   },
   "devDependencies": {
-    "@auth/core": "^0.18.1",
     "@types/cookie": "^0.5.1",
     "tsup": "^7.2.0",
     "typescript": "^5.1.6"
