@@ -1,6 +1,7 @@
 import type { Session } from '@auth/core/types'
 
 import type { Cookie } from './security/cookie'
+import type { Nullish } from './utils/types'
 
 /**
  * Request object used internally.
@@ -31,7 +32,7 @@ export interface InternalResponse {
   /**
    * The session.
    */
-  session?: Session | null
+  session?: Session | Nullish
 
   /**
    * HTTP status code.

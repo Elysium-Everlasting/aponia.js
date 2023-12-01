@@ -4,6 +4,9 @@ import type { AnyProvider, InternalRequest } from '..'
 
 import { MiddlewareAuth, type AuthConfig } from './middleware'
 
+/**
+ * TODO
+ */
 export class ClientAuth {
   auth: MiddlewareAuth
 
@@ -39,8 +42,6 @@ export class ClientAuth {
 
     const result = await this.auth.handle(internalRequest)
 
-    console.log('result: ', result)
-
     result.cookies?.forEach((c) => {
       cookies.set(c.name, c.value, c.options)
     })
@@ -63,8 +64,6 @@ export class ClientAuth {
     if (provider.type === 'email' || provider.type === 'credentials') {
       return
     }
-
-    window.location.href = '/auth/login/google'
 
     // await provider.login()
   }

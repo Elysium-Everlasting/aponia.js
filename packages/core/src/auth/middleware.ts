@@ -262,7 +262,9 @@ export class MiddlewareAuth {
 
       if (sessionTokens) {
         providerResponse.cookies ??= []
-        providerResponse.cookies.push(...(await this.session.createCookies(sessionTokens)))
+        providerResponse.cookies.push(
+          ...(await this.session.createCookiesFromTokens(sessionTokens)),
+        )
       }
     }
 

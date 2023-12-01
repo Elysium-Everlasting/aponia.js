@@ -1,12 +1,6 @@
 import type { Session, User } from '@auth/core/types'
-import { parse } from 'cookie'
 
-import {
-  DEFAULT_ACCESS_TOKEN_AGE,
-  DEFAULT_LOGOUT_REDIRECT,
-  DEFAULT_REFRESH_TOKEN_AGE,
-  DEFAULT_SECRET,
-} from '../constants'
+import { DEFAULT_ACCESS_TOKEN_AGE, DEFAULT_REFRESH_TOKEN_AGE, DEFAULT_SECRET } from '../constants'
 import {
   createCookiesOptions,
   type Cookie,
@@ -19,88 +13,34 @@ import type { InternalRequest, InternalResponse, RefreshToken } from '../types'
 import { asPromise } from '../utils/as-promise'
 import type { Awaitable, DeepPartial, Nullish } from '../utils/types'
 
-export interface NewSessionTokens {
-  accessToken: Session
-  refreshToken?: RefreshToken
-}
-
-export interface OldSessionTokens {
+export interface SessionTokens {
   accessToken?: Session | Nullish
-  refreshToken: RefreshToken
+  refreshToken?: RefreshToken | Nullish
 }
 
-/**
- * Internal session configuration.
- */
+export interface UnknownSessionTokens {
+  accessToken?: Session | Nullish
+  refreshToken?: RefreshToken | Nullish
+}
+
+export interface RawSessionTokens {
+  accessToken?: string
+  refreshToken?: string
+}
+
 export interface SessionControllerConfig {
-  /**
-   * The secret used to sign the JWT. Must be at least 1 character long.
-   *
-   * @default 'secret'
-   */
   secret: string
-
-  /**
-   */
-  pages: {
-    /**
-     * Where to redirect the user after logging out.
-     */
-    logoutRedirect: string
-  }
-
-  /**
-   * Custom the JWT options.
-   */
   jwt: Required<Omit<JWTOptions, 'maxAge'>>
-
-  /**
-   * Options when generating the options for all the cookies.
-   */
   createCookieOptions?: CreateCookiesOptions
-
-  /**
-   * The options to use for the various cookies set by the session manager.
-   */
   cookieOptions: CookiesOptions
-
-  /**
-   * Given a user that just logged in, create a new session.
-   *
-   * @example
-   * A session might only contain the user ID,
-   * so this function would generate a new access token that only contains the user ID.
-   *
-   * @default
-   * (user) => ({ user, accessToken: user })
-   * i.e. The session is the user itself, and a new access token is created with the user's info.
-   */
-  createSession?: (user: User) => Awaitable<NewSessionTokens | Nullish>
-
-  /**
-   * Transform a session.
-   */
-  transformSession?: (session: Session) => Awaitable<Session | Nullish>
-
-  /**
-   * Given the info
-   */
-  handleRefresh?: (tokens: OldSessionTokens) => Awaitable<NewSessionTokens | Nullish>
-
-  onInvalidateAccessToken?: (
-    accessToken: Session,
-    refreshToken: RefreshToken | Nullish,
-  ) => Awaitable<InternalResponse | Nullish>
+  createSession?: (user: User) => Awaitable<SessionTokens | Nullish>
+  transformSession?: (tokens: SessionTokens) => Awaitable<Session | Nullish>
+  handleRefresh?: (tokens: UnknownSessionTokens) => Awaitable<SessionTokens | Nullish>
+  onInvalidateTokens?: (tokens: SessionTokens) => Awaitable<InternalResponse | Nullish>
 }
 
-/**
- * Session user configuration.
- */
 export type SessionControllerUserConfig = DeepPartial<SessionControllerConfig>
 
-/**
- * Session manager.
- */
 export class SessionController {
   config: SessionControllerConfig
 
@@ -112,8 +52,6 @@ export class SessionController {
 
     const secret = config?.secret || DEFAULT_SECRET
 
-    // hkdf throws an error if it attempts to encrypt something with a key that's less than 1 character.
-    // Might as well throw the error now instead of later during a request, where it's harder to debug.
     if (secret.length === 0) {
       throw new Error('The secret must be at least 1 character long')
     }
@@ -121,10 +59,6 @@ export class SessionController {
     this.config = {
       ...config,
       secret,
-      pages: {
-        logoutRedirect: DEFAULT_LOGOUT_REDIRECT,
-        ...config?.pages,
-      },
       jwt: {
         secret,
         encode,
@@ -135,11 +69,15 @@ export class SessionController {
     }
   }
 
-  /**
-   * Decode the JWT, encrypted access and refresh tokens.
-   */
-  async decodeTokens(tokens: { accessToken?: string; refreshToken?: string }) {
-    const accessTokenData = await asPromise(
+  getRawTokensFromRequest(request: InternalRequest): RawSessionTokens {
+    const accessToken = request.cookies[this.config.cookieOptions.accessToken.name]
+    const refreshToken = request.cookies[this.config.cookieOptions.refreshToken.name]
+
+    return { accessToken, refreshToken }
+  }
+
+  async decodeRawTokens(tokens: RawSessionTokens): Promise<SessionTokens> {
+    const accessToken = await asPromise(
       this.config.jwt.decode<Session>({
         secret: this.config.secret,
         token: tokens.accessToken,
@@ -148,7 +86,7 @@ export class SessionController {
       console.log('Error decoding access token', e)
     })
 
-    const refreshTokenData = await asPromise(
+    const refreshToken = await asPromise(
       this.config.jwt.decode<RefreshToken>({
         secret: this.config.secret,
         token: tokens.refreshToken,
@@ -157,34 +95,36 @@ export class SessionController {
       console.log('Error decoding access token', e)
     })
 
-    return { accessTokenData, refreshTokenData }
+    return { accessToken, refreshToken }
   }
 
-  /**
-   * Create cookies from a new session.
-   */
-  async createCookies(newSession: NewSessionTokens): Promise<Cookie[]> {
+  async getTokensFromRequest(request: InternalRequest): Promise<SessionTokens> {
+    const rawTokens = this.getRawTokensFromRequest(request)
+    return this.decodeRawTokens(rawTokens)
+  }
+
+  async createCookiesFromTokens(tokens: SessionTokens): Promise<Cookie[]> {
     const cookies: Cookie[] = []
 
-    if (newSession?.accessToken) {
+    if (tokens?.accessToken) {
       cookies.push({
         name: this.config.cookieOptions.accessToken.name,
         value: await this.config.jwt.encode({
           secret: this.config.secret,
           maxAge: this.config.cookieOptions.accessToken.options.maxAge,
-          token: newSession.accessToken,
+          token: tokens.accessToken,
         }),
         options: this.config.cookieOptions.accessToken.options,
       })
     }
 
-    if (newSession?.refreshToken) {
+    if (tokens?.refreshToken) {
       cookies.push({
         name: this.config.cookieOptions.refreshToken.name,
         value: await this.config.jwt.encode({
           secret: this.config.secret,
           maxAge: this.config.cookieOptions.refreshToken.options.maxAge,
-          token: newSession.refreshToken,
+          token: tokens.refreshToken,
         }),
         options: this.config.cookieOptions.refreshToken.options,
       })
@@ -193,92 +133,43 @@ export class SessionController {
     return cookies
   }
 
-  /**
-   * Get the user from a request.
-   */
   async getSessionFromRequest(request: InternalRequest): Promise<Session | Nullish> {
-    const encodedAccessToken = request.cookies[this.config.cookieOptions.accessToken.name]
+    const tokens = await this.getTokensFromRequest(request)
 
-    const { accessTokenData: accessToken } = await this.decodeTokens({
-      accessToken: encodedAccessToken,
-    })
-
-    if (!accessToken) {
+    if (tokens.accessToken == null) {
       return null
     }
 
-    const session = (await this.config.transformSession?.(accessToken)) ?? accessToken
-    return session ?? null
+    const session = (await this.config.transformSession?.(tokens)) ?? tokens.accessToken
+    return session
   }
 
-  /**
-   * Handle a request by refreshing the user's session if necessary and possible.
-   */
-  async handleRequest(request: InternalRequest): Promise<InternalResponse> {
-    const accessToken = request.cookies[this.config.cookieOptions.accessToken.name]
-    const refreshToken = request.cookies[this.config.cookieOptions.refreshToken.name]
+  async handleRequest(request: InternalRequest): Promise<InternalResponse | Nullish> {
+    const rawTokens = this.getRawTokensFromRequest(request)
 
-    if (accessToken || (!accessToken && !refreshToken)) {
-      return {}
+    if (rawTokens.accessToken || rawTokens.refreshToken == null) {
+      return
     }
 
-    const { accessTokenData, refreshTokenData } = await this.decodeTokens({
-      accessToken,
-      refreshToken,
-    })
+    const tokens = await this.decodeRawTokens(rawTokens)
 
-    if (refreshTokenData == null) {
-      return {}
+    if (tokens.refreshToken == null) {
+      return
     }
 
-    const refreshedTokens = (await this.config.handleRefresh?.({
-      accessToken: accessTokenData,
-      refreshToken: refreshTokenData,
-    })) ?? {
-      accessToken: {
-        expires: refreshTokenData.expires,
-        user: refreshTokenData.user,
-      },
-      refreshToken: {
-        expires: refreshTokenData.expires,
-        user: refreshTokenData.user,
-      },
-    }
+    const refreshedTokens = (await this.config.handleRefresh?.(tokens)) ?? tokens
 
     return {
       session: refreshedTokens?.accessToken,
-      cookies: refreshedTokens ? await this.createCookies(refreshedTokens) : undefined,
+      cookies: refreshedTokens ? await this.createCookiesFromTokens(refreshedTokens) : undefined,
     }
   }
 
-  /**
-   * Log a user out.
-   */
-  async logout(request: Request): Promise<InternalResponse> {
-    const cookies = parse(request.headers.get('cookie') ?? '')
+  async logout(request: InternalRequest): Promise<InternalResponse> {
+    const tokens = await this.getTokensFromRequest(request)
 
-    const accessToken = cookies[this.config.cookieOptions.accessToken.name]
-    const refreshToken = cookies[this.config.cookieOptions.refreshToken.name]
+    const response = (await this.config.onInvalidateTokens?.(tokens)) ?? {}
 
-    const { accessTokenData, refreshTokenData } = await this.decodeTokens({
-      accessToken,
-      refreshToken,
-    })
-
-    let response: InternalResponse = {}
-
-    if (accessTokenData) {
-      const invalidateResponse = await this.config.onInvalidateAccessToken?.(
-        accessTokenData,
-        refreshTokenData,
-      )
-      if (invalidateResponse) {
-        response = invalidateResponse
-      }
-    }
-
-    response.status ??= 302
-    response.redirect ??= this.config.pages.logoutRedirect
     response.cookies ??= [
       {
         name: this.config.cookieOptions.accessToken.name,
@@ -296,8 +187,5 @@ export class SessionController {
   }
 }
 
-/**
- * Create a new session manager.
- */
 export const createSessionController = (config: SessionControllerUserConfig) =>
   new SessionController(config)
