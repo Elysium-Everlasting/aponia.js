@@ -1,5 +1,5 @@
 import {
-  Auth,
+  MiddlewareAuth,
   type AuthConfig,
   type InternalRequest as CoreInternalRequest,
   type InternalResponse,
@@ -8,17 +8,15 @@ import type { Session } from '@auth/core/types'
 import type { Handle, RequestEvent } from '@sveltejs/kit'
 import { parse, serialize } from 'cookie'
 
-const defaultLocalsGetSessionKey = 'getSession'
+const DEFAULT_LOCALS_SESSION_KEY = 'getSession'
 
-const defaultLocalsAuthKey = 'aponia-auth'
+const DEFAULT_LOCALS_DEBUG_KEY = 'aponia-auth'
 
-/**
- * Augment the default internal request with SvelteKit's request event.
- * This makes the extra properties available to callback handlers.
- */
-interface InternalRequest extends Omit<RequestEvent, 'cookies'>, CoreInternalRequest {}
+type Nullish = null | undefined | void
 
-export type Options = {
+export interface InternalRequest extends Omit<RequestEvent, 'cookies'>, CoreInternalRequest {}
+
+export interface SvelteKitAuthOptions {
   /**
    */
   localsGetSessionKey?: keyof App.Locals
@@ -34,60 +32,60 @@ export type Options = {
   debug?: boolean
 }
 
+// export type SvelteKitAuthCallback = (event: RequestEvent) => MiddlewareAuth | AuthConfig
+
 function getBody(response: InternalResponse): BodyInit | null | undefined {
   if (response.body) {
     return JSON.stringify(response.body)
   }
 
   if (response.redirect) {
-    return null
+    return
   }
 
   if (response.error) {
     return response.error.message
   }
 
-  return undefined
+  return
 }
 
 function toInternalRequest(event: RequestEvent): InternalRequest {
   return { ...event, cookies: parse(event.request.headers.get('cookie') ?? '') }
 }
 
-function createResponse(response: InternalResponse): Response {
-  const body = getBody(response)
+function createResponse(internalResponse: InternalResponse): Response {
+  const body = getBody(internalResponse)
   const headers = new Headers()
 
-  response.cookies?.forEach((cookie) => {
+  internalResponse.cookies?.forEach((cookie) => {
     headers.append('Set-Cookie', serialize(cookie.name, cookie.value, cookie.options))
   })
 
-  if (response.redirect) {
-    headers.set('Location', response.redirect)
+  if (internalResponse.redirect) {
+    headers.set('Location', internalResponse.redirect)
   }
 
-  const responseInit: ResponseInit = { status: response.status, headers }
+  const responseInit: ResponseInit = { status: internalResponse.status, headers }
 
-  const res = new Response(body, responseInit)
-
-  return res
+  const response = new Response(body, responseInit)
+  return response
 }
 
-export function createAuthHelpers(auth: Auth, options: Options = {}) {
-  const localsGetUserKey = options.localsGetSessionKey ?? defaultLocalsGetSessionKey
-  const localsAuthKey = options.localsAuthKey ?? defaultLocalsAuthKey
+export function createAuthHelpers(auth: MiddlewareAuth, options: SvelteKitAuthOptions = {}) {
+  const localsSessionKey = options.localsGetSessionKey ?? DEFAULT_LOCALS_SESSION_KEY
+  const localsDebugKey = options.localsAuthKey ?? DEFAULT_LOCALS_DEBUG_KEY
 
-  const getSession = async (event: RequestEvent): Promise<Session | undefined> => {
+  const getSession = async (event: RequestEvent): Promise<Session | Nullish> => {
     const accessToken = event.cookies.get(auth.session.config.cookieOptions.accessToken.name)
 
-    const { accessTokenData } = await auth.session.decodeTokens({ accessToken })
+    const tokens = await auth.session.decodeRawTokens({ accessToken })
 
-    if (!accessTokenData) {
+    if (!accessToken) {
       return
     }
 
-    const session =
-      (await auth.session.config.transformSession?.(accessTokenData)) ?? accessTokenData
+    const session = (await auth.session.config.transformSession?.(tokens)) ?? tokens.accessToken
 
     return session
   }
@@ -97,19 +95,19 @@ export function createAuthHelpers(auth: Auth, options: Options = {}) {
 
     const internalResponse = await auth.handle(toInternalRequest(event))
 
-    let cachedSession: Session | undefined
+    let cachedSession: Session | Nullish
 
-    locals[localsGetUserKey] = async () => (cachedSession ??= await getSession(event))
+    locals[localsSessionKey] = async () => (cachedSession ??= await getSession(event))
 
     if (options.debug) {
-      locals[localsAuthKey] = internalResponse
+      locals[localsDebugKey] = internalResponse
     }
 
-    if (internalResponse.redirect || internalResponse.error || internalResponse.body) {
+    if (internalResponse?.redirect || internalResponse?.error || internalResponse?.body) {
       return createResponse(internalResponse)
     }
 
-    internalResponse.cookies?.forEach((cookie) => {
+    internalResponse?.cookies?.forEach((cookie) => {
       event.cookies.set(cookie.name, cookie.value, cookie.options)
     })
 
@@ -119,21 +117,16 @@ export function createAuthHelpers(auth: Auth, options: Options = {}) {
   return handle
 }
 
-/**
- * TODO: handle callback.
- */
-export type SvelteKitAuthCallback = (event: RequestEvent) => Auth | AuthConfig
-
-export function SvelteKitAuth(sveltekitAuthConfig: Auth | AuthConfig): Handle {
+export function SvelteKitAuth(sveltekitAuthConfig: MiddlewareAuth | AuthConfig): Handle {
   if (typeof sveltekitAuthConfig === 'function') {
     // TODO
   }
 
-  if (sveltekitAuthConfig instanceof Auth) {
+  if (sveltekitAuthConfig instanceof MiddlewareAuth) {
     return createAuthHelpers(sveltekitAuthConfig)
   }
 
-  const auth = new Auth(sveltekitAuthConfig)
+  const auth = new MiddlewareAuth(sveltekitAuthConfig)
 
   return createAuthHelpers(auth)
 }

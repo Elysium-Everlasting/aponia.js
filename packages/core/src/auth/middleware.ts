@@ -42,9 +42,9 @@ export interface AuthConfig {
   callbacks?: Partial<AuthCallbacks>
 }
 
-export class MiddlewareAuth {
+export class MiddlewareAuth<T extends AnyResolvedProvider[] = AnyResolvedProvider[]> {
   session: SessionController
-  providers: AnyResolvedProvider[]
+  providers: T
   pages: AuthPages
   callbacks: Partial<AuthCallbacks>
   routes: {
@@ -67,7 +67,7 @@ export class MiddlewareAuth {
         case 'oidc':
           return new OIDCProvider(resolveOIDCConfig(provider))
       }
-    })
+    }) as T
 
     this.session =
       config.session instanceof SessionController

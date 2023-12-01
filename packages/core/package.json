@@ -30,12 +30,21 @@
       "require": "./src/index.ts",
       "default": "./src/index.ts",
       "import": "./src/index.ts"
+    },
+    "./utils/*": {
+      "types": "./src/utils/*.ts",
+      "require": "./src/utils/*.ts",
+      "default": "./src/utils/*.ts",
+      "import": "./src/utils/*.ts"
     }
   },
   "typesVersions": {
     "*": {
       ".": [
         "src/index.ts"
+      ],
+      "./utils/*": [
+        "src/utils/*.ts"
       ]
     }
   },
