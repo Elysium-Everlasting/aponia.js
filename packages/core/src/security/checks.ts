@@ -2,6 +2,7 @@ import * as oauth from 'oauth4webapi'
 
 import { NONCE_MAX_AGE, PKCE_MAX_AGE, STATE_MAX_AGE } from '../constants'
 import type { Check, InternalRequest } from '../types'
+import { asPromise } from '../utils/as-promise'
 
 import type { Cookie, CookiesOptions } from './cookie.js'
 import { encode, decode, type JWTOptions } from './jwt.js'
@@ -18,21 +19,21 @@ export type CheckParams = {
 
 export const pkce = {
   create: async (params: CheckParams) => {
-    const code_verifier = oauth.generateRandomCodeVerifier()
+    const codeVerifier = oauth.generateRandomCodeVerifier()
 
-    const value = await oauth.calculatePKCECodeChallenge(code_verifier)
+    const value = await oauth.calculatePKCECodeChallenge(codeVerifier)
 
     const modifiedParams = {
       ...params,
       jwt: {
-        ...params.jwt,
         maxAge: PKCE_MAX_AGE,
+        ...params.jwt,
       },
     }
 
-    const cookie = await signCookie('pkceCodeVerifier', modifiedParams, code_verifier)
+    const cookie = await signCookie('pkceCodeVerifier', modifiedParams, codeVerifier)
 
-    return [value, cookie] as const
+    return [value, cookie, codeVerifier] as const
   },
 
   use: async (request: InternalRequest, params: CheckParams) => {
@@ -48,9 +49,15 @@ export const pkce = {
 
     const decodeFn = params.jwt.decode ?? decode
 
-    const value = await decodeFn<CheckPayload>({
-      ...params.jwt,
-      token: codeVerifier,
+    const value = await asPromise(
+      decodeFn<CheckPayload>({
+        ...params.jwt,
+        token: codeVerifier,
+      }),
+    ).catch(() => {
+      return {
+        value: undefined,
+      }
     })
 
     if (value?.value == null) {
@@ -74,8 +81,8 @@ export const state = {
     const modifiedParams = {
       ...params,
       jwt: {
-        ...params.jwt,
         maxAge: STATE_MAX_AGE,
+        ...params.jwt,
       },
     }
 
@@ -95,9 +102,15 @@ export const state = {
       throw new Error('State cookie was missing.')
     }
 
-    const d = params.jwt.decode ?? decode
+    const decodeFn = params.jwt.decode ?? decode
 
-    const value = await d<CheckPayload>({ ...params.jwt, token: state })
+    const value = await asPromise(decodeFn<CheckPayload>({ ...params.jwt, token: state })).catch(
+      () => {
+        return {
+          value: undefined,
+        }
+      },
+    )
 
     if (!value?.value) {
       throw new Error('State value could not be parsed.')
@@ -120,8 +133,8 @@ export const nonce = {
     const modifiedParams = {
       ...params,
       jwt: {
-        ...params.jwt,
         maxAge: NONCE_MAX_AGE,
+        ...params.jwt,
       },
     }
 
@@ -143,7 +156,13 @@ export const nonce = {
 
     const decodeFn = params.jwt.decode ?? decode
 
-    const value = await decodeFn<CheckPayload>({ ...params.jwt, token: nonce })
+    const value = await asPromise(decodeFn<CheckPayload>({ ...params.jwt, token: nonce })).catch(
+      () => {
+        return {
+          value: undefined,
+        }
+      },
+    )
 
     if (value?.value == null) {
       throw new Error('Nonce value could not be parsed.')
@@ -167,7 +186,7 @@ async function signCookie(key: keyof CookiesOptions, params: CheckParams, value:
     value: await encodeFn({ ...params.jwt, token: { value } }),
     options: {
       ...params.cookies[key].options,
-      maxAge: params.jwt.maxAge ?? 60,
+      ...(params.jwt.maxAge != null && { maxAge: params.jwt.maxAge }),
     },
   }
 
