@@ -1,4 +1,4 @@
-import { Auth, type Adapter, type NewSessionTokens, type OldSessionTokens } from '@aponia.js/core'
+import { MiddlewareAuth, type MiddlwareAuthAdapter, type SessionTokens } from '@aponia.js/core'
 import type { User, Session } from '@auth/core/types'
 
 import { fromDate } from './utils'
@@ -36,8 +36,8 @@ export type PrismaAdapterOptions<T extends TableMappings = DefaultTableMappings>
   mappings?: T
   generateSessionToken?: () => string
   userToSession?: (user: User) => any | Promise<any>
-  transformSession?: (session: Session, user: User) => NewSessionTokens | Promise<NewSessionTokens>
-  getUserFromOldSession?: (session: OldSessionTokens) => any | Promise<any>
+  transformSession?: (session: Session, user: User) => SessionTokens | Promise<SessionTokens>
+  getUserFromOldSession?: (session: SessionTokens) => any | Promise<any>
 }
 
 export type ResolvedPrismaAdapterOptions<T extends TableMappings = DefaultTableMappings> = Required<
@@ -45,13 +45,17 @@ export type ResolvedPrismaAdapterOptions<T extends TableMappings = DefaultTableM
 >
 
 export class PrismaAdapter<T extends TableMappings = DefaultTableMappings> {
-  auth: Auth
+  auth: MiddlewareAuth
 
   prisma: PsuedoPrismaClient
 
   options: ResolvedPrismaAdapterOptions<T>
 
-  constructor(auth: Auth, prisma: PsuedoPrismaClient, options: PrismaAdapterOptions<T> = {}) {
+  constructor(
+    auth: MiddlewareAuth,
+    prisma: PsuedoPrismaClient,
+    options: PrismaAdapterOptions<T> = {},
+  ) {
     this.auth = auth
     this.prisma = prisma
     this.options = {
@@ -184,8 +188,8 @@ export class PrismaAdapter<T extends TableMappings = DefaultTableMappings> {
 export function prismaAdapter<T extends TableMappings = DefaultTableMappings>(
   prisma: PsuedoPrismaClient,
   options: PrismaAdapterOptions<T> = {},
-): Adapter {
-  return (auth: Auth) => {
+): MiddlwareAuthAdapter {
+  return (auth) => {
     new PrismaAdapter(auth, prisma, options)
     return auth
   }

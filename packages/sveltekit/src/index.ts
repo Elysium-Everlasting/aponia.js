@@ -85,7 +85,7 @@ export function createAuthHelpers(auth: MiddlewareAuth, options: SvelteKitAuthOp
       return
     }
 
-    const session = (await auth.session.config.transformSession?.(tokens)) ?? tokens.accessToken
+    const session = (await auth.session.config.getSessionFromTokens?.(tokens)) ?? tokens.accessToken
 
     return session
   }
