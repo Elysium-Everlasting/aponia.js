@@ -158,8 +158,8 @@ export class PrismaAdapter<T extends TableMappings = DefaultTableMappings> {
       return await this.options.transformSession(newSession, user)
     }
 
-    this.auth.session.config.handleRefresh ??= async (oldSession) => {
-      const user = await this.options.getUserFromOldSession(oldSession)
+    this.auth.session.config.refreshTokens ??= async (tokens) => {
+      const user = await this.options.getUserFromOldSession(tokens)
 
       if (user == null) {
         return
