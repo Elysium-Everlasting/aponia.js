@@ -35,14 +35,14 @@ export const pkce = {
     return [value, cookie] as const
   },
 
-  async use(request: InternalRequest, params: CheckParams) {
+  use: async (request: InternalRequest, params: CheckParams) => {
     if (!params.checks?.includes('pkce')) {
       return ['auth', null] as const
     }
 
     const codeVerifier = request.cookies[params.cookies.pkceCodeVerifier.name]
 
-    if (!codeVerifier) {
+    if (codeVerifier == null) {
       throw new Error('PKCE code_verifier cookie was missing.')
     }
 
@@ -53,7 +53,7 @@ export const pkce = {
       token: codeVerifier,
     })
 
-    if (!value?.value) {
+    if (value?.value == null) {
       throw new Error('PKCE code_verifier value could not be parsed.')
     }
 
@@ -84,16 +84,14 @@ export const state = {
     return [value, cookie] as const
   },
 
-  async use(request: InternalRequest, params: CheckParams) {
+  use: async (request: InternalRequest, params: CheckParams) => {
     if (!params.checks?.includes('state')) {
       return [oauth.skipStateCheck, null] as const
     }
 
-    console.log(request, params)
-
     const state = request.cookies[params.cookies.state.name]
 
-    if (!state) {
+    if (state == null) {
       throw new Error('State cookie was missing.')
     }
 
@@ -132,14 +130,14 @@ export const nonce = {
     return [value, cookie] as const
   },
 
-  async use(request: InternalRequest, params: CheckParams) {
+  use: async (request: InternalRequest, params: CheckParams) => {
     if (!params.checks?.includes('nonce' as any)) {
       return [oauth.expectNoNonce, null] as const
     }
 
     const nonce = request.cookies[params.cookies.nonce.name]
 
-    if (!nonce) {
+    if (nonce == null) {
       throw new Error('Nonce cookie was missing.')
     }
 
@@ -147,7 +145,7 @@ export const nonce = {
 
     const value = await decodeFn<CheckPayload>({ ...params.jwt, token: nonce })
 
-    if (!value?.value) {
+    if (value?.value == null) {
       throw new Error('Nonce value could not be parsed.')
     }
 

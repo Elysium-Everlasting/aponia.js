@@ -40,7 +40,7 @@ export interface SessionControllerConfig {
   createCookieOptions?: CreateCookiesOptions
   cookieOptions: CookiesOptions
   createSession?: (user: User) => Awaitable<SessionTokens | Nullish>
-  transformSession?: (tokens: SessionTokens) => Awaitable<Session | Nullish>
+  getSessionFromTokens?: (tokens: SessionTokens) => Awaitable<Session | Nullish>
   handleRefresh?: (tokens: UnknownSessionTokens) => Awaitable<SessionTokens | Nullish>
   onInvalidateTokens?: (tokens: SessionTokens) => Awaitable<InternalResponse | Nullish>
 }
@@ -147,14 +147,14 @@ export class SessionController {
       return null
     }
 
-    const session = (await this.config.transformSession?.(tokens)) ?? tokens.accessToken
+    const session = (await this.config.getSessionFromTokens?.(tokens)) ?? tokens.accessToken
     return session
   }
 
   async handleRequest(request: InternalRequest): Promise<InternalResponse | Nullish> {
     const rawTokens = this.getRawTokensFromRequest(request)
 
-    if (rawTokens.accessToken || rawTokens.refreshToken == null) {
+    if (rawTokens.accessToken != null || rawTokens.refreshToken == null) {
       return
     }
 
