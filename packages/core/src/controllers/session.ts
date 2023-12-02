@@ -56,7 +56,7 @@ export class SessionController {
     cookieOptions.accessToken.options.maxAge ??= DEFAULT_ACCESS_TOKEN_AGE
     cookieOptions.refreshToken.options.maxAge ??= DEFAULT_REFRESH_TOKEN_AGE
 
-    const secret = config?.secret || DEFAULT_SECRET
+    const secret = config?.secret ?? DEFAULT_SECRET
 
     if (secret.length === 0) {
       throw new Error('The secret must be at least 1 character long')
@@ -84,27 +84,29 @@ export class SessionController {
   }
 
   async decodeRawTokens(tokens: RawSessionTokens): Promise<SessionTokens> {
-    const accessToken = tokens.accessToken
-      ? await asPromise(
-          this.config.jwt.decode<Session>({
-            secret: this.config.secret,
-            token: tokens.accessToken,
-          }),
-        ).catch((e) => {
-          console.log('Error decoding access token', e)
-        })
-      : undefined
+    const accessToken =
+      tokens.accessToken == null
+        ? undefined
+        : await asPromise(
+            this.config.jwt.decode({
+              secret: this.config.secret,
+              token: tokens.accessToken,
+            }) as Session,
+          ).catch(() => {
+            console.log('Error decoding access token')
+          })
 
-    const refreshToken = tokens.refreshToken
-      ? await asPromise(
-          this.config.jwt.decode<RefreshToken>({
-            secret: this.config.secret,
-            token: tokens.refreshToken,
-          }),
-        ).catch((e) => {
-          console.log('Error decoding access token', e)
-        })
-      : undefined
+    const refreshToken =
+      tokens.refreshToken == null
+        ? undefined
+        : await asPromise(
+            this.config.jwt.decode({
+              secret: this.config.secret,
+              token: tokens.refreshToken,
+            }) as RefreshToken,
+          ).catch(() => {
+            console.log('Error decoding access token')
+          })
 
     return { accessToken, refreshToken }
   }
