@@ -42,30 +42,34 @@ export type CreateCookiesOptions = {
   serializationOptions?: CookieSerializeOptions
 }
 
-export function createCookiesOptions(options?: CreateCookiesOptions): CookiesOptions {
-  const secure = options?.serializationOptions?.secure
-
+export function getCookiePrefix(options?: CreateCookiesOptions): string {
   const cookieName = options?.cookieName ?? DEFAULT_COOKIE_NAME
   const securePrefix = options?.securePrefix ?? DEFAULT_SECURE_PREFIX
-  const cookiePrefix = secure ? securePrefix : ''
+
+  return `${options?.serializationOptions?.secure ? securePrefix : ''}${cookieName}.`
+}
+
+export function createCookiesOptions(options?: CreateCookiesOptions): CookiesOptions {
+  const secure = options?.serializationOptions?.secure
+  const cookiePrefix = getCookiePrefix(options)
 
   return {
     accessToken: {
-      name: `${cookiePrefix}${cookieName}.${ACCESS_TOKEN_NAME}`,
+      name: `${cookiePrefix}.${ACCESS_TOKEN_NAME}`,
       options: {
         ...DEFAULT_COOKIE_SERIALIZE_OPTIONS,
         ...options?.serializationOptions,
       },
     },
     refreshToken: {
-      name: `${cookiePrefix}${cookieName}.${REFRESH_TOKEN_NAME}`,
+      name: `${cookiePrefix}.${REFRESH_TOKEN_NAME}`,
       options: {
         ...DEFAULT_COOKIE_SERIALIZE_OPTIONS,
         ...options?.serializationOptions,
       },
     },
     callbackUrl: {
-      name: `${cookiePrefix}${cookieName}.${CALLBACK_URL_NAME}`,
+      name: `${cookiePrefix}.${CALLBACK_URL_NAME}`,
       options: {
         ...DEFAULT_COOKIE_SERIALIZE_OPTIONS,
         ...options?.serializationOptions,
@@ -76,14 +80,14 @@ export function createCookiesOptions(options?: CreateCookiesOptions): CookiesOpt
        * Default to __Host- for CSRF token for additional protection if using secure cookies.
        * NB: The `__Host-` prefix is stricter than the `__Secure-` prefix.
        */
-      name: `${secure ? HOST_PREFIX : cookiePrefix}${cookieName}.${CSRF_TOKEN_NAME}`,
+      name: `${secure ? HOST_PREFIX : cookiePrefix}.${CSRF_TOKEN_NAME}`,
       options: {
         ...DEFAULT_COOKIE_SERIALIZE_OPTIONS,
         ...options?.serializationOptions,
       },
     },
     pkceCodeVerifier: {
-      name: `${cookiePrefix}${cookieName}.${PKCE_NAME}`,
+      name: `${cookiePrefix}.${PKCE_NAME}`,
       options: {
         ...DEFAULT_COOKIE_SERIALIZE_OPTIONS,
         maxAge: FIFTEEN_MINUTES_IN_SECONDS,
@@ -91,7 +95,7 @@ export function createCookiesOptions(options?: CreateCookiesOptions): CookiesOpt
       },
     },
     state: {
-      name: `${cookiePrefix}${cookieName}.${STATE_NAME}`,
+      name: `${cookiePrefix}.${STATE_NAME}`,
       options: {
         ...DEFAULT_COOKIE_SERIALIZE_OPTIONS,
         maxAge: FIFTEEN_MINUTES_IN_SECONDS,
@@ -99,7 +103,7 @@ export function createCookiesOptions(options?: CreateCookiesOptions): CookiesOpt
       },
     },
     nonce: {
-      name: `${cookiePrefix}${cookieName}.${NONCE_NAME}`,
+      name: `${cookiePrefix}.${NONCE_NAME}`,
       options: {
         ...DEFAULT_COOKIE_SERIALIZE_OPTIONS,
         maxAge: FIFTEEN_MINUTES_IN_SECONDS,
