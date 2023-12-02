@@ -8,13 +8,13 @@ export class Logger {
   }
 
   static log(message: string, logLevel: LogLevel = 0) {
-    if (Logger.logLevel >= logLevel) {
+    if (logLevel >= Logger.logLevel) {
       console.log(message)
     }
   }
 
   static error(message: string, logLevel: LogLevel = 0) {
-    if (Logger.logLevel >= logLevel) {
+    if (logLevel >= Logger.logLevel) {
       console.error(message)
     }
   }

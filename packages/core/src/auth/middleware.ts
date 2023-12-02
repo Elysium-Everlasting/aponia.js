@@ -130,7 +130,8 @@ export class MiddlewareAuth<T extends AnyResolvedProvider[] = AnyResolvedProvide
 
     if (this.matches(internalRequest, this.pages.logout)) {
       return (
-        (await this.callbacks.logout?.(internalRequest)) ?? this.session.logout(internalRequest)
+        (await this.callbacks.logout?.(internalRequest)) ??
+        this.session.invalidateSession(internalRequest)
       )
     }
 

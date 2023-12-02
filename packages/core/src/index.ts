@@ -1,4 +1,4 @@
-import '@auth/core'
+import './aponia-auth.d'
 
 export * from './auth/client'
 export * from './auth/middleware'

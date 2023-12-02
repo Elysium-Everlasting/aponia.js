@@ -20,7 +20,7 @@ export interface JWTOptions {
   secret: string
   maxAge?: number
   encode?: (params: JWTEncodeParams) => Awaitable<string>
-  decode?: <T>(params: JWTDecodeParams) => Awaitable<T | Nullish>
+  decode?: (params: JWTDecodeParams) => Awaitable<any>
 }
 
 export const DEFAULT_JWT_OPTIONS: JWTOptions = { secret: 'secret' }

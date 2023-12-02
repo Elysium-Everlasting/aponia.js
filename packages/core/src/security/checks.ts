@@ -50,10 +50,7 @@ export const pkce = {
     const decodeFn = params.jwt.decode ?? decode
 
     const value = await asPromise(
-      decodeFn<CheckPayload>({
-        ...params.jwt,
-        token: codeVerifier,
-      }),
+      decodeFn({ ...params.jwt, token: codeVerifier }) as CheckPayload,
     ).catch(() => {
       return {
         value: undefined,
@@ -104,7 +101,7 @@ export const state = {
 
     const decodeFn = params.jwt.decode ?? decode
 
-    const value = await asPromise(decodeFn<CheckPayload>({ ...params.jwt, token: state })).catch(
+    const value = await asPromise(decodeFn({ ...params.jwt, token: state }) as CheckPayload).catch(
       () => {
         return {
           value: undefined,
@@ -156,7 +153,7 @@ export const nonce = {
 
     const decodeFn = params.jwt.decode ?? decode
 
-    const value = await asPromise(decodeFn<CheckPayload>({ ...params.jwt, token: nonce })).catch(
+    const value = await asPromise(decodeFn({ ...params.jwt, token: nonce }) as CheckPayload).catch(
       () => {
         return {
           value: undefined,

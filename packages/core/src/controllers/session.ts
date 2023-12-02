@@ -18,6 +18,8 @@ import type { InternalRequest, InternalResponse, RefreshToken } from '../types'
 import { asPromise } from '../utils/as-promise'
 import type { Awaitable, DeepPartial, Nullish } from '../utils/types'
 
+import { Logger } from './logger'
+
 export interface SessionTokens {
   accessToken?: Session | Nullish
   refreshToken?: RefreshToken | Nullish
@@ -93,7 +95,7 @@ export class SessionController {
               token: tokens.accessToken,
             }) as Session,
           ).catch(() => {
-            console.log('Error decoding access token')
+            Logger.log('Error decoding access token')
           })
 
     const refreshToken =
@@ -105,7 +107,7 @@ export class SessionController {
               token: tokens.refreshToken,
             }) as RefreshToken,
           ).catch(() => {
-            console.log('Error decoding access token')
+            Logger.log('Error decoding access token')
           })
 
     return { accessToken, refreshToken }
@@ -178,7 +180,7 @@ export class SessionController {
     }
   }
 
-  async logout(request: InternalRequest): Promise<InternalResponse> {
+  async invalidateSession(request: InternalRequest): Promise<InternalResponse> {
     const tokens = await this.getTokensFromRequest(request)
 
     const response = (await this.config.onInvalidateTokens?.(tokens)) ?? {}
