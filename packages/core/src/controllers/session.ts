@@ -43,8 +43,8 @@ export interface SessionControllerConfig {
   cookieOptions: CookiesOptions
   createSession?: (user: User) => Awaitable<SessionTokens | Nullish>
   getSessionFromTokens?: (tokens: SessionTokens) => Awaitable<Session | Nullish>
-  handleRefresh?: (tokens: UnknownSessionTokens) => Awaitable<SessionTokens | Nullish>
-  onInvalidateTokens?: (tokens: SessionTokens) => Awaitable<InternalResponse | Nullish>
+  refreshTokens?: (tokens: UnknownSessionTokens) => Awaitable<SessionTokens | Nullish>
+  onInvalidate?: (tokens: SessionTokens) => Awaitable<InternalResponse | Nullish>
 }
 
 export type SessionControllerUserConfig = DeepPartial<SessionControllerConfig>
@@ -123,25 +123,23 @@ export class SessionController {
 
     if (tokens?.accessToken) {
       cookies.push({
-        name: this.config.cookieOptions.accessToken.name,
         value: await this.config.jwt.encode({
           secret: this.config.secret,
           maxAge: this.config.cookieOptions.accessToken.options.maxAge,
           token: tokens.accessToken,
         }),
-        options: this.config.cookieOptions.accessToken.options,
+        ...this.config.cookieOptions.accessToken,
       })
     }
 
     if (tokens?.refreshToken) {
       cookies.push({
-        name: this.config.cookieOptions.refreshToken.name,
         value: await this.config.jwt.encode({
           secret: this.config.secret,
           maxAge: this.config.cookieOptions.refreshToken.options.maxAge,
           token: tokens.refreshToken,
         }),
-        options: this.config.cookieOptions.refreshToken.options,
+        ...this.config.cookieOptions.refreshToken,
       })
     }
 
@@ -152,7 +150,7 @@ export class SessionController {
     const tokens = await this.getTokensFromRequest(request)
 
     if (tokens.accessToken == null) {
-      return null
+      return
     }
 
     const session = (await this.config.getSessionFromTokens?.(tokens)) ?? tokens.accessToken
@@ -168,22 +166,21 @@ export class SessionController {
 
     const tokens = await this.decodeRawTokens(rawTokens)
 
-    if (tokens.refreshToken == null) {
-      return
+    const refreshedTokens = (await this.config.refreshTokens?.(tokens)) ?? {
+      accessToken: tokens.refreshToken,
+      refreshToken: tokens.refreshToken,
     }
 
-    const refreshedTokens = (await this.config.handleRefresh?.(tokens)) ?? tokens
+    const cookies = await this.createCookiesFromTokens(refreshedTokens)
+    const session =
+      (await this.config.getSessionFromTokens?.(refreshedTokens)) ?? refreshedTokens.accessToken
 
-    return {
-      session: refreshedTokens?.accessToken,
-      cookies: refreshedTokens ? await this.createCookiesFromTokens(refreshedTokens) : undefined,
-    }
+    return { session, cookies }
   }
 
   async invalidateSession(request: InternalRequest): Promise<InternalResponse> {
-    const tokens = await this.getTokensFromRequest(request)
-
-    const response = (await this.config.onInvalidateTokens?.(tokens)) ?? {}
+    const response =
+      (await this.config.onInvalidate?.(await this.getTokensFromRequest(request))) ?? {}
 
     response.status = 302
     response.redirect = this.config.logoutRedirect
@@ -204,5 +201,5 @@ export class SessionController {
   }
 }
 
-export const createSessionController = (config: SessionControllerUserConfig) =>
+export const createSessionController = (config?: SessionControllerUserConfig) =>
   new SessionController(config)
