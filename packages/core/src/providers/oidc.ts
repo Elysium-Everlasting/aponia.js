@@ -11,7 +11,7 @@ import {
   IS_BROWSER,
 } from '../constants'
 import * as checks from '../security/checks'
-import { defaultCookiesOptions, type Cookie, type CookiesOptions } from '../security/cookie'
+import { DEFAULT_COOKIES_OPTIONS, type Cookie, type CookiesOptions } from '../security/cookie'
 import { DEFAULT_JWT_OPTIONS, type JWTOptions } from '../security/jwt'
 import type { Endpoint, InternalRequest, InternalResponse, ProviderPages } from '../types'
 
@@ -37,7 +37,7 @@ export class OIDCProvider<TProfile> {
 
   authorizationServer: oauth.AuthorizationServer
 
-  cookiesOptions = defaultCookiesOptions
+  cookiesOptions = DEFAULT_COOKIES_OPTIONS
 
   jwt = DEFAULT_JWT_OPTIONS
 

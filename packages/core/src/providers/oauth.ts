@@ -10,7 +10,7 @@ import {
   ISSUER,
 } from '../constants'
 import * as checks from '../security/checks'
-import { defaultCookiesOptions } from '../security/cookie'
+import { DEFAULT_COOKIES_OPTIONS } from '../security/cookie'
 import type { Cookie, CookiesOptions } from '../security/cookie'
 import { DEFAULT_JWT_OPTIONS, type JWTOptions } from '../security/jwt'
 import type { Endpoint, InternalRequest, InternalResponse, ProviderPages } from '../types'
@@ -41,7 +41,7 @@ export class OAuthProvider<TProfile> {
 
   authorizationServer: oauth.AuthorizationServer
 
-  cookiesOptions = defaultCookiesOptions
+  cookiesOptions = DEFAULT_COOKIES_OPTIONS
 
   jwt = DEFAULT_JWT_OPTIONS
 

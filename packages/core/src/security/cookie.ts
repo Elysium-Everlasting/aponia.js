@@ -101,4 +101,4 @@ export function createCookiesOptions(options?: CreateCookiesOptions): CookiesOpt
   }
 }
 
-export const defaultCookiesOptions = createCookiesOptions()
+export const DEFAULT_COOKIES_OPTIONS = createCookiesOptions()
