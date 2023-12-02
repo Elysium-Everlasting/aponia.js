@@ -46,7 +46,7 @@ export function getCookiePrefix(options?: CreateCookiesOptions): string {
   const cookieName = options?.cookieName ?? DEFAULT_COOKIE_NAME
   const securePrefix = options?.securePrefix ?? DEFAULT_SECURE_PREFIX
 
-  return `${options?.serializationOptions?.secure ? securePrefix : ''}${cookieName}.`
+  return `${options?.serializationOptions?.secure ? securePrefix : ''}${cookieName}`
 }
 
 export function createCookiesOptions(options?: CreateCookiesOptions): CookiesOptions {
