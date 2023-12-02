@@ -84,23 +84,27 @@ export class SessionController {
   }
 
   async decodeRawTokens(tokens: RawSessionTokens): Promise<SessionTokens> {
-    const accessToken = await asPromise(
-      this.config.jwt.decode<Session>({
-        secret: this.config.secret,
-        token: tokens.accessToken,
-      }),
-    ).catch((e) => {
-      console.log('Error decoding access token', e)
-    })
+    const accessToken = tokens.accessToken
+      ? await asPromise(
+          this.config.jwt.decode<Session>({
+            secret: this.config.secret,
+            token: tokens.accessToken,
+          }),
+        ).catch((e) => {
+          console.log('Error decoding access token', e)
+        })
+      : undefined
 
-    const refreshToken = await asPromise(
-      this.config.jwt.decode<RefreshToken>({
-        secret: this.config.secret,
-        token: tokens.refreshToken,
-      }),
-    ).catch((e) => {
-      console.log('Error decoding access token', e)
-    })
+    const refreshToken = tokens.refreshToken
+      ? await asPromise(
+          this.config.jwt.decode<RefreshToken>({
+            secret: this.config.secret,
+            token: tokens.refreshToken,
+          }),
+        ).catch((e) => {
+          console.log('Error decoding access token', e)
+        })
+      : undefined
 
     return { accessToken, refreshToken }
   }
