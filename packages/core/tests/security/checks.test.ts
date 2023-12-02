@@ -1,8 +1,9 @@
 import crypto from 'node:crypto'
 
+import * as oauth from 'oauth4webapi'
 import { beforeAll, describe, test, expect } from 'vitest'
 
-import { pkce } from '../../src/security/checks'
+import { pkce, state } from '../../src/security/checks'
 import { DEFAULT_COOKIES_OPTIONS } from '../../src/security/cookie'
 import { DEFAULT_JWT_OPTIONS } from '../../src/security/jwt'
 import type { InternalRequest } from '../../src/types'
@@ -10,10 +11,14 @@ import type { InternalRequest } from '../../src/types'
 beforeAll(() => {
   const originalCrypto = globalThis.crypto
 
-  globalThis.crypto = crypto as typeof originalCrypto
+  Object.defineProperty(globalThis, 'crypto', {
+    value: crypto as typeof originalCrypto,
+  })
 
   return () => {
-    globalThis.crypto = originalCrypto
+    Object.defineProperty(globalThis, 'crypto', {
+      value: originalCrypto,
+    })
   }
 })
 
@@ -114,6 +119,82 @@ describe('checks', () => {
         })
 
         expect(value).toEqual(codeVerifier)
+      })
+    })
+  })
+
+  describe('state', () => {
+    describe('create', () => {
+      test('correctly creates value and cookie with default settings', async () => {
+        const [value, cookie] = await state.create({
+          jwt: DEFAULT_JWT_OPTIONS,
+          cookies: DEFAULT_COOKIES_OPTIONS,
+        })
+
+        expect(cookie.options).toEqual(DEFAULT_COOKIES_OPTIONS.pkceCodeVerifier.options)
+        expect(value.length).toEqual(43)
+      })
+    })
+
+    describe('use', () => {
+      test('returns skip if not using state check', async () => {
+        const [value, cookie] = await state.use(exampleInternalRequest, {
+          checks: [],
+          cookies: DEFAULT_COOKIES_OPTIONS,
+          jwt: DEFAULT_JWT_OPTIONS,
+        })
+
+        expect(value).toEqual(oauth.skipStateCheck)
+        expect(cookie).toEqual(null)
+      })
+
+      test('throws error if state cookie is missing', async () => {
+        await expect(
+          state.use(exampleInternalRequest, {
+            checks: ['state'],
+            cookies: DEFAULT_COOKIES_OPTIONS,
+            jwt: DEFAULT_JWT_OPTIONS,
+          }),
+        ).rejects.toThrow()
+      })
+
+      test('throws error if state value could not be parsed', async () => {
+        const internalRequest: InternalRequest = {
+          ...exampleInternalRequest,
+          cookies: {
+            [DEFAULT_COOKIES_OPTIONS.state.name]: 'invalid',
+          },
+        }
+
+        await expect(
+          state.use(internalRequest, {
+            checks: ['state'],
+            cookies: DEFAULT_COOKIES_OPTIONS,
+            jwt: DEFAULT_JWT_OPTIONS,
+          }),
+        ).rejects.toThrow()
+      })
+
+      test('returns original value and cookie if valid', async () => {
+        const [value, cookie] = await state.create({
+          jwt: DEFAULT_JWT_OPTIONS,
+          cookies: DEFAULT_COOKIES_OPTIONS,
+        })
+
+        const internalRequest: InternalRequest = {
+          ...exampleInternalRequest,
+          cookies: {
+            [cookie.name]: cookie.value,
+          },
+        }
+
+        const [stateValue] = await state.use(internalRequest, {
+          checks: ['state'],
+          cookies: DEFAULT_COOKIES_OPTIONS,
+          jwt: DEFAULT_JWT_OPTIONS,
+        })
+
+        expect(stateValue).toEqual(value)
       })
     })
   })
