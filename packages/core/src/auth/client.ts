@@ -42,15 +42,15 @@ export class ClientAuth {
 
     const result = await this.auth.handle(internalRequest)
 
-    result.cookies?.forEach((c) => {
+    result?.cookies?.forEach((c) => {
       cookies.set(c.name, c.value, c.options)
     })
 
-    if (result.session) {
+    if (result?.session) {
       // TODO
     }
 
-    if (result.redirect) {
+    if (result?.redirect) {
       window.location.href = result.redirect
       return
     }

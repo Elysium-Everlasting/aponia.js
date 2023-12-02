@@ -2,7 +2,7 @@ import type { OAuthConfig, OIDCConfig } from '@auth/core/providers/oauth'
 import type { Session } from '@auth/core/types'
 
 import type { Cookie } from './security/cookie'
-import type { Nullish } from './utils/types'
+import type { Awaitable, Nullish } from './utils/types'
 
 export interface InternalRequest {
   request: Request
@@ -33,3 +33,10 @@ export type ProviderPages = {
 }
 
 export type Check = OAuthConfig<any>['checks'] | OIDCConfig<any>['checks']
+
+export interface Endpoint<TContext = any, TResponse = any> {
+  url: string
+  params?: Record<string, any>
+  request?: (context: TContext) => Awaitable<TResponse>
+  conform?: (response: Response) => Awaitable<Response | Nullish>
+}

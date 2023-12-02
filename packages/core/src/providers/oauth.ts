@@ -1,4 +1,5 @@
 import type { OAuthConfig, OAuthUserConfig } from '@auth/core/providers'
+import type { TokenSet } from '@auth/core/types'
 import * as oauth from 'oauth4webapi'
 
 import {
@@ -11,18 +12,9 @@ import {
 import * as checks from '../security/checks'
 import { defaultCookiesOptions } from '../security/cookie'
 import type { Cookie, CookiesOptions } from '../security/cookie'
-import { defaultJWTOptions, type JWTOptions } from '../security/jwt'
-import type { InternalRequest, InternalResponse, ProviderPages } from '../types'
+import { DEFAULT_JWT_OPTIONS, type JWTOptions } from '../security/jwt'
+import type { Endpoint, InternalRequest, InternalResponse, ProviderPages } from '../types'
 import type { Awaitable, Nullish } from '../utils/types'
-
-export type TokenSet = Partial<oauth.OAuth2TokenEndpointResponse>
-
-export interface Endpoint<TContext = any, TResponse = any> {
-  url: string
-  params?: Record<string, any>
-  request?: (context: TContext) => Awaitable<TResponse>
-  conform?: (response: Response) => Awaitable<Response | Nullish>
-}
 
 export type ResolvedOAuthConfig<TProfile> = {
   id: string
@@ -40,10 +32,6 @@ export type ResolvedOAuthConfig<TProfile> = {
   ) => Awaitable<InternalResponse | Nullish> | Nullish
 } & OAuthConfig<TProfile>
 
-export interface OAuthDefaultConfig<TProfile>
-  extends Pick<ResolvedOAuthConfig<TProfile>, 'id' | 'endpoints'>,
-    Omit<OAuthConfig<TProfile>, 'id' | 'endpoints' | 'clientId' | 'clientSecret'> {}
-
 export class OAuthProvider<TProfile> {
   static type = 'oauth' as const
 
@@ -55,7 +43,7 @@ export class OAuthProvider<TProfile> {
 
   cookiesOptions = defaultCookiesOptions
 
-  jwt = defaultJWTOptions
+  jwt = DEFAULT_JWT_OPTIONS
 
   constructor(options: ResolvedOAuthConfig<TProfile>) {
     this.config = options

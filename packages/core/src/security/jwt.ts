@@ -23,7 +23,9 @@ export interface JWTOptions {
   decode?: <T>(params: JWTDecodeParams) => Awaitable<T | Nullish>
 }
 
-async function getDerivedEncryptionKey(secret: string) {
+export const DEFAULT_JWT_OPTIONS: JWTOptions = { secret: 'secret' }
+
+export async function getDerivedEncryptionKey(secret: string) {
   const derivedEncryptionKey = await hkdf('sha256', secret, SALT, KEY_INFO, 32)
   return derivedEncryptionKey
 }
@@ -31,14 +33,12 @@ async function getDerivedEncryptionKey(secret: string) {
 export async function encode<T extends Record<string, any> = Record<string, any>>(
   params: JWTEncodeParams<T>,
 ) {
-  const { token = {}, secret, maxAge = DAY_IN_SECONDS } = params
+  const encryptionSecret = await getDerivedEncryptionKey(params.secret)
 
-  const encryptionSecret = await getDerivedEncryptionKey(secret)
-
-  const encodedToken = await new EncryptJWT(token)
+  const encodedToken = await new EncryptJWT(params.token ?? {})
     .setProtectedHeader({ alg: 'dir', enc: 'A256GCM' })
     .setIssuedAt()
-    .setExpirationTime(getTimestamp() + maxAge)
+    .setExpirationTime(getTimestamp() + (params.maxAge ?? DAY_IN_SECONDS))
     .setJti(crypto.randomUUID())
     .encrypt(encryptionSecret)
 
@@ -48,17 +48,13 @@ export async function encode<T extends Record<string, any> = Record<string, any>
 export async function decode<T = Record<string, any>>(
   params: JWTDecodeParams,
 ): Promise<(T & JWTPayload) | Nullish> {
-  const { token, secret } = params
-
-  if (token == null) {
+  if (params.token == null) {
     return null
   }
 
-  const encryptionSecret = await getDerivedEncryptionKey(secret)
+  const encryptionSecret = await getDerivedEncryptionKey(params.secret)
 
-  const { payload } = await jwtDecrypt(token, encryptionSecret, { clockTolerance: 15 })
+  const { payload } = await jwtDecrypt(params.token, encryptionSecret, { clockTolerance: 15 })
 
   return payload as T & JWTPayload
 }
-
-export const defaultJWTOptions: JWTOptions = { secret: 'secret' }

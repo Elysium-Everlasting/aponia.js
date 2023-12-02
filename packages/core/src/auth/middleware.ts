@@ -164,14 +164,8 @@ export class MiddlewareAuth<T extends AnyResolvedProvider[] = AnyResolvedProvide
       const sessionTokens = (await this.session.config.createSession?.(
         providerResponse.session.user,
       )) ?? {
-        accessToken: {
-          expires: providerResponse.session.expires,
-          user: providerResponse.session.user,
-        },
-        refreshToken: {
-          expires: providerResponse.session.expires,
-          user: providerResponse.session.user,
-        },
+        accessToken: providerResponse.session,
+        refreshToken: providerResponse.session,
       }
 
       if (sessionTokens?.accessToken) {

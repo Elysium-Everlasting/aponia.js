@@ -1,4 +1,5 @@
 import type { OIDCConfig, OIDCUserConfig } from '@auth/core/providers'
+import type { TokenSet } from '@auth/core/types'
 import * as oauth from 'oauth4webapi'
 
 import {
@@ -11,17 +12,8 @@ import {
 } from '../constants'
 import * as checks from '../security/checks'
 import { defaultCookiesOptions, type Cookie, type CookiesOptions } from '../security/cookie'
-import { defaultJWTOptions, type JWTOptions } from '../security/jwt'
-import type { InternalRequest, InternalResponse, ProviderPages } from '../types'
-import type { Awaitable, Nullish } from '../utils/types'
-
-export type TokenSet = Partial<oauth.OAuth2TokenEndpointResponse>
-
-interface Endpoint<TContext = any, TResponse = any> {
-  params?: Record<string, any>
-  request?: (context: TContext) => Awaitable<TResponse>
-  conform?: (response: Response) => Awaitable<Response | Nullish>
-}
+import { DEFAULT_JWT_OPTIONS, type JWTOptions } from '../security/jwt'
+import type { Endpoint, InternalRequest, InternalResponse, ProviderPages } from '../types'
 
 export type ResolvedOIDCConfig<TProfile> = {
   id: string
@@ -34,15 +26,7 @@ export type ResolvedOIDCConfig<TProfile> = {
     token: Endpoint<OIDCProvider<TProfile>, TokenSet>
     userinfo: Endpoint<{ provider: OIDCConfig<TProfile>; tokens: TokenSet }, TProfile>
   }
-  onAuth?: (
-    user: TProfile,
-    tokens: oauth.OpenIDTokenEndpointResponse,
-  ) => Awaitable<InternalResponse | Nullish> | Nullish
 } & OIDCConfig<TProfile>
-
-export interface OIDCDefaultConfig<TProfile>
-  extends Pick<ResolvedOIDCConfig<TProfile>, 'id' | 'issuer'>,
-    Omit<OIDCConfig<TProfile>, 'id' | 'issuer' | 'clientId' | 'clientSecret'> {}
 
 export class OIDCProvider<TProfile> {
   static type = 'oidc' as const
@@ -55,7 +39,7 @@ export class OIDCProvider<TProfile> {
 
   cookiesOptions = defaultCookiesOptions
 
-  jwt = defaultJWTOptions
+  jwt = DEFAULT_JWT_OPTIONS
 
   constructor(options: ResolvedOIDCConfig<TProfile>) {
     this.config = options
@@ -216,7 +200,7 @@ export class OIDCProvider<TProfile> {
 
     const profile: any = oauth.getValidatedIdTokenClaims(tokens)
 
-    const processedResponse: InternalResponse = (await this.config.onAuth?.(profile, tokens)) ?? {
+    const processedResponse: InternalResponse = {
       session: {
         expires: '',
         user: (await this.config.profile?.(profile, tokens)) ?? profile,
@@ -232,9 +216,9 @@ export class OIDCProvider<TProfile> {
   }
 }
 
-export function resolveOIDCConfig(
-  config: OIDCConfig<any> & { options?: OIDCUserConfig<any> },
-): ResolvedOIDCConfig<any> {
+export function resolveOIDCConfig<T = any>(
+  config: OIDCConfig<T> & { options?: OIDCUserConfig<T> },
+): ResolvedOIDCConfig<T> {
   const id = config.id ?? config.options?.id
   const clientId = config.clientId ?? config.options?.clientId ?? ''
   const clientSecret = config.clientSecret ?? config.options?.clientSecret
