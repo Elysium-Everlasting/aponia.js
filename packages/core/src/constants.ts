@@ -47,3 +47,12 @@ export const DEFAULT_COOKIE_SERIALIZE_OPTIONS: CookieSerializeOptions = {
   path: '/',
 }
 export const DEFAULT_RESPONSE_TYPE = 'code'
+
+export const ACCESS_TOKEN_NAME = 'access-token'
+export const REFRESH_TOKEN_NAME = 'refresh-token'
+export const CALLBACK_URL_NAME = 'callback-url'
+export const CSRF_TOKEN_NAME = 'csrf-token'
+export const PKCE_NAME = 'pkce.code-verifier'
+export const STATE_NAME = 'state'
+export const NONCE_NAME = 'nonce'
+export const HOST_PREFIX = '__Host-'
