@@ -178,7 +178,11 @@ export const nonce = {
   },
 }
 
-async function signCookie(key: keyof CookiesOptions, params: CheckParams, value: string) {
+async function signCookie(
+  key: keyof CookiesOptions,
+  params: CheckParams,
+  value: string,
+): Promise<Cookie> {
   const encodeFn = params.jwt.encode ?? encode
 
   const signedCookie: Cookie = {
