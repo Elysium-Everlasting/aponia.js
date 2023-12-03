@@ -16,11 +16,9 @@ import type { Awaitable, Nullish } from '../utils/types'
 
 export type AnyProvider = OAuthConfig<any> | OIDCConfig<any> | CredentialsProvider | EmailProvider
 
-export type AnyResolvedProvider =
-  | OAuthProvider<any>
-  | OIDCProvider<any>
-  | CredentialsProvider
-  | EmailProvider
+export type AnyResolvedOauthProvider = OAuthProvider<any> | OIDCProvider<any>
+
+export type AnyResolvedProvider = AnyResolvedOauthProvider | CredentialsProvider | EmailProvider
 
 export interface AuthPages {
   logout: PageEndpoint
@@ -48,6 +46,7 @@ export class MiddlewareAuth<T extends AnyResolvedProvider[] = AnyResolvedProvide
   pages: AuthPages
   callbacks: Partial<AuthCallbacks>
   routes: {
+    register: Map<string, AnyResolvedProvider>
     login: Map<string, AnyResolvedProvider>
     callback: Map<string, AnyResolvedProvider>
   }
@@ -86,6 +85,7 @@ export class MiddlewareAuth<T extends AnyResolvedProvider[] = AnyResolvedProvide
     this.routes = {
       login: new Map(),
       callback: new Map(),
+      register: new Map(),
     }
 
     this.providers.forEach((provider) => {
@@ -95,6 +95,10 @@ export class MiddlewareAuth<T extends AnyResolvedProvider[] = AnyResolvedProvide
 
       this.routes.login.set(provider.config.pages.login.route, provider)
       this.routes.callback.set(provider.config.pages.callback.route, provider)
+
+      if (provider.config.pages.register) {
+        this.routes.register.set(provider.config.pages.register.route, provider)
+      }
     })
 
     if (config.adapter == null) {
@@ -129,6 +133,7 @@ export class MiddlewareAuth<T extends AnyResolvedProvider[] = AnyResolvedProvide
     const sessionResponse = await this.session.handleRequest(internalRequest)
 
     if (this.matches(internalRequest, this.pages.logout)) {
+      internalRequest.action = 'logout'
       return (
         (await this.callbacks.logout?.(internalRequest)) ??
         this.session.invalidateSession(internalRequest)
@@ -136,14 +141,17 @@ export class MiddlewareAuth<T extends AnyResolvedProvider[] = AnyResolvedProvide
     }
 
     if (this.matches(internalRequest, this.pages.update)) {
+      internalRequest.action = 'update'
       return (await this.callbacks.update?.(internalRequest)) ?? sessionResponse
     }
 
     if (this.matches(internalRequest, this.pages.forgot)) {
+      internalRequest.action = 'forgot'
       return (await this.callbacks.forgot?.(internalRequest)) ?? sessionResponse
     }
 
     if (this.matches(internalRequest, this.pages.reset)) {
+      internalRequest.action = 'reset'
       return (await this.callbacks.reset?.(internalRequest)) ?? sessionResponse
     }
 
@@ -153,6 +161,8 @@ export class MiddlewareAuth<T extends AnyResolvedProvider[] = AnyResolvedProvide
     if (loginHandler == null && callbackHandler == null) {
       return sessionResponse
     }
+
+    internalRequest.action = loginHandler != null ? 'login' : 'callback'
 
     const providerResponse =
       loginHandler && this.matches(internalRequest, loginHandler.config.pages.login)

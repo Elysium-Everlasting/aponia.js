@@ -1,10 +1,12 @@
 import type { OAuthConfig, OIDCConfig } from '@auth/core/providers/oauth'
 import type { Session } from '@auth/core/types'
 
+import type { Action } from './constants'
 import type { Cookie } from './security/cookie'
 import type { Awaitable, Nullish } from './utils/types'
 
 export interface InternalRequest {
+  action?: Action
   request: Request
   url: URL
   cookies: Record<string, string>
@@ -30,6 +32,7 @@ export interface PageEndpoint {
 export type ProviderPages = {
   login: PageEndpoint
   callback: PageEndpoint
+  register?: PageEndpoint
 }
 
 export type Check = OAuthConfig<any>['checks'] | OIDCConfig<any>['checks']
