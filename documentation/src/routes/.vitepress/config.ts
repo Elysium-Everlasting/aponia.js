@@ -10,10 +10,45 @@ const repositoryName = repository.url.split('/').pop() ?? ''
 const defaultTheme: DefaultTheme.Config = {
   nav: [
     { text: 'Home', link: '/' },
-    { text: 'Examples', link: '/markdown-examples' },
+    { text: 'Reference', link: '/reference/index' },
   ],
 
   sidebar: [
+    {
+      text: '@aponia.js/core',
+      link: '/core/index',
+    },
+    {
+      text: 'Adapters',
+      link: '/adapters/index',
+      items: [
+        {
+          text: '@aponia.js/adapter-prisma',
+          items: [
+            {
+              text: 'Getting Started',
+              link: '/adapters/prisma/index',
+              items: [],
+            },
+          ],
+        },
+      ],
+    },
+    {
+      text: 'Integrations',
+      link: '/integrations/index',
+      items: [
+        {
+          text: '@aponia.js/sveltekit',
+          items: [
+            {
+              text: 'Getting Started',
+              link: '/integrations/sveltekit/index',
+            },
+          ],
+        },
+      ],
+    },
     {
       text: 'Examples',
       items: [
@@ -30,9 +65,9 @@ const defaultTheme: DefaultTheme.Config = {
  * @see https://vitepress.dev/reference/site-config
  */
 export default defineConfig({
-  title: 'My Awesome Project',
+  title: 'Aponia.js',
 
-  description: 'A VitePress Site',
+  description: 'Blessed authentication',
 
   themeConfig: defaultTheme,
 

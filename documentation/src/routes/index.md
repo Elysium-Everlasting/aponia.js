@@ -1,24 +1,28 @@
 ---
-# https://vitepress.dev/reference/default-theme-home-page
 layout: home
 
 hero:
-  name: 'My Awesome Project'
-  text: 'A VitePress Site'
-  tagline: My great project tagline
+  name: Aponia.js
+  text: Blessed Authentication
+  tagline: Simple and versatile authentication done right
   actions:
     - theme: brand
-      text: Markdown Examples
-      link: /markdown-examples
+      text: Get Started
+      link: /core/index
     - theme: alt
-      text: API Examples
-      link: /api-examples
+      text: Reference
+      link: /reference/index
 
 features:
-  - title: Feature A
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
-  - title: Feature B
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
-  - title: Feature C
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
+  - title: Core
+    details: Full interoperability with `@auth.js/core`.
+    link: /core/index
+
+  - title: Integrations
+    details: Handle authentication requirements for a variety of frameworks and libraries.
+    link: /integrations/index
+
+  - title: Adapters
+    details: Connect your authentication with a custom backend.
+    link: /adapters/index
 ---
