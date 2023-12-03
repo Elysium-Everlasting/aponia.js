@@ -118,8 +118,8 @@ export class MiddlewareAuth<T extends AnyResolvedProvider[] = AnyResolvedProvide
 
   matches(internalRequest: InternalRequest, pageEndpoint: PageEndpoint) {
     return (
-      internalRequest.url.pathname === pageEndpoint.route &&
-      this.pages.logout.methods.includes(internalRequest.request.method)
+      pageEndpoint.route === internalRequest.url.pathname &&
+      pageEndpoint.methods.includes(internalRequest.request.method)
     )
   }
 

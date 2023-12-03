@@ -46,9 +46,9 @@ export class OIDCProvider<TProfile> {
 
   jwt = DEFAULT_JWT_OPTIONS
 
-  constructor(options: ResolvedOIDCConfig<TProfile>) {
-    this.config = options
-    this.authorizationServer = { issuer: options.issuer }
+  constructor(config: ResolvedOIDCConfig<TProfile>) {
+    this.config = config
+    this.authorizationServer = { issuer: config.issuer }
   }
 
   get checkParams(): checks.CheckParams {
@@ -148,7 +148,7 @@ export class OIDCProvider<TProfile> {
       cookies.push(stateCookie)
     }
 
-    const codeGrantParams = await oauth.validateJwtAuthResponse(
+    const codeGrantParams = oauth.validateAuthResponse(
       this.authorizationServer,
       this.config.client,
       request.url.searchParams,
