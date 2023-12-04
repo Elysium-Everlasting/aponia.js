@@ -17,7 +17,8 @@ export class DatabaseSessionController implements SessionController {
 
   async handleRequest(_request: InternalRequest): Promise<InternalResponse | Nullish> {}
 
-  async getSessionFromCookies(_cookies: Record<string, string>): Promise<Session | Nullish> {}
+  async getSessionFromCookies(_cookies: Record<string, string>): Promise<Session | Nullish> {
+  }
 
   async createCookiesFromSession(_session: Session): Promise<Cookie[]> {
     return []
