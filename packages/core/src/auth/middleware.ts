@@ -162,7 +162,7 @@ export class MiddlewareAuth<T extends AnyResolvedProvider[] = AnyResolvedProvide
         refreshToken: response.session,
       }
       response.cookies ??= []
-      response.cookies.push(...(await this.session.createCookiesFromTokens(sessionTokens)))
+      response.cookies.push(...(await this.session.createCookiesFromSession(sessionTokens)))
     }
 
     return response

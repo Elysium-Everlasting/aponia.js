@@ -19,7 +19,7 @@ import type { InternalRequest, InternalResponse, RefreshToken } from '../types'
 import { asPromise } from '../utils/as-promise'
 import type { Awaitable, DeepPartial, Nullish } from '../utils/types'
 
-import type { RawSessionTokens, SessionTokens, UnknownSessionTokens } from '.'
+import type { RawSessionTokens, SessionController, SessionTokens, UnknownSessionTokens } from '.'
 
 export interface SessionControllerConfig {
   secret: string
@@ -36,7 +36,7 @@ export interface SessionControllerConfig {
 
 export type SessionControllerUserConfig = DeepPartial<SessionControllerConfig>
 
-export class JwtSessionController {
+export class JwtSessionController implements SessionController {
   config: SessionControllerConfig
 
   constructor(config?: SessionControllerUserConfig) {
@@ -65,9 +65,9 @@ export class JwtSessionController {
     }
   }
 
-  getRawTokensFromRequest(request: InternalRequest): RawSessionTokens {
-    const accessToken = request.cookies[this.config.cookieOptions.accessToken.name]
-    const refreshToken = request.cookies[this.config.cookieOptions.refreshToken.name]
+  getRawTokensFromCookies(cookies: Record<string, string>): RawSessionTokens {
+    const accessToken = cookies[this.config.cookieOptions.accessToken.name]
+    const refreshToken = cookies[this.config.cookieOptions.refreshToken.name]
 
     return { accessToken, refreshToken }
   }
@@ -100,12 +100,12 @@ export class JwtSessionController {
     return { accessToken, refreshToken }
   }
 
-  async getTokensFromRequest(request: InternalRequest): Promise<SessionTokens> {
-    const rawTokens = this.getRawTokensFromRequest(request)
+  async getTokensFromCookies(cookies: Record<string, string>): Promise<SessionTokens> {
+    const rawTokens = this.getRawTokensFromCookies(cookies)
     return this.decodeRawTokens(rawTokens)
   }
 
-  async createCookiesFromTokens(tokens: SessionTokens): Promise<Cookie[]> {
+  async createCookiesFromSession(tokens: SessionTokens): Promise<Cookie[]> {
     const cookies: Cookie[] = []
 
     if (tokens?.accessToken) {
@@ -133,8 +133,8 @@ export class JwtSessionController {
     return cookies
   }
 
-  async getSessionFromRequest(request: InternalRequest): Promise<Session | Nullish> {
-    const tokens = await this.getTokensFromRequest(request)
+  async getSessionFromCookies(cookies: Record<string, string>): Promise<Session | Nullish> {
+    const tokens = await this.getTokensFromCookies(cookies)
 
     if (tokens.accessToken == null) {
       return
@@ -145,7 +145,7 @@ export class JwtSessionController {
   }
 
   async handleRequest(request: InternalRequest): Promise<InternalResponse | Nullish> {
-    const rawTokens = this.getRawTokensFromRequest(request)
+    const rawTokens = this.getRawTokensFromCookies(request.cookies)
 
     if (rawTokens.accessToken != null || rawTokens.refreshToken == null) {
       return
@@ -158,7 +158,7 @@ export class JwtSessionController {
       refreshToken: tokens.refreshToken,
     }
 
-    const cookies = await this.createCookiesFromTokens(refreshedTokens)
+    const cookies = await this.createCookiesFromSession(refreshedTokens)
     const session =
       (await this.config.getSessionFromTokens?.(refreshedTokens)) ?? refreshedTokens.accessToken
 
@@ -167,7 +167,7 @@ export class JwtSessionController {
 
   async invalidateSession(request: InternalRequest): Promise<InternalResponse> {
     const response =
-      (await this.config.onInvalidate?.(await this.getTokensFromRequest(request))) ?? {}
+      (await this.config.onInvalidate?.(await this.getTokensFromCookies(request.cookies))) ?? {}
 
     response.status = 302
     response.redirect = this.config.logoutRedirect

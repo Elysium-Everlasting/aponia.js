@@ -47,7 +47,7 @@ describe('SessionController', () => {
         },
       }
 
-      expect(sessionController.getRawTokensFromRequest(request)).toEqual({
+      expect(sessionController.getRawTokensFromCookies(request.cookies)).toEqual({
         accessToken,
         refreshToken,
       })
@@ -103,11 +103,7 @@ describe('SessionController', () => {
     test('returns undefined when token does not exist', async () => {
       const sessionController = new JwtSessionController()
 
-      const decodedTokens = await sessionController.getTokensFromRequest({
-        request: new Request(new URL('http://localhost')),
-        url: new URL('http://localhost'),
-        cookies: {},
-      })
+      const decodedTokens = await sessionController.getTokensFromCookies({})
 
       expect(decodedTokens).toEqual({ accessToken: undefined, refreshToken: undefined })
     })
@@ -121,13 +117,9 @@ describe('SessionController', () => {
         },
       })
 
-      const decodedTokens = await sessionController.getTokensFromRequest({
-        request: new Request(new URL('http://localhost')),
-        url: new URL('http://localhost'),
-        cookies: {
-          [DEFAULT_COOKIES_OPTIONS.accessToken.name]: '',
-          [DEFAULT_COOKIES_OPTIONS.refreshToken.name]: '',
-        },
+      const decodedTokens = await sessionController.getTokensFromCookies({
+        [DEFAULT_COOKIES_OPTIONS.accessToken.name]: '',
+        [DEFAULT_COOKIES_OPTIONS.refreshToken.name]: '',
       })
 
       expect(decodedTokens.accessToken).toEqual(value)
@@ -143,13 +135,9 @@ describe('SessionController', () => {
         },
       })
 
-      const decodedTokens = await sessionController.getTokensFromRequest({
-        request: new Request(new URL('http://localhost')),
-        url: new URL('http://localhost'),
-        cookies: {
-          [DEFAULT_COOKIES_OPTIONS.accessToken.name]: '',
-          [DEFAULT_COOKIES_OPTIONS.refreshToken.name]: '',
-        },
+      const decodedTokens = await sessionController.getTokensFromCookies({
+        [DEFAULT_COOKIES_OPTIONS.accessToken.name]: '',
+        [DEFAULT_COOKIES_OPTIONS.refreshToken.name]: '',
       })
 
       expect(decodedTokens).toEqual({ accessToken: undefined, refreshToken: undefined })
@@ -160,7 +148,7 @@ describe('SessionController', () => {
     test('returns no cookies if no tokens are given', async () => {
       const sessionController = new JwtSessionController()
 
-      const cookies = await sessionController.createCookiesFromTokens({})
+      const cookies = await sessionController.createCookiesFromSession({})
 
       expect(cookies).toHaveLength(0)
     })
@@ -168,7 +156,7 @@ describe('SessionController', () => {
     test('returns one cookie if either token is given', async () => {
       const sessionController = new JwtSessionController()
 
-      const cookies = await sessionController.createCookiesFromTokens({
+      const cookies = await sessionController.createCookiesFromSession({
         accessToken: {
           expires: '',
         },
@@ -180,7 +168,7 @@ describe('SessionController', () => {
     test('returns two cookies if both tokens are given', async () => {
       const sessionController = new JwtSessionController()
 
-      const cookies = await sessionController.createCookiesFromTokens({
+      const cookies = await sessionController.createCookiesFromSession({
         accessToken: {
           expires: '',
         },
@@ -211,7 +199,7 @@ describe('SessionController', () => {
         cookies: {},
       }
 
-      const session = await sessionController.getSessionFromRequest(request)
+      const session = await sessionController.getSessionFromCookies(request.cookies)
 
       expect(session).toBeUndefined()
     })
@@ -235,7 +223,7 @@ describe('SessionController', () => {
         },
       }
 
-      const session = await sessionController.getSessionFromRequest(request)
+      const session = await sessionController.getSessionFromCookies(request.cookies)
 
       expect(session).toEqual(defaultSession)
     })
@@ -260,7 +248,7 @@ describe('SessionController', () => {
         },
       }
 
-      await sessionController.getSessionFromRequest(request)
+      await sessionController.getSessionFromCookies(request.cookies)
 
       expect(getSessionFromTokens).toHaveBeenCalled()
     })
