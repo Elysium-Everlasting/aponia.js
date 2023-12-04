@@ -6,11 +6,11 @@ import {
   DEFAULT_RESET_ROUTE,
   DEFAULT_UPDATE_ROUTE,
 } from '../constants'
-import { SessionController, type SessionControllerUserConfig } from '../controllers/session'
 import type { CredentialsProvider } from '../providers/credentials'
 import type { EmailProvider } from '../providers/email'
 import { OAuthProvider, resolveOAuthConfig } from '../providers/oauth.js'
 import { OIDCProvider, resolveOIDCConfig } from '../providers/oidc.js'
+import { SessionController, type SessionControllerUserConfig } from '../session/jwt'
 import type { InternalRequest, InternalResponse, PageEndpoint } from '../types'
 import type { Awaitable, Nullish } from '../utils/types'
 

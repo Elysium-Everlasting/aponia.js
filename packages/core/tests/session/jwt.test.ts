@@ -1,12 +1,12 @@
 import type { Session } from '@auth/core/types'
 import { describe, test, expect, vi } from 'vitest'
 
+import { DEFAULT_COOKIES_OPTIONS } from '../../src/security/cookie'
 import {
   SessionController,
   createSessionController,
   type SessionTokens,
-} from '../../src/controllers/session'
-import { DEFAULT_COOKIES_OPTIONS } from '../../src/security/cookie'
+} from '../../src/session/jwt'
 import type { InternalRequest } from '../../src/types'
 
 describe('SessionController', () => {
