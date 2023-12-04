@@ -1,4 +1,4 @@
-import type { Session, User } from '@auth/core/types'
+import type { Session } from '@auth/core/types'
 
 import {
   DEFAULT_ACCESS_TOKEN_AGE,
@@ -35,41 +35,24 @@ export interface RawSessionTokens {
   refreshToken?: string
 }
 
-export interface SessionControllerConfig<
-  T extends Strategy = 'jwt',
-  TTokens extends ResolvedTokens<T> = ResolvedTokens<T>,
-> {
+export interface SessionControllerConfig {
   secret: string
   jwt: Required<Omit<JWTOptions, 'maxAge'>>
   logoutRedirect?: string
   createCookieOptions?: CreateCookiesOptions
   cookieOptions: CookiesOptions
-  createSession?: (user: User) => Awaitable<SessionTokens | Nullish>
-  getSessionFromTokens?: (tokens: TTokens) => Awaitable<Session | Nullish>
+  createSessionTokens?: (session: Session) => Awaitable<SessionTokens | Nullish>
+  getSessionFromTokens?: (tokens: SessionTokens) => Awaitable<Session | Nullish>
   refreshTokens?: (tokens: UnknownSessionTokens) => Awaitable<SessionTokens | Nullish>
-  onInvalidate?: (tokens: TTokens) => Awaitable<InternalResponse | Nullish>
+  onInvalidate?: (tokens: SessionTokens) => Awaitable<InternalResponse | Nullish>
 }
 
-export type SessionControllerUserConfig<
-  T extends Strategy = 'jwt',
-  TTokens extends ResolvedTokens<T> = ResolvedTokens<T>,
-> = DeepPartial<SessionControllerConfig<T, TTokens>>
+export type SessionControllerUserConfig = DeepPartial<SessionControllerConfig>
 
-export type Strategy = 'jwt' | 'database'
+export class SessionController {
+  config: SessionControllerConfig
 
-export type ResolvedTokens<T extends Strategy> = T extends 'jwt' ? SessionTokens : RawSessionTokens
-
-export class SessionController<
-  T extends Strategy = 'jwt',
-  TTokens extends ResolvedTokens<T> = ResolvedTokens<T>,
-> {
-  strategy: T
-
-  config: SessionControllerConfig<T, TTokens>
-
-  constructor(config?: SessionControllerUserConfig<T, TTokens>, strategy: T = 'jwt' as T) {
-    this.strategy = strategy
-
+  constructor(config?: SessionControllerUserConfig) {
     const cookieOptions = createCookiesOptions(config?.createCookieOptions)
 
     cookieOptions.accessToken.options.maxAge ??= DEFAULT_ACCESS_TOKEN_AGE
@@ -130,9 +113,9 @@ export class SessionController<
     return { accessToken, refreshToken }
   }
 
-  async getTokensFromRequest(request: InternalRequest): Promise<TTokens> {
+  async getTokensFromRequest(request: InternalRequest): Promise<SessionTokens> {
     const rawTokens = this.getRawTokensFromRequest(request)
-    return (this.strategy === 'jwt' ? this.decodeRawTokens(rawTokens) : rawTokens) as TTokens
+    return this.decodeRawTokens(rawTokens)
   }
 
   async createCookiesFromTokens(tokens: SessionTokens): Promise<Cookie[]> {
@@ -184,7 +167,7 @@ export class SessionController<
     const tokens = await this.decodeRawTokens(rawTokens)
 
     const refreshedTokens = (await this.config.refreshTokens?.(tokens)) ?? {
-      accessToken: tokens.refreshToken,
+      accessToken: tokens.refreshToken as any,
       refreshToken: tokens.refreshToken,
     }
 
@@ -216,4 +199,8 @@ export class SessionController<
 
     return response
   }
+}
+
+export function createSessionController(config?: SessionControllerUserConfig) {
+  return new SessionController(config)
 }

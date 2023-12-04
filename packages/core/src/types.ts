@@ -21,7 +21,7 @@ export interface InternalResponse {
   body?: unknown
 }
 
-export interface RefreshToken extends Session {}
+export interface RefreshToken {}
 
 export interface PageEndpoint {
   route: string
