@@ -112,69 +112,21 @@ export class MiddlewareAuth<T extends AnyResolvedProvider[] = AnyResolvedProvide
     }
   }
 
-  async handle(internalRequest: InternalRequest): Promise<InternalResponse | Nullish> {
-    const internalResponse = await this.generateInternalResponse(internalRequest).catch(
-      (error) => ({ error }),
-    )
-
-    return internalResponse
-  }
-
-  matches(internalRequest: InternalRequest, pageEndpoint: PageEndpoint) {
-    return (
-      pageEndpoint.route === internalRequest.url.pathname &&
-      pageEndpoint.methods.includes(internalRequest.request.method)
-    )
-  }
-
-  async generateInternalResponse(
-    internalRequest: InternalRequest,
-  ): Promise<InternalResponse | Nullish> {
+  public async handle(internalRequest: InternalRequest): Promise<InternalResponse | Nullish> {
     const loginHandler = this.routes.login.get(internalRequest.url.pathname)
 
     if (loginHandler && this.matches(internalRequest, loginHandler.config.pages.login)) {
       internalRequest.action = 'login'
-
       const providerResponse = await loginHandler.login(internalRequest)
-
-      if (providerResponse.session?.user) {
-        const sessionTokens = (await this.session.config.createSession?.(
-          providerResponse.session.user,
-        )) ?? {
-          accessToken: providerResponse.session,
-          refreshToken: providerResponse.session,
-        }
-
-        providerResponse.cookies ??= []
-        providerResponse.cookies.push(
-          ...(await this.session.createCookiesFromTokens(sessionTokens)),
-        )
-
-        return providerResponse
-      }
+      return await this.handleProviderResponse(providerResponse)
     }
 
     const callbackHandler = this.routes.callback.get(internalRequest.url.pathname)
 
     if (callbackHandler) {
       internalRequest.action = 'callback'
-
       const providerResponse = await callbackHandler.callback(internalRequest)
-
-      if (providerResponse.session?.user) {
-        const sessionTokens = (await this.session.config.createSession?.(
-          providerResponse.session.user,
-        )) ?? {
-          accessToken: providerResponse.session,
-          refreshToken: providerResponse.session,
-        }
-
-        providerResponse.cookies ??= []
-        providerResponse.cookies.push(
-          ...(await this.session.createCookiesFromTokens(sessionTokens)),
-        )
-        return providerResponse
-      }
+      return await this.handleProviderResponse(providerResponse)
     }
 
     if (this.matches(internalRequest, this.pages.logout)) {
@@ -201,6 +153,26 @@ export class MiddlewareAuth<T extends AnyResolvedProvider[] = AnyResolvedProvide
     }
 
     return await this.session.handleRequest(internalRequest)
+  }
+
+  private async handleProviderResponse(response: InternalResponse): Promise<InternalResponse> {
+    if (response.session?.user) {
+      const sessionTokens = (await this.session.config.createSession?.(response.session.user)) ?? {
+        accessToken: response.session,
+        refreshToken: response.session,
+      }
+      response.cookies ??= []
+      response.cookies.push(...(await this.session.createCookiesFromTokens(sessionTokens)))
+    }
+
+    return response
+  }
+
+  private matches(internalRequest: InternalRequest, pageEndpoint: PageEndpoint) {
+    return (
+      pageEndpoint.route === internalRequest.url.pathname &&
+      pageEndpoint.methods.includes(internalRequest.request.method)
+    )
   }
 }
 
