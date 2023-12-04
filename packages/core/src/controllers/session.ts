@@ -6,6 +6,7 @@ import {
   DEFAULT_REFRESH_TOKEN_AGE,
   DEFAULT_SECRET,
 } from '../constants'
+import { Logger } from '../logger'
 import {
   createCookiesOptions,
   type Cookie,
@@ -17,8 +18,6 @@ import type { JWTOptions } from '../security/jwt'
 import type { InternalRequest, InternalResponse, RefreshToken } from '../types'
 import { asPromise } from '../utils/as-promise'
 import type { Awaitable, DeepPartial, Nullish } from '../utils/types'
-
-import { Logger } from './logger'
 
 export interface SessionTokens {
   accessToken?: Session | Nullish
@@ -41,6 +40,7 @@ export interface SessionControllerConfig {
   logoutRedirect?: string
   createCookieOptions?: CreateCookiesOptions
   cookieOptions: CookiesOptions
+
   createSessionTokens?: (session: Session) => Awaitable<SessionTokens | Nullish>
   getSessionFromTokens?: (tokens: SessionTokens) => Awaitable<Session | Nullish>
   refreshTokens?: (tokens: UnknownSessionTokens) => Awaitable<SessionTokens | Nullish>

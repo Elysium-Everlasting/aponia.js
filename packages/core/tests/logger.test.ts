@@ -2,7 +2,7 @@ import { beforeEach } from 'node:test'
 
 import { describe, test, expect, vi } from 'vitest'
 
-import { Logger } from '../../src/controllers/logger'
+import { Logger } from '../src/logger'
 
 beforeEach(() => {
   Logger.resetLogLevel()
