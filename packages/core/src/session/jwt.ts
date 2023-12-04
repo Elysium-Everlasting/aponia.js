@@ -19,20 +19,7 @@ import type { InternalRequest, InternalResponse, RefreshToken } from '../types'
 import { asPromise } from '../utils/as-promise'
 import type { Awaitable, DeepPartial, Nullish } from '../utils/types'
 
-export interface SessionTokens {
-  accessToken?: Session | Nullish
-  refreshToken?: RefreshToken | Nullish
-}
-
-export interface UnknownSessionTokens {
-  accessToken?: Session | Nullish
-  refreshToken?: RefreshToken | Nullish
-}
-
-export interface RawSessionTokens {
-  accessToken?: string
-  refreshToken?: string
-}
+import type { RawSessionTokens, SessionTokens, UnknownSessionTokens } from '.'
 
 export interface SessionControllerConfig {
   secret: string
@@ -49,7 +36,7 @@ export interface SessionControllerConfig {
 
 export type SessionControllerUserConfig = DeepPartial<SessionControllerConfig>
 
-export class SessionController {
+export class JwtSessionController {
   config: SessionControllerConfig
 
   constructor(config?: SessionControllerUserConfig) {
@@ -202,5 +189,5 @@ export class SessionController {
 }
 
 export function createSessionController(config?: SessionControllerUserConfig) {
-  return new SessionController(config)
+  return new JwtSessionController(config)
 }

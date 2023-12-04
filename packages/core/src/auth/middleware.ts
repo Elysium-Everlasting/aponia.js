@@ -10,7 +10,7 @@ import type { CredentialsProvider } from '../providers/credentials'
 import type { EmailProvider } from '../providers/email'
 import { OAuthProvider, resolveOAuthConfig } from '../providers/oauth.js'
 import { OIDCProvider, resolveOIDCConfig } from '../providers/oidc.js'
-import { SessionController, type SessionControllerUserConfig } from '../session/jwt'
+import { JwtSessionController, type SessionControllerUserConfig } from '../session/jwt'
 import type { InternalRequest, InternalResponse, PageEndpoint } from '../types'
 import type { Awaitable, Nullish } from '../utils/types'
 
@@ -34,14 +34,14 @@ export type AuthCallbacks = {
 
 export interface AuthConfig {
   adapter?: MiddlwareAuthAdapter | MiddlwareAuthAdapter[]
-  session: SessionController | SessionControllerUserConfig
+  session: JwtSessionController | SessionControllerUserConfig
   providers: AnyProvider[]
   pages?: Partial<AuthPages>
   callbacks?: Partial<AuthCallbacks>
 }
 
 export class MiddlewareAuth<T extends AnyResolvedProvider[] = AnyResolvedProvider[]> {
-  session: SessionController
+  session: JwtSessionController
   providers: T
   pages: AuthPages
   callbacks: Partial<AuthCallbacks>
@@ -69,9 +69,9 @@ export class MiddlewareAuth<T extends AnyResolvedProvider[] = AnyResolvedProvide
     }) as T
 
     this.session =
-      config.session instanceof SessionController
+      config.session instanceof JwtSessionController
         ? config.session
-        : new SessionController(config.session)
+        : new JwtSessionController(config.session)
 
     this.pages = {
       logout: config.pages?.logout ?? { route: DEFAULT_LOGOUT_ROUTE, methods: ['POST'] },

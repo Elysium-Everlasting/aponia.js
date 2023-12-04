@@ -2,27 +2,24 @@ import type { Session } from '@auth/core/types'
 import { describe, test, expect, vi } from 'vitest'
 
 import { DEFAULT_COOKIES_OPTIONS } from '../../src/security/cookie'
-import {
-  SessionController,
-  createSessionController,
-  type SessionTokens,
-} from '../../src/session/jwt'
+import type { SessionTokens } from '../../src/session'
+import { JwtSessionController, createSessionController } from '../../src/session/jwt'
 import type { InternalRequest } from '../../src/types'
 
 describe('SessionController', () => {
   describe('constructor', () => {
     test('does not throw error if no secret is given because default secret is used', () => {
-      expect(() => new SessionController()).not.toThrow()
+      expect(() => new JwtSessionController()).not.toThrow()
     })
 
     test('throws error if secret is given with less than 1 character', () => {
-      expect(() => new SessionController({ secret: '' })).toThrow()
+      expect(() => new JwtSessionController({ secret: '' })).toThrow()
     })
 
     test('overrides default jwt settings with custom jwt settings', () => {
       const encode = vi.fn()
 
-      const sessionController = new SessionController({
+      const sessionController = new JwtSessionController({
         jwt: {
           encode,
         },
@@ -34,7 +31,7 @@ describe('SessionController', () => {
 
   describe('getRawTokensFromRequest', () => {
     test('returns the access token and refresh token from the request cookies', () => {
-      const sessionController = new SessionController()
+      const sessionController = new JwtSessionController()
 
       const accessToken = 'access_token'
       const refreshToken = 'refresh_token'
@@ -59,7 +56,7 @@ describe('SessionController', () => {
 
   describe('decodeRawTokens', () => {
     test('returns undefined when token does not exist', async () => {
-      const sessionController = new SessionController()
+      const sessionController = new JwtSessionController()
 
       const decodedTokens = await sessionController.decodeRawTokens({})
 
@@ -69,7 +66,7 @@ describe('SessionController', () => {
     test('decodes tokens when they exist', async () => {
       const value = 'decoded_token'
 
-      const sessionController = new SessionController({
+      const sessionController = new JwtSessionController({
         jwt: {
           decode: () => value,
         },
@@ -85,7 +82,7 @@ describe('SessionController', () => {
     })
 
     test('returns undefined when token cannot be decoded', async () => {
-      const sessionController = new SessionController({
+      const sessionController = new JwtSessionController({
         jwt: {
           decode: async () => {
             throw new Error()
@@ -104,7 +101,7 @@ describe('SessionController', () => {
 
   describe('getTokensFromRequest', () => {
     test('returns undefined when token does not exist', async () => {
-      const sessionController = new SessionController()
+      const sessionController = new JwtSessionController()
 
       const decodedTokens = await sessionController.getTokensFromRequest({
         request: new Request(new URL('http://localhost')),
@@ -118,7 +115,7 @@ describe('SessionController', () => {
     test('decodes tokens when they exist', async () => {
       const value = 'decoded_token'
 
-      const sessionController = new SessionController({
+      const sessionController = new JwtSessionController({
         jwt: {
           decode: () => value,
         },
@@ -138,7 +135,7 @@ describe('SessionController', () => {
     })
 
     test('returns undefined when token cannot be decoded', async () => {
-      const sessionController = new SessionController({
+      const sessionController = new JwtSessionController({
         jwt: {
           decode: async () => {
             throw new Error()
@@ -161,7 +158,7 @@ describe('SessionController', () => {
 
   describe('createCookiesFromTokens', () => {
     test('returns no cookies if no tokens are given', async () => {
-      const sessionController = new SessionController()
+      const sessionController = new JwtSessionController()
 
       const cookies = await sessionController.createCookiesFromTokens({})
 
@@ -169,7 +166,7 @@ describe('SessionController', () => {
     })
 
     test('returns one cookie if either token is given', async () => {
-      const sessionController = new SessionController()
+      const sessionController = new JwtSessionController()
 
       const cookies = await sessionController.createCookiesFromTokens({
         accessToken: {
@@ -181,7 +178,7 @@ describe('SessionController', () => {
     })
 
     test('returns two cookies if both tokens are given', async () => {
-      const sessionController = new SessionController()
+      const sessionController = new JwtSessionController()
 
       const cookies = await sessionController.createCookiesFromTokens({
         accessToken: {
@@ -200,7 +197,7 @@ describe('SessionController', () => {
     test('returns undefined session if no valid access token', async () => {
       const defaultSession = { session: 'session' }
 
-      const sessionController = new SessionController({
+      const sessionController = new JwtSessionController({
         jwt: {
           decode: () => defaultSession,
         },
@@ -222,7 +219,7 @@ describe('SessionController', () => {
     test('returns session from access token if valid access token', async () => {
       const defaultSession = { session: 'session' }
 
-      const sessionController = new SessionController({
+      const sessionController = new JwtSessionController({
         jwt: {
           decode: () => defaultSession,
         },
@@ -246,7 +243,7 @@ describe('SessionController', () => {
     test('calls getSessionFromTokens callback if provided and defined tokens were decoded', async () => {
       const getSessionFromTokens = vi.fn()
 
-      const sessionController = new SessionController({
+      const sessionController = new JwtSessionController({
         getSessionFromTokens,
         jwt: {
           decode: () => ({}),
@@ -271,7 +268,7 @@ describe('SessionController', () => {
 
   describe('handleRequest', () => {
     test('returns undefined if access token exists', async () => {
-      const sessionController = new SessionController()
+      const sessionController = new JwtSessionController()
 
       const url = new URL('http://localhost')
 
@@ -289,7 +286,7 @@ describe('SessionController', () => {
     })
 
     test('returns undefined if neither access and refresh tokens exist', async () => {
-      const sessionController = new SessionController()
+      const sessionController = new JwtSessionController()
 
       const url = new URL('http://localhost')
 
@@ -308,7 +305,7 @@ describe('SessionController', () => {
       test('returns new session', async () => {
         const newSession = { session: 'session' }
 
-        const sessionController = new SessionController({
+        const sessionController = new JwtSessionController({
           jwt: {
             decode: () => newSession,
           },
@@ -342,7 +339,7 @@ describe('SessionController', () => {
           return tokens
         })
 
-        const sessionController = new SessionController({
+        const sessionController = new JwtSessionController({
           refreshTokens,
           jwt: {
             decode: () => ({}),
@@ -375,7 +372,7 @@ describe('SessionController', () => {
 
         const getSessionFromTokens = vi.fn(() => customSession)
 
-        const sessionController = new SessionController({
+        const sessionController = new JwtSessionController({
           getSessionFromTokens,
           jwt: {
             decode: () => ({}),
@@ -404,7 +401,7 @@ describe('SessionController', () => {
     test('calls provided onInvalidateSession callback', async () => {
       const onInvalidate = vi.fn()
 
-      const sessionController = new SessionController({ onInvalidate })
+      const sessionController = new JwtSessionController({ onInvalidate })
 
       const url = new URL('http://localhost')
 
@@ -422,7 +419,7 @@ describe('SessionController', () => {
     test('returns a new session controller with the provided config', () => {
       const sessionController = createSessionController()
 
-      expect(sessionController).toBeInstanceOf(SessionController)
+      expect(sessionController).toBeInstanceOf(JwtSessionController)
     })
   })
 })
