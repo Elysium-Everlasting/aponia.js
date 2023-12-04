@@ -130,7 +130,52 @@ export class MiddlewareAuth<T extends AnyResolvedProvider[] = AnyResolvedProvide
   async generateInternalResponse(
     internalRequest: InternalRequest,
   ): Promise<InternalResponse | Nullish> {
-    const sessionResponse = await this.session.handleRequest(internalRequest)
+    const loginHandler = this.routes.login.get(internalRequest.url.pathname)
+
+    if (loginHandler && this.matches(internalRequest, loginHandler.config.pages.login)) {
+      internalRequest.action = 'login'
+
+      const providerResponse = await loginHandler.login(internalRequest)
+
+      if (providerResponse.session?.user) {
+        const sessionTokens = (await this.session.config.createSession?.(
+          providerResponse.session.user,
+        )) ?? {
+          accessToken: providerResponse.session,
+          refreshToken: providerResponse.session,
+        }
+
+        providerResponse.cookies ??= []
+        providerResponse.cookies.push(
+          ...(await this.session.createCookiesFromTokens(sessionTokens)),
+        )
+
+        return providerResponse
+      }
+    }
+
+    const callbackHandler = this.routes.callback.get(internalRequest.url.pathname)
+
+    if (callbackHandler) {
+      internalRequest.action = 'callback'
+
+      const providerResponse = await callbackHandler.callback(internalRequest)
+
+      if (providerResponse.session?.user) {
+        const sessionTokens = (await this.session.config.createSession?.(
+          providerResponse.session.user,
+        )) ?? {
+          accessToken: providerResponse.session,
+          refreshToken: providerResponse.session,
+        }
+
+        providerResponse.cookies ??= []
+        providerResponse.cookies.push(
+          ...(await this.session.createCookiesFromTokens(sessionTokens)),
+        )
+        return providerResponse
+      }
+    }
 
     if (this.matches(internalRequest, this.pages.logout)) {
       internalRequest.action = 'logout'
@@ -142,65 +187,20 @@ export class MiddlewareAuth<T extends AnyResolvedProvider[] = AnyResolvedProvide
 
     if (this.matches(internalRequest, this.pages.update)) {
       internalRequest.action = 'update'
-      return (await this.callbacks.update?.(internalRequest)) ?? sessionResponse
+      return await this.callbacks.update?.(internalRequest)
     }
 
     if (this.matches(internalRequest, this.pages.forgot)) {
       internalRequest.action = 'forgot'
-      return (await this.callbacks.forgot?.(internalRequest)) ?? sessionResponse
+      return await this.callbacks.forgot?.(internalRequest)
     }
 
     if (this.matches(internalRequest, this.pages.reset)) {
       internalRequest.action = 'reset'
-      return (await this.callbacks.reset?.(internalRequest)) ?? sessionResponse
+      return await this.callbacks.reset?.(internalRequest)
     }
 
-    const loginHandler = this.routes.login.get(internalRequest.url.pathname)
-    const callbackHandler = this.routes.callback.get(internalRequest.url.pathname)
-
-    if (loginHandler == null && callbackHandler == null) {
-      return sessionResponse
-    }
-
-    internalRequest.action = loginHandler != null ? 'login' : 'callback'
-
-    const providerResponse =
-      loginHandler && this.matches(internalRequest, loginHandler.config.pages.login)
-        ? await loginHandler.login(internalRequest)
-        : callbackHandler && this.matches(internalRequest, callbackHandler.config.pages.callback)
-        ? await callbackHandler.callback(internalRequest)
-        : {}
-
-    if (providerResponse.session?.user) {
-      const sessionTokens = (await this.session.config.createSession?.(
-        providerResponse.session.user,
-      )) ?? {
-        accessToken: providerResponse.session,
-        refreshToken: providerResponse.session,
-      }
-
-      if (sessionTokens?.accessToken) {
-        providerResponse.session = sessionTokens.accessToken
-      }
-
-      if (sessionTokens) {
-        providerResponse.cookies ??= []
-        providerResponse.cookies.push(
-          ...(await this.session.createCookiesFromTokens(sessionTokens)),
-        )
-      }
-    }
-
-    if (sessionResponse?.cookies) {
-      providerResponse.cookies ??= []
-      providerResponse.cookies.push(...sessionResponse.cookies)
-    }
-
-    if (sessionResponse?.session) {
-      providerResponse.session = sessionResponse?.session
-    }
-
-    return providerResponse
+    return await this.session.handleRequest(internalRequest)
   }
 }
 

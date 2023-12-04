@@ -1,3 +1,4 @@
+```prisma
 model Account {
   id String  @id @default(cuid()) Uniquely identifies an account. REQUIRED.
   userId String Associates the account with a user. REQUIRED.
@@ -55,6 +56,7 @@ model User {
   name String? Descriptive info about the user. OPTIONAL.
   image String? Descriptive info about the user. OPTIONAL.
 }
+```
 
 # Notes
 User is the smallest atomic unit.
@@ -78,3 +80,6 @@ ensures its validity, so use it to create a new session.
 The refresh token should contain the user's ID at the very minimum.
 The refresh token is not stored in any database, it is only preserved by the client,
 and consumed by the server when needed.
+
+## onAuth
+1.
