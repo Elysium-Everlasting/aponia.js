@@ -27,7 +27,7 @@ export type ResolvedOAuthConfig<TProfile> = {
     userinfo: Endpoint<{ provider: OAuthConfig<TProfile>; tokens: TokenSet }, TProfile>
   }
   onAuth?: (
-    user: TProfile,
+    profile: TProfile,
     tokens: oauth.OAuth2TokenEndpointResponse,
   ) => Awaitable<InternalResponse | Nullish> | Nullish
 } & OAuthConfig<TProfile>

@@ -28,7 +28,7 @@ export type ResolvedOIDCConfig<TProfile> = {
     userinfo: Endpoint<{ provider: OIDCConfig<TProfile>; tokens: TokenSet }, TProfile>
   }
   onAuth?: (
-    user: TProfile,
+    profile: TProfile,
     tokens: oauth.OpenIDTokenEndpointResponse,
   ) => Awaitable<InternalResponse | Nullish> | Nullish
 } & OIDCConfig<TProfile>
