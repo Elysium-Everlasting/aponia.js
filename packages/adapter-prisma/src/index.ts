@@ -24,6 +24,7 @@ export type PrismaAdapterConfig = {
   ) => Awaitable<Account>
   getUserFromAccount: (account: Account) => Awaitable<User>
   createSession: (user: User) => Awaitable<Session>
+  createRefreshToken: (session: Session) => Awaitable<RefreshToken>
   findSessionFromRefreshToken: (refreshToken: RefreshToken) => Awaitable<Session | Nullish>
   refreshSession: (session: Session) => Awaitable<Session>
   invalidateSession: (session: Session) => unknown
@@ -78,9 +79,10 @@ export class PrismaAdapter {
     })
 
     this.auth.session.config.createSessionTokens ??= async (session) => {
+      const refreshToken = await this.config.createRefreshToken(session)
       return {
         accessToken: session,
-        refreshToken: { id: session.refreshToken },
+        refreshToken,
       }
     }
 
@@ -93,9 +95,11 @@ export class PrismaAdapter {
 
       const newSession = await this.config.refreshSession(session)
 
+      const newRefreshToken = await this.config.createRefreshToken(newSession)
+
       return {
         accessToken: newSession,
-        refreshToken: { id: newSession.refreshToken },
+        refreshToken: newRefreshToken,
       }
     }
 
