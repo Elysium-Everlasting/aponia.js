@@ -1,105 +1,122 @@
-import { MiddlewareAuth, type MiddlwareAuthAdapter, type SessionTokens } from '@aponia.js/core'
-import type { User, Session } from '@auth/core/types'
+import {
+  MiddlewareAuth,
+  type MiddlwareAuthAdapter,
+  type InternalRequest,
+  type RefreshToken,
+} from '@aponia.js/core'
+import type { Nullish } from '@aponia.js/core/utils/types'
+import type { Account, Awaitable, Session, User } from '@auth/core/types'
+import type * as oauth from 'oauth4webapi'
 
-type PsuedoPrismaClient = { $transaction: (...args: any) => any } & Record<string, any>
+export type PsuedoPrismaClient = { $transaction: (...args: any) => any } & Record<string, any>
 
-export const DEFAULT_TABLE_MAPPINGS = {
-  user: {
-    name: 'user',
-    id: 'id',
-    email: 'email',
-  },
-  session: {
-    name: 'session',
-    id: 'id',
-    userId: 'user_id',
-    expires: 'expires',
-  },
-} as const
-
-export type DefaultTableMappings = typeof DEFAULT_TABLE_MAPPINGS
-
-export type TableMappings = { [K in keyof DefaultTableMappings]: DefaultTableMappings[K] }
-
-export type PrismaAdapterOptions<T extends TableMappings = DefaultTableMappings> = {
-  mappings?: T
-  generateSessionToken?: () => string
-  userToSession?: (user: User) => any | Promise<any>
-  transformSession?: (session: Session, user: User) => SessionTokens | Promise<SessionTokens>
-  getUserFromOldSession?: (session: SessionTokens) => any | Promise<any>
+export type PrismaAdapterConfig = {
+  findAccount: (
+    profile: any,
+    tokens: oauth.OAuth2TokenEndpointResponse | oauth.OpenIDTokenEndpointResponse,
+    request: InternalRequest,
+  ) => Awaitable<Account | Nullish>
+  linkAccount: (
+    profile: any,
+    tokens: oauth.OAuth2TokenEndpointResponse | oauth.OpenIDTokenEndpointResponse,
+    request: InternalRequest,
+    session: Session,
+  ) => Awaitable<Account>
+  getUserFromAccount: (account: Account) => Awaitable<User>
+  createSession: (user: User) => Awaitable<Session>
+  findSessionFromRefreshToken: (refreshToken: RefreshToken) => Awaitable<Session | Nullish>
+  refreshSession: (session: Session) => Awaitable<Session>
+  invalidateSession: (session: Session) => unknown
 }
 
-export type ResolvedPrismaAdapterOptions<T extends TableMappings = DefaultTableMappings> = Required<
-  PrismaAdapterOptions<T>
->
-
-export class PrismaAdapter<T extends TableMappings = DefaultTableMappings> {
+export class PrismaAdapter {
   auth: MiddlewareAuth
 
   prisma: PsuedoPrismaClient
 
-  options: ResolvedPrismaAdapterOptions<T>
+  config: PrismaAdapterConfig
 
-  constructor(
-    auth: MiddlewareAuth,
-    prisma: PsuedoPrismaClient,
-    options: PrismaAdapterOptions<T> = {},
-  ) {
+  constructor(auth: MiddlewareAuth, prisma: PsuedoPrismaClient, config: PrismaAdapterConfig) {
     this.auth = auth
     this.prisma = prisma
-    this.options = {
-      mappings: DEFAULT_TABLE_MAPPINGS as T,
-      generateSessionToken: crypto.randomUUID,
-      transformSession: async (session, user) => {
-        const sessionData = { ...session, user }
-
-        return {
-          user,
-          accessToken: sessionData,
-          refreshToken: sessionData,
-        }
-      },
-      userToSession: (user) => user,
-      getUserFromOldSession: (session) => session.refreshToken,
-      ...options,
-    }
+    this.config = config
 
     this.auth.providers.forEach((provider) => {
       if (provider.type === 'email' || provider.type === 'credentials') {
         return
       }
 
-      provider.config.onAuth ??= async (user: any, tokens: any) => {
-        user
-        tokens
+      provider.config.onAuth ??= async (profile, tokens, request) => {
+        const session = await this.auth.session.getSessionFromRequest(request)
+
+        if (session == null) {
+          const account = await this.config.findAccount(profile, tokens, request)
+
+          if (account != null) {
+            const user = await this.config.getUserFromAccount(account)
+            const newSession = await this.config.createSession(user)
+            return { session: newSession }
+          }
+
+          throw new Error('Please login with the initial account you created')
+        }
+
+        const existingAccount = await this.config.findAccount(profile, tokens, request)
+
+        if (existingAccount != null) {
+          const user = await this.config.getUserFromAccount(existingAccount)
+          const newSession = await this.config.createSession(user)
+          return { session: newSession }
+        }
+
+        const newAccount = await this.config.linkAccount(profile, tokens, request, session)
+
+        const user = await this.config.getUserFromAccount(newAccount)
+        const newSession = await this.config.createSession(user)
+        return { session: newSession }
       }
     })
 
-    this.auth.session.config.createSession ??= async (user) => {
-      user
+    this.auth.session.config.createSessionTokens ??= async (session) => {
+      return {
+        accessToken: session,
+        refreshToken: { id: session.refreshToken },
+      }
     }
 
     this.auth.session.config.refreshTokens ??= async (tokens) => {
-      tokens
+      if (tokens.refreshToken == null) {
+        return
+      }
+
+      const session = this.config.findSessionFromRefreshToken(tokens.refreshToken) as Session
+
+      const newSession = await this.config.refreshSession(session)
+
+      return {
+        accessToken: newSession,
+        refreshToken: { id: newSession.refreshToken },
+      }
     }
 
     this.auth.session.config.onInvalidate ??= async (tokens) => {
-      tokens
+      if (tokens.refreshToken == null) {
+        return
+      }
+
+      const session = this.config.findSessionFromRefreshToken(tokens.refreshToken) as Session
+
+      await this.config.invalidateSession(session)
     }
   }
 }
 
-/**
- * Adapts base {@link Auth} class to use Prisma by defining custom handlers on the providers and session manager.
- */
-export function prismaAdapter<T extends TableMappings = DefaultTableMappings>(
+export function prismaAdapter(
   prisma: PsuedoPrismaClient,
-  options: PrismaAdapterOptions<T> = {},
+  config: PrismaAdapterConfig,
 ): MiddlwareAuthAdapter {
   return (auth) => {
-    new PrismaAdapter(auth, prisma, options)
+    new PrismaAdapter(auth, prisma, config)
     return auth
   }
 }
-
-export default prismaAdapter
