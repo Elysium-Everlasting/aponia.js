@@ -7,38 +7,29 @@ import {
   DEFAULT_SECRET,
 } from '../constants'
 import { Logger } from '../logger'
-import {
-  createCookiesOptions,
-  type Cookie,
-  type CookiesOptions,
-  type CreateCookiesOptions,
-} from '../security/cookie'
+import { createCookiesOptions, type Cookie } from '../security/cookie'
 import { encode, decode } from '../security/jwt'
 import type { JWTOptions } from '../security/jwt'
 import type { InternalRequest, InternalResponse } from '../types'
 import { asPromise } from '../utils/as-promise'
 import type { Awaitable, DeepPartial, Nullish } from '../utils/types'
 
-import type { RawSessionTokens, SessionController, SessionTokens } from '.'
+import type { RawSessionTokens, SessionController, SessionControllerConfig, SessionTokens } from '.'
 
-export interface SessionControllerConfig {
-  secret: string
+export interface JwtSessionControllerConfig extends SessionControllerConfig {
   jwt: Required<Omit<JWTOptions, 'maxAge'>>
-  logoutRedirect?: string
-  createCookieOptions?: CreateCookiesOptions
-  cookieOptions: CookiesOptions
 
   createTokensFromSession?: (session: Session) => Awaitable<SessionTokens | Nullish>
   getSessionFromTokens?: (tokens: SessionTokens) => Awaitable<Session | Nullish>
   onInvalidate?: (tokens: SessionTokens) => Awaitable<InternalResponse | Nullish>
 }
 
-export type SessionControllerUserConfig = DeepPartial<SessionControllerConfig>
+export type JwtSessionControllerUserConfig = DeepPartial<JwtSessionControllerConfig>
 
 export class JwtSessionController implements SessionController {
-  config: SessionControllerConfig
+  config: JwtSessionControllerConfig
 
-  constructor(config?: SessionControllerUserConfig) {
+  constructor(config?: JwtSessionControllerUserConfig) {
     const cookieOptions = createCookiesOptions(config?.createCookieOptions)
 
     cookieOptions.accessToken.options.maxAge ??= DEFAULT_ACCESS_TOKEN_AGE
@@ -173,6 +164,6 @@ export class JwtSessionController implements SessionController {
   }
 }
 
-export function createSessionController(config?: SessionControllerUserConfig) {
+export function createSessionController(config?: JwtSessionControllerUserConfig) {
   return new JwtSessionController(config)
 }

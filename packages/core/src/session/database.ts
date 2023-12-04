@@ -4,9 +4,9 @@ import type { Cookie } from '../security/cookie'
 import type { InternalRequest, InternalResponse, RefreshToken } from '../types'
 import type { Nullish } from '../utils/types'
 
-import type { SessionController } from '.'
+import type { SessionController, SessionControllerConfig } from '.'
 
-export type DatabaseSessionControllerConfig = {
+export interface DatabaseSessionControllerConfig extends SessionControllerConfig {
   createSession: (user: User) => Awaitable<Session>
   refreshSession: (session: Session) => Awaitable<Session>
   invalidateSession: (session: Session) => unknown

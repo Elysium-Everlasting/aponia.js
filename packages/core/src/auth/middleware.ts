@@ -11,7 +11,6 @@ import type { EmailProvider } from '../providers/email'
 import { OAuthProvider, resolveOAuthConfig } from '../providers/oauth.js'
 import { OIDCProvider, resolveOIDCConfig } from '../providers/oidc.js'
 import type { SessionController } from '../session'
-import { JwtSessionController, type SessionControllerUserConfig } from '../session/jwt'
 import type { InternalRequest, InternalResponse, PageEndpoint } from '../types'
 import type { Awaitable, Nullish } from '../utils/types'
 
@@ -35,7 +34,7 @@ export type AuthCallbacks = {
 
 export interface AuthConfig {
   adapter?: MiddlwareAuthAdapter | MiddlwareAuthAdapter[]
-  session: SessionController | SessionControllerUserConfig
+  session: SessionController
   providers: AnyProvider[]
   pages?: Partial<AuthPages>
   callbacks?: Partial<AuthCallbacks>
@@ -69,10 +68,7 @@ export class MiddlewareAuth<T extends AnyResolvedProvider[] = AnyResolvedProvide
       }
     }) as T
 
-    this.session =
-      config.session instanceof JwtSessionController
-        ? config.session
-        : new JwtSessionController(config.session as any)
+    this.session = config.session
 
     this.pages = {
       logout: config.pages?.logout ?? { route: DEFAULT_LOGOUT_ROUTE, methods: ['POST'] },

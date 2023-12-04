@@ -1,8 +1,15 @@
 import type { Session } from '@auth/core/types'
 
-import type { Cookie } from '../security/cookie'
+import type { Cookie, CookiesOptions, CreateCookiesOptions } from '../security/cookie'
 import type { InternalRequest, InternalResponse, RefreshToken } from '../types'
 import type { Nullish } from '../utils/types'
+
+export interface SessionControllerConfig {
+  secret: string
+  logoutRedirect?: string
+  createCookieOptions?: CreateCookiesOptions
+  cookieOptions: CookiesOptions
+}
 
 export interface SessionTokens {
   accessToken?: Session | Nullish
