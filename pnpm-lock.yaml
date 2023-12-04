@@ -137,6 +137,9 @@ importers:
       '@auth/core':
         specifier: ^0.18.1
         version: 0.18.1
+      oauth4webapi:
+        specifier: ^2.3.0
+        version: 2.3.0
     devDependencies:
       tsup:
         specifier: ^7.2.0

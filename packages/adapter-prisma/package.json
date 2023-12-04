@@ -47,7 +47,8 @@
   },
   "dependencies": {
     "@aponia.js/core": "workspace:^",
-    "@auth/core": "^0.18.1"
+    "@auth/core": "^0.18.1",
+    "oauth4webapi": "^2.3.0"
   },
   "devDependencies": {
     "tsup": "^7.2.0",
