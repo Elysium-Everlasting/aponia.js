@@ -50,7 +50,7 @@ export class PrismaAdapter {
       }
 
       provider.config.onAuth ??= async (profile, tokens, request) => {
-        const session = await this.auth.session.getSessionFromRequest(request)
+        const session = await this.auth.session.getSessionFromCookies(request.cookies)
 
         if (session == null) {
           const account = await this.config.findAccount(profile, tokens, request)
@@ -80,7 +80,7 @@ export class PrismaAdapter {
       }
     })
 
-    this.auth.session.config.createSessionTokens ??= async (session) => {
+    this.auth.session.config.createTokensFromSession ??= async (session) => {
       const refreshToken = await this.config.createRefreshTokenFromSession(session)
       return {
         accessToken: session,

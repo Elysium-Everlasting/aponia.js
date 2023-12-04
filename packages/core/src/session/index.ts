@@ -20,9 +20,13 @@ export interface RawSessionTokens {
 }
 
 export abstract class SessionController {
-  abstract createCookiesFromSession(tokens: SessionTokens): Promise<Cookie[]>
+  abstract config: any
+
+  abstract createCookiesFromSession(session: Session): Promise<Cookie[]>
 
   abstract getSessionFromCookies(cookies: Record<string, string>): Promise<Session | Nullish>
 
   abstract handleRequest(request: InternalRequest): Promise<InternalResponse | Nullish>
+
+  abstract invalidateSession(request: InternalRequest): Promise<InternalResponse | Nullish>
 }

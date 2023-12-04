@@ -10,6 +10,7 @@ import type { CredentialsProvider } from '../providers/credentials'
 import type { EmailProvider } from '../providers/email'
 import { OAuthProvider, resolveOAuthConfig } from '../providers/oauth.js'
 import { OIDCProvider, resolveOIDCConfig } from '../providers/oidc.js'
+import type { SessionController } from '../session'
 import { JwtSessionController, type SessionControllerUserConfig } from '../session/jwt'
 import type { InternalRequest, InternalResponse, PageEndpoint } from '../types'
 import type { Awaitable, Nullish } from '../utils/types'
@@ -34,14 +35,14 @@ export type AuthCallbacks = {
 
 export interface AuthConfig {
   adapter?: MiddlwareAuthAdapter | MiddlwareAuthAdapter[]
-  session: JwtSessionController | SessionControllerUserConfig
+  session: SessionController | SessionControllerUserConfig
   providers: AnyProvider[]
   pages?: Partial<AuthPages>
   callbacks?: Partial<AuthCallbacks>
 }
 
 export class MiddlewareAuth<T extends AnyResolvedProvider[] = AnyResolvedProvider[]> {
-  session: JwtSessionController
+  session: SessionController
   providers: T
   pages: AuthPages
   callbacks: Partial<AuthCallbacks>
@@ -71,7 +72,7 @@ export class MiddlewareAuth<T extends AnyResolvedProvider[] = AnyResolvedProvide
     this.session =
       config.session instanceof JwtSessionController
         ? config.session
-        : new JwtSessionController(config.session)
+        : new JwtSessionController(config.session as any)
 
     this.pages = {
       logout: config.pages?.logout ?? { route: DEFAULT_LOGOUT_ROUTE, methods: ['POST'] },
@@ -157,14 +158,8 @@ export class MiddlewareAuth<T extends AnyResolvedProvider[] = AnyResolvedProvide
 
   private async handleProviderResponse(response: InternalResponse): Promise<InternalResponse> {
     if (response.session) {
-      const sessionTokens = (await this.session.config.createTokensFromSession?.(
-        response.session,
-      )) ?? {
-        accessToken: response.session,
-        refreshToken: response.session,
-      }
       response.cookies ??= []
-      response.cookies.push(...(await this.session.createCookiesFromSession(sessionTokens)))
+      response.cookies.push(...(await this.session.createCookiesFromSession(response.session)))
     }
 
     return response

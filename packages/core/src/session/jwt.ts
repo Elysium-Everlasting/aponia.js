@@ -77,6 +77,39 @@ export class JwtSessionController implements SessionController {
     return session
   }
 
+  async createCookiesFromSession(session: Session): Promise<Cookie[]> {
+    const tokens = (await this.config.createTokensFromSession?.(session)) ?? {
+      accessToken: session,
+      refreshToken: session,
+    }
+
+    const cookies: Cookie[] = []
+
+    if (tokens?.accessToken) {
+      cookies.push({
+        value: await this.config.jwt.encode({
+          secret: this.config.secret,
+          maxAge: this.config.cookieOptions.accessToken.options.maxAge,
+          token: tokens.accessToken,
+        }),
+        ...this.config.cookieOptions.accessToken,
+      })
+    }
+
+    if (tokens?.refreshToken) {
+      cookies.push({
+        value: await this.config.jwt.encode({
+          secret: this.config.secret,
+          maxAge: this.config.cookieOptions.refreshToken.options.maxAge,
+          token: tokens.refreshToken,
+        }),
+        ...this.config.cookieOptions.refreshToken,
+      })
+    }
+
+    return cookies
+  }
+
   async invalidateSession(request: InternalRequest): Promise<InternalResponse> {
     const response =
       (await this.config.onInvalidate?.(await this.getTokensFromCookies(request.cookies))) ?? {}
@@ -137,34 +170,6 @@ export class JwtSessionController implements SessionController {
           })
 
     return { accessToken, refreshToken }
-  }
-
-  async createCookiesFromSession(tokens: SessionTokens): Promise<Cookie[]> {
-    const cookies: Cookie[] = []
-
-    if (tokens?.accessToken) {
-      cookies.push({
-        value: await this.config.jwt.encode({
-          secret: this.config.secret,
-          maxAge: this.config.cookieOptions.accessToken.options.maxAge,
-          token: tokens.accessToken,
-        }),
-        ...this.config.cookieOptions.accessToken,
-      })
-    }
-
-    if (tokens?.refreshToken) {
-      cookies.push({
-        value: await this.config.jwt.encode({
-          secret: this.config.secret,
-          maxAge: this.config.cookieOptions.refreshToken.options.maxAge,
-          token: tokens.refreshToken,
-        }),
-        ...this.config.cookieOptions.refreshToken,
-      })
-    }
-
-    return cookies
   }
 }
 
