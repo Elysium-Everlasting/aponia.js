@@ -232,7 +232,7 @@ describe('SessionController', () => {
       const getSessionFromTokens = vi.fn()
 
       const sessionController = new JwtSessionController({
-        getSessionFromTokens,
+        getSessionFromSessionTokens: getSessionFromTokens,
         jwt: {
           decode: () => ({}),
         },
@@ -361,7 +361,7 @@ describe('SessionController', () => {
         const getSessionFromTokens = vi.fn(() => customSession)
 
         const sessionController = new JwtSessionController({
-          getSessionFromTokens,
+          getSessionFromSessionTokens: getSessionFromTokens,
           jwt: {
             decode: () => ({}),
           },

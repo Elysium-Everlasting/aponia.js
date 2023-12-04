@@ -15,11 +15,11 @@ import {
 } from '../security/cookie'
 import { encode, decode } from '../security/jwt'
 import type { JWTOptions } from '../security/jwt'
-import type { InternalRequest, InternalResponse, RefreshToken } from '../types'
+import type { InternalRequest, InternalResponse } from '../types'
 import { asPromise } from '../utils/as-promise'
 import type { Awaitable, DeepPartial, Nullish } from '../utils/types'
 
-import type { RawSessionTokens, SessionController, SessionTokens, UnknownSessionTokens } from '.'
+import type { RawSessionTokens, SessionController, SessionTokens } from '.'
 
 export interface SessionControllerConfig {
   secret: string
@@ -28,9 +28,8 @@ export interface SessionControllerConfig {
   createCookieOptions?: CreateCookiesOptions
   cookieOptions: CookiesOptions
 
-  createSessionTokens?: (session: Session) => Awaitable<SessionTokens | Nullish>
+  createTokensFromSession?: (session: Session) => Awaitable<SessionTokens | Nullish>
   getSessionFromTokens?: (tokens: SessionTokens) => Awaitable<Session | Nullish>
-  refreshTokens?: (tokens: UnknownSessionTokens) => Awaitable<SessionTokens | Nullish>
   onInvalidate?: (tokens: SessionTokens) => Awaitable<InternalResponse | Nullish>
 }
 
@@ -65,6 +64,46 @@ export class JwtSessionController implements SessionController {
     }
   }
 
+  async handleRequest(_request: InternalRequest): Promise<InternalResponse | Nullish> {}
+
+  async getSessionFromCookies(cookies: Record<string, string>): Promise<Session | Nullish> {
+    const tokens = await this.getTokensFromCookies(cookies)
+
+    if (tokens.accessToken == null) {
+      return
+    }
+
+    const session = (await this.config.getSessionFromTokens?.(tokens)) ?? tokens.accessToken
+    return session
+  }
+
+  async invalidateSession(request: InternalRequest): Promise<InternalResponse> {
+    const response =
+      (await this.config.onInvalidate?.(await this.getTokensFromCookies(request.cookies))) ?? {}
+
+    response.status = 302
+    response.redirect = this.config.logoutRedirect
+    response.cookies ??= [
+      {
+        name: this.config.cookieOptions.accessToken.name,
+        value: '',
+        options: { ...this.config.cookieOptions.accessToken.options, maxAge: 0 },
+      },
+      {
+        name: this.config.cookieOptions.refreshToken.name,
+        value: '',
+        options: { ...this.config.cookieOptions.refreshToken.options, maxAge: 0 },
+      },
+    ]
+
+    return response
+  }
+
+  async getTokensFromCookies(cookies: Record<string, string>): Promise<SessionTokens> {
+    const rawTokens = this.getRawTokensFromCookies(cookies)
+    return this.decodeRawTokens(rawTokens)
+  }
+
   getRawTokensFromCookies(cookies: Record<string, string>): RawSessionTokens {
     const accessToken = cookies[this.config.cookieOptions.accessToken.name]
     const refreshToken = cookies[this.config.cookieOptions.refreshToken.name]
@@ -80,7 +119,7 @@ export class JwtSessionController implements SessionController {
             this.config.jwt.decode({
               secret: this.config.secret,
               token: tokens.accessToken,
-            }) as Session,
+            }),
           ).catch(() => {
             Logger.log('Error decoding access token')
           })
@@ -92,17 +131,12 @@ export class JwtSessionController implements SessionController {
             this.config.jwt.decode({
               secret: this.config.secret,
               token: tokens.refreshToken,
-            }) as RefreshToken,
+            }),
           ).catch(() => {
             Logger.log('Error decoding access token')
           })
 
     return { accessToken, refreshToken }
-  }
-
-  async getTokensFromCookies(cookies: Record<string, string>): Promise<SessionTokens> {
-    const rawTokens = this.getRawTokensFromCookies(cookies)
-    return this.decodeRawTokens(rawTokens)
   }
 
   async createCookiesFromSession(tokens: SessionTokens): Promise<Cookie[]> {
@@ -131,60 +165,6 @@ export class JwtSessionController implements SessionController {
     }
 
     return cookies
-  }
-
-  async getSessionFromCookies(cookies: Record<string, string>): Promise<Session | Nullish> {
-    const tokens = await this.getTokensFromCookies(cookies)
-
-    if (tokens.accessToken == null) {
-      return
-    }
-
-    const session = (await this.config.getSessionFromTokens?.(tokens)) ?? tokens.accessToken
-    return session
-  }
-
-  async handleRequest(request: InternalRequest): Promise<InternalResponse | Nullish> {
-    const rawTokens = this.getRawTokensFromCookies(request.cookies)
-
-    if (rawTokens.accessToken != null || rawTokens.refreshToken == null) {
-      return
-    }
-
-    const tokens = await this.decodeRawTokens(rawTokens)
-
-    const refreshedTokens = (await this.config.refreshTokens?.(tokens)) ?? {
-      accessToken: tokens.refreshToken as any,
-      refreshToken: tokens.refreshToken,
-    }
-
-    const cookies = await this.createCookiesFromSession(refreshedTokens)
-    const session =
-      (await this.config.getSessionFromTokens?.(refreshedTokens)) ?? refreshedTokens.accessToken
-
-    return { session, cookies }
-  }
-
-  async invalidateSession(request: InternalRequest): Promise<InternalResponse> {
-    const response =
-      (await this.config.onInvalidate?.(await this.getTokensFromCookies(request.cookies))) ?? {}
-
-    response.status = 302
-    response.redirect = this.config.logoutRedirect
-    response.cookies ??= [
-      {
-        name: this.config.cookieOptions.accessToken.name,
-        value: '',
-        options: { ...this.config.cookieOptions.accessToken.options, maxAge: 0 },
-      },
-      {
-        name: this.config.cookieOptions.refreshToken.name,
-        value: '',
-        options: { ...this.config.cookieOptions.refreshToken.options, maxAge: 0 },
-      },
-    ]
-
-    return response
   }
 }
 

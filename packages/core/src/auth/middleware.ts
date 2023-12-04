@@ -157,7 +157,9 @@ export class MiddlewareAuth<T extends AnyResolvedProvider[] = AnyResolvedProvide
 
   private async handleProviderResponse(response: InternalResponse): Promise<InternalResponse> {
     if (response.session) {
-      const sessionTokens = (await this.session.config.createSessionTokens?.(response.session)) ?? {
+      const sessionTokens = (await this.session.config.createTokensFromSession?.(
+        response.session,
+      )) ?? {
         accessToken: response.session,
         refreshToken: response.session,
       }
