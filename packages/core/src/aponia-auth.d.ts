@@ -1,6 +1,6 @@
 import type * as oauth from 'oauth4webapi'
 
-import type { InternalResponse } from './types'
+import type { InternalRequest, InternalResponse } from './types'
 import type { Awaitable, Nullish } from './utils/types'
 
 declare module '@auth/core/providers/oauth' {
@@ -8,6 +8,7 @@ declare module '@auth/core/providers/oauth' {
     onAuth?: (
       user: Profile,
       tokens: oauth.OAuth2TokenEndpointResponse | oauth.OpenIDTokenEndpointResponse,
+      request: InternalRequest,
     ) => Awaitable<InternalResponse | Nullish>
   }
 }

@@ -14,7 +14,6 @@ import * as checks from '../security/checks'
 import { DEFAULT_COOKIES_OPTIONS, type Cookie, type CookiesOptions } from '../security/cookie'
 import { DEFAULT_JWT_OPTIONS, type JWTOptions } from '../security/jwt'
 import type { Endpoint, InternalRequest, InternalResponse, ProviderPages } from '../types'
-import type { Awaitable, Nullish } from '../utils/types'
 
 export type ResolvedOIDCConfig<TProfile> = {
   id: string
@@ -27,10 +26,6 @@ export type ResolvedOIDCConfig<TProfile> = {
     token: Endpoint<OIDCProvider<TProfile>, TokenSet>
     userinfo: Endpoint<{ provider: OIDCConfig<TProfile>; tokens: TokenSet }, TProfile>
   }
-  onAuth?: (
-    profile: TProfile,
-    tokens: oauth.OpenIDTokenEndpointResponse,
-  ) => Awaitable<InternalResponse | Nullish> | Nullish
 } & OIDCConfig<TProfile>
 
 export class OIDCProvider<TProfile> {
@@ -205,7 +200,11 @@ export class OIDCProvider<TProfile> {
 
     const profile: any = oauth.getValidatedIdTokenClaims(tokens)
 
-    const processedResponse: InternalResponse = (await this.config.onAuth?.(profile, tokens)) ?? {
+    const processedResponse: InternalResponse = (await this.config.onAuth?.(
+      profile,
+      tokens,
+      request,
+    )) ?? {
       session: {
         expires: '',
         user: (await this.config.profile?.(profile, tokens)) ?? profile,

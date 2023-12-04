@@ -14,7 +14,6 @@ import { DEFAULT_COOKIES_OPTIONS } from '../security/cookie'
 import type { Cookie, CookiesOptions } from '../security/cookie'
 import { DEFAULT_JWT_OPTIONS, type JWTOptions } from '../security/jwt'
 import type { Endpoint, InternalRequest, InternalResponse, ProviderPages } from '../types'
-import type { Awaitable, Nullish } from '../utils/types'
 
 export type ResolvedOAuthConfig<TProfile> = {
   id: string
@@ -26,10 +25,6 @@ export type ResolvedOAuthConfig<TProfile> = {
     token: Endpoint<OAuthProvider<TProfile>, TokenSet>
     userinfo: Endpoint<{ provider: OAuthConfig<TProfile>; tokens: TokenSet }, TProfile>
   }
-  onAuth?: (
-    profile: TProfile,
-    tokens: oauth.OAuth2TokenEndpointResponse,
-  ) => Awaitable<InternalResponse | Nullish> | Nullish
 } & OAuthConfig<TProfile>
 
 export class OAuthProvider<TProfile> {
@@ -177,7 +172,11 @@ export class OAuthProvider<TProfile> {
       throw new Error('TODO: Handle missing profile')
     }
 
-    const processedResponse: InternalResponse = (await this.config.onAuth?.(profile, tokens)) ?? {
+    const processedResponse: InternalResponse = (await this.config.onAuth?.(
+      profile,
+      tokens,
+      request,
+    )) ?? {
       session: {
         expires: '',
         user: (await this.config.profile?.(profile, tokens)) ?? profile,
