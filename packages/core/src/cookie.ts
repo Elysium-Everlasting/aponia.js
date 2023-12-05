@@ -2,6 +2,12 @@
  * @see https://github.com/jshttp/cookie
  */
 
+export interface Cookie {
+  name: string
+  value: string
+  options?: CookieSerializeOptions
+}
+
 export type CookiePriority = 'low' | 'medium' | 'high'
 
 export type CookieSameSite = true | false | 'lax' | 'strict' | 'none'
