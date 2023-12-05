@@ -16,50 +16,84 @@ export type CookieSerializeOptions = {
   priority?: CookiePriority
   sameSite?: CookieSameSite
   secure?: boolean
+  partitioned?: boolean
 }
+
+/**
+ * RegExp to match field-content in RFC 7230 sec 3.2
+ *
+ * field-content = field-vchar [ 1*( SP / HTAB ) field-vchar ]
+ * field-vchar   = VCHAR / obs-text
+ * obs-text      = %x80-FF
+ */
+// eslint-disable-next-line no-control-regex
+export const fieldContentRegExp = /^[\u0009\u0020-\u007e\u0080-\u00ff]+$/
 
 export function serializeCookie(
   name: string,
   value: string,
   options: CookieSerializeOptions = {},
 ): string {
+  if (!fieldContentRegExp.test(name)) {
+    throw new TypeError('argument name is invalid')
+  }
+
   const encode = options.encode ?? encodeURIComponent
 
-  let serializedCookie = `${name}=${encode(value)}`
+  const encodedValue = encode(value)
+
+  if (encodedValue && !fieldContentRegExp.test(encodedValue)) {
+    throw new TypeError('argument value is invalid')
+  }
+
+  let cookieString = `${name}=${encodedValue}`
 
   if (options.maxAge != null) {
-    serializedCookie += `; Max-Age=${getMaxAge(options.maxAge)}`
+    if (!isFinite(options.maxAge)) {
+      throw new TypeError('option maxAge is invalid')
+    }
+    cookieString += `; Max-Age=${Math.floor(options.maxAge)}`
   }
 
   if (options.domain) {
-    serializedCookie += `; Domain=${options.domain}`
+    if (!fieldContentRegExp.test(options.domain)) {
+      throw new TypeError('option domain is invalid')
+    }
+    cookieString += `; Domain=${options.domain}`
   }
 
   if (options.path) {
-    serializedCookie += `; Path=${options.path}`
+    if (!fieldContentRegExp.test(options.path)) {
+      throw new TypeError('option path is invalid')
+    }
+    cookieString += `; Path=${options.path}`
   }
 
   if (options.expires) {
-    serializedCookie += `; Expires=${options.expires.toUTCString()}`
+    cookieString += `; Expires=${options.expires.toUTCString()}`
   }
 
   if (options.httpOnly) {
-    serializedCookie += '; HttpOnly'
+    cookieString += '; HttpOnly'
   }
 
   if (options.secure) {
-    serializedCookie += '; Secure'
+    cookieString += '; Secure'
+  }
+
+  if (options.partitioned) {
+    cookieString += '; Partitioned'
   }
 
   if (options.priority) {
-    serializedCookie += `; Priority=${getPriority(options.priority)}`
+    cookieString += `; Priority=${getPriority(options.priority)}`
   }
 
   if (options.sameSite) {
-    serializedCookie += `; SameSite=${getSameSite(options.sameSite)}`
+    cookieString += `; SameSite=${getSameSite(options.sameSite)}`
   }
 
-  return serializedCookie
+  return cookieString
 }
 
 export interface CookieParseOptions {
@@ -96,13 +130,6 @@ export function parseCookie(
   return cookies
 }
 
-function getMaxAge(value: number) {
-  if (isNaN(value) || !isFinite(value)) {
-    throw new TypeError('maxAge is invalid')
-  }
-  return Math.floor(value)
-}
-
 function getPriority(value: string) {
   const priority = value.toLowerCase()
 
@@ -110,10 +137,8 @@ function getPriority(value: string) {
     case 'low':
     case 'medium':
     case 'high':
-      return priority.charAt(0).toUpperCase() + priority.slice(1)
-
     default:
-      throw new TypeError('option priority is invalid')
+      return priority.charAt(0).toUpperCase() + priority.slice(1)
   }
 }
 
@@ -127,10 +152,8 @@ function getSameSite(value: string | true) {
 
     case 'lax':
     case 'none':
-      return sameSite.charAt(0).toUpperCase() + sameSite.slice(1)
-
     default:
-      throw new TypeError('option sameSite is invalid')
+      return sameSite.charAt(0).toUpperCase() + sameSite.slice(1)
   }
 }
 
