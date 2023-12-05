@@ -62,17 +62,31 @@ export function serializeCookie(
   return serializedCookie
 }
 
-export function parseCookie(serializedCookie: string): Record<string, string> {
+export interface CookieParseOptions {
+  decode?: (value: string) => string
+}
+
+export function parseCookie(
+  serializedCookie: string,
+  options?: CookieParseOptions,
+): Record<string, string> {
+  const decode = options?.decode ?? decodeURIComponent
+
   const cookies = serializedCookie
     .split(';')
-    .map((keyValue) => keyValue.split('='))
+    .map((keyValue) => keyValue.split(/=(.*)/))
     .reduce(
       (accummulated, [key, value]) => {
-        if (key == null || value == null) {
+        if (key == null || value == null || key in accummulated) {
           return accummulated
         }
 
-        accummulated[decodeURIComponent(key.trim())] = decodeURIComponent(value.trim())
+        const trimmedValue = value.trim()
+
+        const unquotedValue =
+          trimmedValue.charCodeAt(0) === 0x22 ? trimmedValue.slice(1, -1) : trimmedValue
+
+        accummulated[key.trim()] = safeTransform(unquotedValue, decode)
 
         return accummulated
       },
@@ -117,5 +131,13 @@ function getSameSite(value: string | true) {
 
     default:
       throw new TypeError('option sameSite is invalid')
+  }
+}
+
+function safeTransform<T>(value: T, transform: (value: T) => T) {
+  try {
+    return transform(value)
+  } catch {
+    return value
   }
 }
