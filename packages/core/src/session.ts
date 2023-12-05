@@ -6,7 +6,11 @@ export interface Tokens {
 }
 
 export class SessionController {
-  constructor(public readonly config?: SessionControllerConfig) {}
+  config: SessionControllerConfig
+
+  constructor(config: SessionControllerConfig = {}) {
+    this.config = config
+  }
 
   async createSessionFromUser(user: Aponia.User): Promise<Aponia.Session> {
     return user

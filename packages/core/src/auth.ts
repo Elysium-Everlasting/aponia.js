@@ -8,6 +8,7 @@ import {
 export interface AuthConfig {
   pages?: Partial<AuthPages>
   callbacks?: Partial<AuthCallbacks>
+  plugins?: any | any[]
 }
 
 export interface AuthPages {
