@@ -1,4 +1,4 @@
-import type { Awaitable, Nullish } from '../utils/types'
+import type { Awaitable } from '../utils/types'
 
 /**
  * Tokens are shared as strings. e.g. session IDs, JWT-encoded objects, JSON-stringified objects, etc.
@@ -16,7 +16,7 @@ export abstract class SessionController {
    * After a provider authenticates a user,
    * it returns an {@link Aponia.User}, which should be used to create a {@link Aponia.Session}.
    */
-  abstract createSessionFromUser(user: Aponia.User): Awaitable<Aponia.Session | Nullish>
+  abstract createSessionFromUser(user: Aponia.User): Awaitable<Aponia.Session | undefined>
 
   /**
    * Whenever a new session is created by the framework,
@@ -24,7 +24,7 @@ export abstract class SessionController {
    *
    * The middleware will decide how to send the tokens, e.g. in cookies, response body, etc.
    */
-  abstract createTokensFromSession(session: Aponia.Session): Awaitable<Tokens | Nullish>
+  abstract createTokensFromSession(session: Aponia.Session): Awaitable<Tokens | undefined>
 
   /**
    * The client should include the tokens on subsequent requests;
@@ -32,5 +32,5 @@ export abstract class SessionController {
    *
    * The middleware will decide where to get the tokens, e.g. cookies, Authorization header, etc.
    */
-  abstract parseSessionFromTokens(tokens: Tokens): Awaitable<Aponia.Session | Nullish>
+  abstract parseSessionFromTokens(tokens: Tokens): Awaitable<Aponia.Session | undefined>
 }
