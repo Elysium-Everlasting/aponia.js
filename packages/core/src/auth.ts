@@ -4,7 +4,7 @@ import {
   DEFAULT_RESET_ROUTE,
   DEFAULT_UPDATE_ROUTE,
 } from './constants'
-import type { SessionController, Tokens } from './controllers/session'
+import type { SessionController } from './controllers/session'
 import type { Provider } from './providers'
 import {
   createClientCookiesOptions,
@@ -132,45 +132,12 @@ export class Auth {
     }
 
     if (response.session != null) {
-      const tokens = await this.session.createTokensFromSession(response.session)
-
-      if (tokens) {
-        await this.addTokensToResponse(response, tokens)
-      }
+      const cookies = await this.session.createCookiesFromSession(response.session)
+      response.cookies ??= []
+      response.cookies.push(...cookies)
     }
 
     return response
-  }
-
-  public async getTokensFromRequest(request: Aponia.Request): Promise<Tokens> {
-    return {
-      accessToken: request.cookies[this.cookies.accessToken.name],
-      refreshToken: request.cookies[this.cookies.refreshToken.name],
-    }
-  }
-
-  public async addTokensToResponse(response: Aponia.Response, tokens: Tokens): Promise<void> {
-    if (tokens.accessToken == null && tokens.refreshToken == null) {
-      return
-    }
-
-    response.cookies ??= []
-
-    if (tokens.accessToken) {
-      response.cookies.push({
-        name: this.cookies.accessToken.name,
-        value: tokens.accessToken,
-        options: this.cookies.accessToken.options,
-      })
-    }
-
-    if (tokens.refreshToken) {
-      response.cookies.push({
-        name: this.cookies.refreshToken.name,
-        value: tokens.refreshToken,
-        options: this.cookies.refreshToken.options,
-      })
-    }
   }
 
   /**
