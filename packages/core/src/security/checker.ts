@@ -101,5 +101,3 @@ export class Checker {
     return decodedNonce
   }
 }
-
-export const DEFAULT_CHECKER = new Checker()

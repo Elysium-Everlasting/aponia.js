@@ -2,19 +2,6 @@
  * @see https://github.com/jshttp/cookie
  */
 
-import {
-  ACCESS_TOKEN_NAME,
-  CSRF_TOKEN_NAME,
-  DEFAULT_COOKIE_NAME,
-  DEFAULT_SECURE_PREFIX,
-  FIFTEEN_MINUTES_IN_SECONDS,
-  HOST_PREFIX,
-  NONCE_NAME,
-  PKCE_NAME,
-  REFRESH_TOKEN_NAME,
-  STATE_NAME,
-} from '../constants'
-
 export interface Cookie {
   name: string
   value: string
@@ -181,89 +168,5 @@ function safeTransform<T>(value: T, transform: (value: T) => T) {
     return transform(value)
   } catch {
     return value
-  }
-}
-
-export interface CreateCookiesOptions {
-  cookieName?: string
-  securePrefix?: string
-  serializationOptions?: CookieSerializeOptions
-}
-
-export interface CookieOption {
-  name: string
-  options: CookieSerializeOptions
-}
-
-export interface ClientCookiesOptions {
-  accessToken: CookieOption
-  refreshToken: CookieOption
-  csrfToken: CookieOption
-}
-
-export interface OAuthCookiesOptions {
-  state: CookieOption
-  nonce: CookieOption
-  pkce: CookieOption
-}
-
-export function getCookiePrefix(options?: CreateCookiesOptions): string {
-  const cookieName = options?.cookieName ?? DEFAULT_COOKIE_NAME
-  const securePrefix = options?.securePrefix ?? DEFAULT_SECURE_PREFIX
-
-  return `${options?.serializationOptions?.secure ? securePrefix : ''}${cookieName}`
-}
-
-export function createClientCookiesOptions(options?: CreateCookiesOptions): ClientCookiesOptions {
-  const secure = options?.serializationOptions?.secure
-  const cookiePrefix = getCookiePrefix(options)
-  const serializeOptions = { ...options?.serializationOptions }
-
-  return {
-    accessToken: {
-      name: `${cookiePrefix}.${ACCESS_TOKEN_NAME}`,
-      options: serializeOptions,
-    },
-    refreshToken: {
-      name: `${cookiePrefix}.${REFRESH_TOKEN_NAME}`,
-      options: serializeOptions,
-    },
-    csrfToken: {
-      /**
-       * Default to __Host- for CSRF token for additional protection if using secure cookies.
-       * NB: The `__Host-` prefix is stricter than the `__Secure-` prefix.
-       */
-      name: `${secure ? HOST_PREFIX : cookiePrefix}.${CSRF_TOKEN_NAME}`,
-      options: serializeOptions,
-    },
-  }
-}
-
-export function createOAuthCookiesOptions(options?: CreateCookiesOptions): OAuthCookiesOptions {
-  const cookiePrefix = getCookiePrefix(options)
-  const serializeOptions = { ...options?.serializationOptions }
-
-  return {
-    pkce: {
-      name: `${cookiePrefix}.${PKCE_NAME}`,
-      options: {
-        maxAge: FIFTEEN_MINUTES_IN_SECONDS,
-        ...serializeOptions,
-      },
-    },
-    state: {
-      name: `${cookiePrefix}.${STATE_NAME}`,
-      options: {
-        maxAge: FIFTEEN_MINUTES_IN_SECONDS,
-        ...serializeOptions,
-      },
-    },
-    nonce: {
-      name: `${cookiePrefix}.${NONCE_NAME}`,
-      options: {
-        maxAge: FIFTEEN_MINUTES_IN_SECONDS,
-        ...serializeOptions,
-      },
-    },
   }
 }
