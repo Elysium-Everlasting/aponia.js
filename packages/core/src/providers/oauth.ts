@@ -4,10 +4,19 @@ import {
   DEFAULT_CALLBACK_REDIRECT,
   DEFAULT_CALLBACK_ROUTE,
   DEFAULT_LOGIN_ROUTE,
+  FIFTEEN_MINUTES_IN_SECONDS,
   ISSUER,
+  PKCE_NAME,
+  STATE_NAME,
 } from '../constants'
+import type { PluginCoordinator } from '../plugin'
 import { Checker, type CheckerConfig } from '../security/checker'
-import type { Cookie } from '../security/cookie'
+import {
+  getCookiePrefix,
+  type Cookie,
+  type CookieOption,
+  type CreateCookiesOptions,
+} from '../security/cookie'
 import type { PageEndpoint } from '../types'
 import type { Awaitable, Nullish } from '../utils/types'
 
@@ -105,10 +114,18 @@ export class OAuthProvider<T> implements Provider {
 
     this.managedEndpoints = [this.pages.login, this.pages.callback]
 
+    this.cookies = createOAuthCookiesOptions(config.cookies)
+
     this.checker = new Checker(config.checker)
   }
 
-  async handle(request: Aponia.Request): Promise<Aponia.Response | void> {
+  public initialize(plugin: PluginCoordinator) {
+    plugin.on('cookies', (options) => {
+      this.cookies = createOAuthCookiesOptions(options)
+    })
+  }
+
+  public async handle(request: Aponia.Request): Promise<Aponia.Response | void> {
     if (this.matches(request, this.pages.login)) {
       return this.login(request)
     }
@@ -118,7 +135,7 @@ export class OAuthProvider<T> implements Provider {
     }
   }
 
-  async login(request: Aponia.Request): Promise<Aponia.Response> {
+  public async login(request: Aponia.Request): Promise<Aponia.Response> {
     const url = new URL(this.endpoints.authorization.url)
 
     const params = this.endpoints.authorization.params ?? {}
@@ -163,7 +180,7 @@ export class OAuthProvider<T> implements Provider {
     return { status: 302, redirect: url.toString(), cookies }
   }
 
-  async callback(request: Aponia.Request): Promise<Aponia.Response> {
+  public async callback(request: Aponia.Request): Promise<Aponia.Response> {
     const cookies: Cookie[] = []
 
     const state = await this.checker.useState(request.cookies[this.cookies.state.name])
@@ -256,4 +273,31 @@ export class OAuthProvider<T> implements Provider {
       pageEndpoint.route === request.url.pathname && pageEndpoint.methods.includes(request.method)
     )
   }
+}
+
+export function createOAuthCookiesOptions(options?: CreateCookiesOptions): OAuthCookiesOptions {
+  const cookiePrefix = getCookiePrefix(options)
+  const serializeOptions = { ...options?.serialize }
+
+  return {
+    pkce: {
+      name: `${cookiePrefix}.${PKCE_NAME}`,
+      options: {
+        maxAge: FIFTEEN_MINUTES_IN_SECONDS,
+        ...serializeOptions,
+      },
+    },
+    state: {
+      name: `${cookiePrefix}.${STATE_NAME}`,
+      options: {
+        maxAge: FIFTEEN_MINUTES_IN_SECONDS,
+        ...serializeOptions,
+      },
+    },
+  }
+}
+
+export interface OAuthCookiesOptions {
+  pkce: CookieOption
+  state: CookieOption
 }

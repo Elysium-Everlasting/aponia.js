@@ -2,6 +2,8 @@
  * @see https://github.com/jshttp/cookie
  */
 
+import { DEFAULT_COOKIE_NAME, DEFAULT_SECURE_PREFIX } from '../constants'
+
 export interface Cookie {
   name: string
   value: string
@@ -169,4 +171,22 @@ function safeTransform<T>(value: T, transform: (value: T) => T) {
   } catch {
     return value
   }
+}
+
+export interface CreateCookiesOptions {
+  name?: string
+  securePrefix?: string
+  serialize?: CookieSerializeOptions
+}
+
+export interface CookieOption {
+  name: string
+  options: CookieSerializeOptions
+}
+
+export function getCookiePrefix(options?: CreateCookiesOptions): string {
+  const cookieName = options?.name ?? DEFAULT_COOKIE_NAME
+  const securePrefix = options?.securePrefix ?? DEFAULT_SECURE_PREFIX
+
+  return `${options?.serialize?.secure ? securePrefix : ''}${cookieName}`
 }

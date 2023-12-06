@@ -1,8 +1,9 @@
-import { DEFAULT_ACCESS_TOKEN_AGE, DEFAULT_SECRET } from '../constants'
+import { ACCESS_TOKEN_NAME, DEFAULT_ACCESS_TOKEN_AGE, DEFAULT_SECRET } from '../constants'
+import type { PluginCoordinator } from '../plugin'
 import {
-  createClientCookiesOptions,
-  type ClientCookiesOptions,
+  getCookiePrefix,
   type Cookie,
+  type CookieOption,
   type CreateCookiesOptions,
 } from '../security/cookie'
 import {
@@ -29,6 +30,7 @@ export class JwtSessionController implements SessionController {
   jwt: JWTOptions
 
   encode: (params: JWTEncodeParams) => Awaitable<string>
+
   decode: (params: JWTDecodeParams) => Awaitable<any>
 
   constructor(config: JwtSessionControllerConfig = {}) {
@@ -36,23 +38,55 @@ export class JwtSessionController implements SessionController {
 
     this.cookies = createClientCookiesOptions({
       ...config.cookie,
-      serializationOptions: {
+      serialize: {
         path: '/',
         sameSite: 'lax',
-        ...config.cookie?.serializationOptions,
+        ...config.cookie?.serialize,
       },
     })
 
     this.cookies.accessToken.options.maxAge ??= DEFAULT_ACCESS_TOKEN_AGE
 
     this.jwt = {
-      secret: DEFAULT_SECRET,
-      maxAge: DEFAULT_ACCESS_TOKEN_AGE,
       ...config.jwt,
+      secret: config.jwt?.secret ?? DEFAULT_SECRET,
+      maxAge: config.jwt?.maxAge ?? DEFAULT_ACCESS_TOKEN_AGE,
     }
 
     this.encode = config.jwt?.encode ?? encode
+
     this.decode = config.jwt?.decode ?? decode
+  }
+
+  initialize(plugin: PluginCoordinator) {
+    plugin.on('cookies', (options) => {
+      this.cookies = createClientCookiesOptions({
+        ...options,
+        serialize: {
+          path: '/',
+          sameSite: 'lax',
+          ...options.serialize,
+        },
+      })
+
+      this.cookies.accessToken.options.maxAge ??= DEFAULT_ACCESS_TOKEN_AGE
+    })
+
+    plugin.on('jwt', (options) => {
+      this.jwt = {
+        ...options,
+        maxAge: options.maxAge ?? DEFAULT_ACCESS_TOKEN_AGE,
+        secret: options.secret ?? DEFAULT_SECRET,
+      }
+    })
+
+    plugin.on('jwtEncode', (encode) => {
+      this.encode = encode
+    })
+
+    plugin.on('jwtDecode', (decode) => {
+      this.decode = decode
+    })
   }
 
   async createSessionFromUser(user: Aponia.User): Promise<Aponia.Session | undefined> {
@@ -83,5 +117,30 @@ export class JwtSessionController implements SessionController {
     const accessToken = await this.decode({ ...this.jwt, token: rawAccessToken })
 
     return accessToken
+  }
+}
+
+export interface ClientCookiesOptions {
+  accessToken: CookieOption
+}
+
+export function createClientCookiesOptions(options?: CreateCookiesOptions): ClientCookiesOptions {
+  // const secure = options?.serialize?.secure
+  const cookiePrefix = getCookiePrefix(options)
+  const serializeOptions = { ...options?.serialize }
+
+  return {
+    accessToken: {
+      name: `${cookiePrefix}.${ACCESS_TOKEN_NAME}`,
+      options: serializeOptions,
+    },
+    // csrfToken: {
+    //   /**
+    //    * Default to __Host- for CSRF token for additional protection if using secure cookies.
+    //    * NB: The `__Host-` prefix is stricter than the `__Secure-` prefix.
+    //    */
+    //   name: `${secure ? HOST_PREFIX : cookiePrefix}.${CSRF_TOKEN_NAME}`,
+    //   options: serializeOptions,
+    // },
   }
 }
