@@ -123,6 +123,10 @@ export class OAuthProvider<T> implements Provider {
     plugin.on('cookies', (options) => {
       this.cookies = createOAuthCookiesOptions(options)
     })
+
+    plugin.on('checker', (config) => {
+      this.checker.setConfig(config)
+    })
   }
 
   public async handle(request: Aponia.Request): Promise<Aponia.Response | void> {
