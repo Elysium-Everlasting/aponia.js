@@ -7,7 +7,12 @@ import {
   ISSUER,
 } from '../constants'
 import { DEFAULT_CHECKER, type Checker } from '../security/checker'
-import type { Cookie } from '../security/cookie'
+import {
+  createOAuthCookiesOptions,
+  type Cookie,
+  type CreateCookiesOptions,
+  type OAuthCookiesOptions,
+} from '../security/cookie'
 import type { Awaitable, Nullish } from '../utils/types'
 
 import type { Endpoint, Provider, TokenEndpointResponse } from '.'
@@ -35,6 +40,7 @@ export interface OAuthProviderConfig<T> {
   endpoints?: Partial<OAuthEndpoints<T>>
   checker?: Checker
   profile?: (profile: T, tokens: TokenEndpointResponse) => Awaitable<Aponia.User | Nullish>
+  cookies?: CreateCookiesOptions
 }
 
 export class OAuthProvider<T> implements Provider {
@@ -51,6 +57,8 @@ export class OAuthProvider<T> implements Provider {
   client: oauth.Client
 
   authorizationServer: oauth.AuthorizationServer
+
+  cookies: OAuthCookiesOptions
 
   constructor(config: OAuthProviderConfig<T>) {
     this.config = config
@@ -91,6 +99,8 @@ export class OAuthProvider<T> implements Provider {
       token_endpoint: this.endpoints.token.url,
       userinfo_endpoint: this.endpoints.userinfo.url,
     }
+
+    this.cookies = createOAuthCookiesOptions(config.cookies)
   }
 
   routes(): string[] {
@@ -124,7 +134,11 @@ export class OAuthProvider<T> implements Provider {
 
       url.searchParams.set('state', state)
 
-      cookies.push(stateCookie)
+      cookies.push({
+        name: this.cookies.state.name,
+        value: state,
+        options: this.cookies.state.options,
+      })
     }
 
     if (this.checker.checks.includes('pkce')) {
@@ -133,7 +147,11 @@ export class OAuthProvider<T> implements Provider {
       url.searchParams.set('code_challenge', challenge)
       url.searchParams.set('code_challenge_method', 'S256')
 
-      cookies.push(verifier)
+      cookies.push({
+        name: this.cookies.pkce.name,
+        value: verifier,
+        options: this.cookies.pkce.options,
+      })
     }
 
     return { status: 302, redirect: url.toString(), cookies }
@@ -144,7 +162,11 @@ export class OAuthProvider<T> implements Provider {
 
     const state = await this.checker.useState(request.cookies['state'])
 
-    cookies.push(stateCookie)
+    cookies.push({
+      name: this.cookies.state.name,
+      value: '',
+      options: { ...this.cookies.state.options, maxAge: 0 },
+    })
 
     const codeGrantParams = oauth.validateAuthResponse(
       this.authorizationServer,
@@ -160,7 +182,11 @@ export class OAuthProvider<T> implements Provider {
     const pkce = await this.checker.usePkce(request.cookies['pkce'])
 
     if (pkce) {
-      cookies.push(pkceCookie)
+      cookies.push({
+        name: this.cookies.pkce.name,
+        value: '',
+        options: { ...this.cookies.pkce.options, maxAge: 0 },
+      })
     }
 
     const initialCodeGrantResponse = await oauth.authorizationCodeGrantRequest(

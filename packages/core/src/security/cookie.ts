@@ -267,7 +267,3 @@ export function createOAuthCookiesOptions(options?: CreateCookiesOptions): OAuth
     },
   }
 }
-
-export const DEFAULT_CLIENT_COOKIES_OPTIONS = createClientCookiesOptions()
-
-export const DEFAULT_OAUTH_COOKIES_OPTIONS = createOAuthCookiesOptions()
