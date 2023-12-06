@@ -6,6 +6,8 @@ import {
   DEFAULT_LOGIN_ROUTE,
   ISSUER,
 } from '../constants'
+import { DEFAULT_CHECKER, type Checker } from '../security/checker'
+import type { Cookie } from '../security/cookie'
 import type { Awaitable, Nullish } from '../utils/types'
 
 import type { Endpoint, Provider, TokenEndpointResponse } from '.'
@@ -29,9 +31,9 @@ export interface OAuthProviderConfig<T> {
   clientId: string
   clientSecret?: string
   client?: oauth.Client
-  checks?: OAuthCheck[]
   pages?: Partial<OAuthPages>
   endpoints?: Partial<OAuthEndpoints<T>>
+  checker?: Checker
   profile?: (profile: T, tokens: TokenEndpointResponse) => Awaitable<Aponia.User | Nullish>
 }
 
@@ -40,7 +42,7 @@ export class OAuthProvider<T> implements Provider {
 
   id: string
 
-  checks: OAuthCheck[]
+  checker: Checker
 
   pages: OAuthPages
 
@@ -55,7 +57,7 @@ export class OAuthProvider<T> implements Provider {
 
     this.id = config.id
 
-    this.checks = config.checks ?? ['pkce']
+    this.checker = config.checker ?? DEFAULT_CHECKER
 
     this.pages = {
       login: config.pages?.login ?? `${DEFAULT_LOGIN_ROUTE}/${this.id}`,
@@ -105,6 +107,8 @@ export class OAuthProvider<T> implements Provider {
 
     const params = this.endpoints.authorization.params ?? {}
 
+    const cookies: Cookie[] = []
+
     Object.entries(params).forEach(([key, value]) => {
       if (typeof value === 'string') {
         url.searchParams.set(key, value)
@@ -115,17 +119,21 @@ export class OAuthProvider<T> implements Provider {
       url.searchParams.set('redirect_uri', `${request.url.origin}${this.pages.callback}`)
     }
 
-    if (this.config.checks?.includes('state')) {
-      const [state, stateCookie] = await checks.state.create(this.checkParams)
+    if (this.checker.checks.includes('state')) {
+      const state = await this.checker.createState()
+
       url.searchParams.set('state', state)
+
       cookies.push(stateCookie)
     }
 
-    if (this.config.checks?.includes('pkce')) {
-      const [pkce, pkceCookie] = await checks.pkce.create(this.checkParams)
-      url.searchParams.set('code_challenge', pkce)
+    if (this.checker.checks.includes('pkce')) {
+      const [verifier, challenge] = await this.checker.createPkce()
+
+      url.searchParams.set('code_challenge', challenge)
       url.searchParams.set('code_challenge_method', 'S256')
-      cookies.push(pkceCookie)
+
+      cookies.push(verifier)
     }
 
     return { status: 302, redirect: url.toString(), cookies }
@@ -134,11 +142,9 @@ export class OAuthProvider<T> implements Provider {
   async callback(request: Aponia.Request): Promise<Aponia.Response> {
     const cookies: Cookie[] = []
 
-    const [state, stateCookie] = await checks.state.use(request, this.checkParams)
+    const state = await this.checker.useState(request.cookies['state'])
 
-    if (stateCookie) {
-      cookies.push(stateCookie)
-    }
+    cookies.push(stateCookie)
 
     const codeGrantParams = oauth.validateAuthResponse(
       this.authorizationServer,
@@ -151,9 +157,9 @@ export class OAuthProvider<T> implements Provider {
       throw new Error(codeGrantParams.error_description)
     }
 
-    const [pkce, pkceCookie] = await checks.pkce.use(request, this.checkParams)
+    const pkce = await this.checker.usePkce(request.cookies['pkce'])
 
-    if (pkceCookie) {
+    if (pkce) {
       cookies.push(pkceCookie)
     }
 
@@ -162,7 +168,7 @@ export class OAuthProvider<T> implements Provider {
       this.client,
       codeGrantParams,
       `${request.url.origin}${this.pages.callback}`,
-      pkce,
+      pkce ?? 'AUTH',
     )
 
     const codeGrantResponse =
