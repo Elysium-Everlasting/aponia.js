@@ -6,19 +6,12 @@ import {
 } from './constants'
 import type { SessionController } from './controllers/session'
 import type { Provider } from './providers'
-import {
-  createClientCookiesOptions,
-  type ClientCookiesOptions,
-  type CreateCookiesOptions,
-} from './security/cookie'
 
 export interface AuthConfig {
   session: SessionController
   providers?: Provider[]
   pages?: Partial<AuthPages>
-  cookies?: CreateCookiesOptions
   callbacks?: Partial<AuthCallbacks>
-  plugins?: any | any[]
 }
 
 export interface AuthPages {
@@ -51,8 +44,6 @@ export class Auth {
 
   providerHandlers: Map<string, Provider>
 
-  cookies: ClientCookiesOptions
-
   constructor(config: AuthConfig) {
     this.pages = {
       logout: config.pages?.logout ?? { route: DEFAULT_LOGOUT_ROUTE, methods: ['POST'] },
@@ -69,11 +60,7 @@ export class Auth {
 
     this.providerHandlers = new Map()
 
-    this.cookies = createClientCookiesOptions(config.cookies)
-
     this.providers.forEach((provider) => {
-      provider.setCookiesOptions(config.cookies)
-
       provider.routes.forEach((route) => {
         this.providerHandlers.set(route, provider)
       })
