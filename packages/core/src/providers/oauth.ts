@@ -6,7 +6,6 @@ import {
   DEFAULT_LOGIN_ROUTE,
   ISSUER,
 } from '../constants'
-import type { Cookie } from '../cookie'
 import type { Awaitable, Nullish } from '../utils/types'
 
 import type { Endpoint, Provider, TokenEndpointResponse } from '.'
@@ -103,8 +102,6 @@ export class OAuthProvider<T> implements Provider {
 
   async login(request: Aponia.Request): Promise<Aponia.Response> {
     const url = new URL(this.endpoints.authorization.url)
-
-    const cookies: Cookie[] = []
 
     const params = this.endpoints.authorization.params ?? {}
 

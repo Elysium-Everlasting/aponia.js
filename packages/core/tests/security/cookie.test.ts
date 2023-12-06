@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'vitest'
 
-import { serializeCookie, parseCookie } from '../src/cookie'
+import { serializeCookie, parseCookie } from '../../src/security/cookie'
 
 describe('cookie', () => {
   describe('serializeCookie', () => {
