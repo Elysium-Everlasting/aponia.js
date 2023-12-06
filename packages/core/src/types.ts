@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-namespace */
 
 import type { Action } from './constants'
-import type { CookieStore } from './security/cookie'
+import type { Cookie } from './security/cookie'
 
 /**
  * The request object that the framework handles.
@@ -20,7 +20,7 @@ export interface AponiaRequest {
   /**
    * Cookies sent with the request.
    */
-  cookies: CookieStore
+  cookies: Record<string, string>
 
   /**
    * Relevant headers sent with the request.
@@ -61,7 +61,7 @@ export interface AponiaResponse {
   /**
    * Cookies to be set in the response.
    */
-  cookies?: CookieStore
+  cookies?: Cookie[]
 
   /**
    * Any errors that occurred during the handling.

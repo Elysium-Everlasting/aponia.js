@@ -5,7 +5,11 @@ import {
   DEFAULT_UPDATE_ROUTE,
 } from './constants'
 import type { Provider } from './providers'
-import type { CreateCookiesOptions } from './security/cookie'
+import {
+  createClientCookiesOptions,
+  type ClientCookiesOptions,
+  type CreateCookiesOptions,
+} from './security/cookie'
 import type { SessionController, Tokens } from './session-controller'
 import { JsonSessionController } from './session-controller/json'
 
@@ -53,6 +57,8 @@ export class Auth {
 
   providerHandlers: Map<string, Provider>
 
+  cookies: ClientCookiesOptions
+
   constructor(config: AuthConfig) {
     this.pages = {
       logout: config.pages?.logout ?? { route: DEFAULT_LOGOUT_ROUTE, methods: ['POST'] },
@@ -71,6 +77,8 @@ export class Auth {
 
     this.providerHandlers = new Map()
 
+    this.cookies = createClientCookiesOptions(config.cookies)
+
     this.providers.forEach((provider) => {
       provider.setCookiesOptions(config.cookies)
 
@@ -84,13 +92,13 @@ export class Auth {
     const providerResponse = await this.handleProviderRequest(request)
 
     if (providerResponse) {
-      return await this.handleResponseSession(request, providerResponse)
+      return await this.handleResponseSession(providerResponse)
     }
 
     const staticResponse = await this.handleStaticRequest(request)
 
     if (staticResponse) {
-      return await this.handleResponseSession(request, staticResponse)
+      return await this.handleResponseSession(staticResponse)
     }
 
     return (await this.callbacks?.fallback?.(request)) ?? {}
@@ -126,10 +134,7 @@ export class Auth {
     return
   }
 
-  public async handleResponseSession(
-    request: Aponia.Request,
-    response: Aponia.Response,
-  ): Promise<Aponia.Response> {
+  public async handleResponseSession(response: Aponia.Response): Promise<Aponia.Response> {
     if (response.session == null && response.user != null) {
       response.session = await this.session.createSessionFromUser(response.user)
     }
@@ -138,7 +143,7 @@ export class Auth {
       const tokens = await this.session.createTokensFromSession(response.session)
 
       if (tokens) {
-        await this.addTokensToResponse(request, response, tokens)
+        await this.addTokensToResponse(response, tokens)
       }
     }
 
@@ -148,8 +153,8 @@ export class Auth {
   public async getTokensFromRequest(request: Aponia.Request): Promise<Tokens> {
     if (this.transport === 'cookie') {
       return {
-        accessToken: await request.cookies.get('access-token'),
-        refreshToken: await request.cookies.get('refresh-token'),
+        accessToken: request.cookies[this.cookies.accessToken.name],
+        refreshToken: request.cookies[this.cookies.refreshToken.name],
       }
     }
 
@@ -158,23 +163,20 @@ export class Auth {
     }
   }
 
-  public async addTokensToResponse(
-    request: Aponia.Request,
-    response: Aponia.Response,
-    tokens: Tokens,
-  ): Promise<void> {
+  public async addTokensToResponse(response: Aponia.Response, tokens: Tokens): Promise<void> {
     if (tokens.accessToken == null && tokens.refreshToken == null) {
       return
     }
 
     switch (this.transport) {
       case 'cookie': {
-        response.cookies ??= request.cookies
+        response.cookies ??= []
 
         if (tokens.accessToken) {
-          await response.cookies.set('access-token', tokens.accessToken, {
-            maxAge: 60 * 60 * 24 * 7,
-            path: '/',
+          response.cookies.push({
+            name: this.cookies.accessToken.name,
+            value: tokens.accessToken,
+            options: this.cookies.accessToken.options,
           })
         }
         break
