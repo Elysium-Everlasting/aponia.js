@@ -34,7 +34,14 @@ export class JwtSessionController implements SessionController {
   constructor(config: JwtSessionControllerConfig = {}) {
     this.config = config
 
-    this.cookies = createClientCookiesOptions(config.cookie)
+    this.cookies = createClientCookiesOptions({
+      ...config.cookie,
+      serializationOptions: {
+        path: '/',
+        sameSite: 'lax',
+        ...config.cookie?.serializationOptions,
+      },
+    })
 
     this.cookies.accessToken.options.maxAge ??= DEFAULT_ACCESS_TOKEN_AGE
 

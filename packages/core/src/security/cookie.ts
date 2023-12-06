@@ -17,7 +17,7 @@ import {
 
 export interface Cookie {
   name: string
-  value: unknown
+  value: string
   options?: CookieSerializeOptions
 }
 

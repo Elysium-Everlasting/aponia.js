@@ -28,6 +28,7 @@ export const ACTIONS = [
   'update',
   'forgot',
   'reset',
+  'unknown',
 ] as const
 export type Action = (typeof ACTIONS)[number]
 

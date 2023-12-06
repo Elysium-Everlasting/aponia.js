@@ -48,6 +48,9 @@ const config = {
       typescript: true,
     },
   },
+  env: {
+    browser: true,
+  },
   ignorePatterns: ['*.config.*', '*.cjs'],
 }
 

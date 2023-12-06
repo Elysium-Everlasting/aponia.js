@@ -28,7 +28,7 @@ export interface OAuthPages {
 export interface OAuthEndpoints<T> {
   authorization: Endpoint<OAuthProvider<T>>
   token: Endpoint<OAuthProvider<T>, TokenEndpointResponse>
-  userinfo: Endpoint<{ provider: OAuthProvider<T>; tokens: TokenEndpointResponse }, T>
+  userinfo: Endpoint<{ provider: OAuthEndpoints<T>; tokens: TokenEndpointResponse }, T>
 }
 
 export interface OAuthProviderConfig<T> {
@@ -85,14 +85,15 @@ export class OAuthProvider<T> implements Provider {
           ...config.endpoints?.authorization?.params,
         },
       },
-      ...config.endpoints,
       token: { url: '' },
       userinfo: { url: '' },
+      ...config.endpoints,
     }
 
     this.client = {
       client_id: config.clientId,
       client_secret: config.clientSecret,
+      ...config.client,
     }
 
     this.authorizationServer = {
@@ -108,7 +109,14 @@ export class OAuthProvider<T> implements Provider {
   }
 
   setCookiesOptions(options?: CreateCookiesOptions): void {
-    this.cookies = createOAuthCookiesOptions(options)
+    this.cookies = createOAuthCookiesOptions({
+      ...options,
+      serializationOptions: {
+        path: '/',
+        sameSite: 'lax',
+        ...options?.serializationOptions,
+      },
+    })
   }
 
   async handle(request: Aponia.Request): Promise<Aponia.Response | void> {
@@ -169,7 +177,7 @@ export class OAuthProvider<T> implements Provider {
   async callback(request: Aponia.Request): Promise<Aponia.Response> {
     const cookies: Cookie[] = []
 
-    const state = await this.checker.useState(request.cookies['state'])
+    const state = await this.checker.useState(request.cookies[this.cookies.state.name])
 
     cookies.push({
       name: this.cookies.state.name,
@@ -188,7 +196,7 @@ export class OAuthProvider<T> implements Provider {
       throw new Error(codeGrantParams.error_description)
     }
 
-    const pkce = await this.checker.usePkce(request.cookies['pkce'])
+    const pkce = await this.checker.usePkce(request.cookies[this.cookies.pkce.name])
 
     if (pkce) {
       cookies.push({
@@ -229,7 +237,10 @@ export class OAuthProvider<T> implements Provider {
       throw new Error('TODO: Handle OAuth 2.0 response body error')
     }
 
-    const profile = await (this.endpoints.userinfo.request?.({ provider: this, tokens }) ??
+    const profile = await (this.endpoints.userinfo.request?.({
+      provider: this.endpoints,
+      tokens,
+    }) ??
       oauth
         .userInfoRequest(this.authorizationServer, this.client, tokens.access_token)
         .then((response) => response.json()))
@@ -242,7 +253,7 @@ export class OAuthProvider<T> implements Provider {
       user: (await this.config.profile?.(profile, tokens)) ?? profile,
       status: 302,
       cookies,
-      redirect: this.pages.callback,
+      redirect: this.pages.redirect,
     }
 
     return response
