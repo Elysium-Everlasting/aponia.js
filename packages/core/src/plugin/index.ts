@@ -5,8 +5,6 @@ import type { Awaitable } from '../utils/types'
 
 export type Listener<T> = (data: T) => unknown
 
-export type ExtractListener<T> = T extends Listener<infer U> ? U : never
-
 export type Plugin = (plugin: PluginCoordinator) => void
 
 export class PluginCoordinator {
@@ -23,5 +21,12 @@ export class PluginCoordinator {
     listener: (typeof this.listeners)[T] extends Array<infer U> ? U : never,
   ) {
     this.listeners[event].push(listener as never)
+  }
+
+  emit<T extends keyof typeof this.listeners>(
+    event: T,
+    data: (typeof this.listeners)[T] extends Array<Listener<infer U>> ? U : never,
+  ) {
+    this.listeners[event].forEach((listener) => listener(data as never))
   }
 }
