@@ -202,7 +202,7 @@ export interface CookiesOptions {
   state: CookieOption
   nonce: CookieOption
   csrfToken: CookieOption
-  pkceCodeVerifier: CookieOption
+  pkce: CookieOption
   callbackUrl: CookieOption
 }
 
@@ -239,7 +239,7 @@ export function createCookiesOptions(options?: CreateCookiesOptions): CookiesOpt
       name: `${secure ? HOST_PREFIX : cookiePrefix}.${CSRF_TOKEN_NAME}`,
       options: serializeOptions,
     },
-    pkceCodeVerifier: {
+    pkce: {
       name: `${cookiePrefix}.${PKCE_NAME}`,
       options: {
         maxAge: FIFTEEN_MINUTES_IN_SECONDS,
