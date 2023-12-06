@@ -4,6 +4,7 @@ import {
   DEFAULT_RESET_ROUTE,
   DEFAULT_UPDATE_ROUTE,
 } from './constants'
+import type { Provider } from './providers'
 import type { CookieSerializeOptions } from './security/cookie'
 import type { SessionController, Tokens } from './session-controller'
 import { JsonSessionController } from './session-controller/json'
@@ -11,6 +12,7 @@ import { JsonSessionController } from './session-controller/json'
 export interface AuthConfig {
   transport?: Transport
   session?: SessionController
+  providers?: Provider[]
   pages?: Partial<AuthPages>
   callbacks?: Partial<AuthCallbacks>
   plugins?: any | any[]
@@ -49,6 +51,10 @@ export class Auth {
 
   cookie?: CookieSerializeOptions
 
+  providers: Provider[]
+
+  providerHandlers: Map<string, Provider>
+
   constructor(config: AuthConfig) {
     this.pages = {
       logout: config.pages?.logout ?? { route: DEFAULT_LOGOUT_ROUTE, methods: ['POST'] },
@@ -64,9 +70,25 @@ export class Auth {
     this.transport = config.transport ?? 'cookie'
 
     this.cookie = config.cookie
+
+    this.providers = config.providers ?? []
+
+    this.providerHandlers = new Map()
+
+    this.providers.forEach((provider) => {
+      provider.routes.forEach((route) => {
+        this.providerHandlers.set(route, provider)
+      })
+    })
   }
 
   public async handle(request: Aponia.Request): Promise<Aponia.Response> {
+    const providerResponse = await this.handleProviderRequest(request)
+
+    if (providerResponse) {
+      return await this.handleResponseSession(request, providerResponse)
+    }
+
     const staticResponse = await this.handleStaticRequest(request)
 
     if (staticResponse) {
@@ -76,11 +98,10 @@ export class Auth {
     return (await this.callbacks?.fallback?.(request)) ?? {}
   }
 
-  public async handleProviderRequest(
-    request: Aponia.Request,
-  ): Promise<Aponia.Response | undefined> {
-    request
-    return
+  public async handleProviderRequest(request: Aponia.Request): Promise<Aponia.Response | void> {
+    if (this.providerHandlers.has(request.url.pathname)) {
+      return await this.providerHandlers.get(request.url.pathname)?.handle(request)
+    }
   }
 
   public async handleStaticRequest(request: Aponia.Request): Promise<Aponia.Response | undefined> {

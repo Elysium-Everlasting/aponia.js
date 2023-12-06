@@ -10,12 +10,12 @@ export abstract class Provider {
    *
    * @example A Google provider might handle ['/auth/login/google', '/auth/callback/google']
    */
-  abstract routes(): string[]
+  abstract routes: string[]
 
   /**
    * Whenever a route is matched, the provider should handle the request.
    */
-  abstract handle(request: Aponia.Request): Awaitable<Aponia.Response>
+  abstract handle(request: Aponia.Request): Awaitable<Aponia.Response | void>
 }
 
 export interface Endpoint<TContext = any, TResponse = any> {

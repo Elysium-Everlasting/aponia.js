@@ -60,6 +60,8 @@ export class OAuthProvider<T> implements Provider {
 
   cookies: OAuthCookiesOptions
 
+  routes: string[]
+
   constructor(config: OAuthProviderConfig<T>) {
     this.config = config
 
@@ -101,15 +103,18 @@ export class OAuthProvider<T> implements Provider {
     }
 
     this.cookies = createOAuthCookiesOptions(config.cookies)
+
+    this.routes = [this.pages.login, this.pages.callback]
   }
 
-  routes(): string[] {
-    return []
-  }
+  async handle(request: Aponia.Request): Promise<Aponia.Response | void> {
+    if (request.url.pathname === this.pages.login) {
+      return this.login(request)
+    }
 
-  async handle(request: Aponia.Request): Promise<Aponia.Response> {
-    request
-    return {}
+    if (request.url.pathname === this.pages.callback) {
+      return this.callback(request)
+    }
   }
 
   async login(request: Aponia.Request): Promise<Aponia.Response> {
