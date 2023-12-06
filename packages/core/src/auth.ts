@@ -5,7 +5,7 @@ import {
   DEFAULT_UPDATE_ROUTE,
 } from './constants'
 import type { Provider } from './providers'
-import type { CookieSerializeOptions } from './security/cookie'
+import type { CreateCookiesOptions } from './security/cookie'
 import type { SessionController, Tokens } from './session-controller'
 import { JsonSessionController } from './session-controller/json'
 
@@ -14,9 +14,9 @@ export interface AuthConfig {
   session?: SessionController
   providers?: Provider[]
   pages?: Partial<AuthPages>
+  cookies?: CreateCookiesOptions
   callbacks?: Partial<AuthCallbacks>
   plugins?: any | any[]
-  cookie?: CookieSerializeOptions
 }
 
 export interface AuthPages {
@@ -49,8 +49,6 @@ export class Auth {
 
   pages: AuthPages
 
-  cookie?: CookieSerializeOptions
-
   providers: Provider[]
 
   providerHandlers: Map<string, Provider>
@@ -69,13 +67,13 @@ export class Auth {
 
     this.transport = config.transport ?? 'cookie'
 
-    this.cookie = config.cookie
-
     this.providers = config.providers ?? []
 
     this.providerHandlers = new Map()
 
     this.providers.forEach((provider) => {
+      provider.setCookiesOptions(config.cookies)
+
       provider.routes.forEach((route) => {
         this.providerHandlers.set(route, provider)
       })

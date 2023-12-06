@@ -1,5 +1,6 @@
 import type * as oauth from 'oauth4webapi'
 
+import type { CreateCookiesOptions } from '../security/cookie'
 import type { Awaitable, Nullish } from '../utils/types'
 
 /**
@@ -16,6 +17,11 @@ export abstract class Provider {
    * Whenever a route is matched, the provider should handle the request.
    */
   abstract handle(request: Aponia.Request): Awaitable<Aponia.Response | void>
+
+  /**
+   * Providers should set cookies of some sort.
+   */
+  abstract setCookiesOptions(options?: CreateCookiesOptions): void
 }
 
 export interface Endpoint<TContext = any, TResponse = any> {

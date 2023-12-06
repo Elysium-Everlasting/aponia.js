@@ -107,6 +107,10 @@ export class OAuthProvider<T> implements Provider {
     this.routes = [this.pages.login, this.pages.callback]
   }
 
+  setCookiesOptions(options?: CreateCookiesOptions): void {
+    this.cookies = createOAuthCookiesOptions(options)
+  }
+
   async handle(request: Aponia.Request): Promise<Aponia.Response | void> {
     if (request.url.pathname === this.pages.login) {
       return this.login(request)
