@@ -22,3 +22,9 @@ export const ACTIONS = [
 ] as const
 
 export type Action = (typeof ACTIONS)[number]
+
+//----------------------------------------------------------------------------------------
+// Logistical.
+//----------------------------------------------------------------------------------------
+export const ISSUER = 'aponia.js'
+export const KEY_INFO = 'Auth.js Generated Encryption Key'
