@@ -6,6 +6,7 @@ import {
 } from './constants'
 import type { SessionController } from './controllers/session'
 import type { Provider } from './providers'
+import type { PageEndpoint } from './types'
 
 export interface AuthConfig {
   session: SessionController
@@ -27,12 +28,6 @@ export type AuthCallbacks = {
   [k in keyof AuthPages]?: (request: Aponia.Request) => Promise<Aponia.Response>
 }
 
-export interface PageEndpoint {
-  route: string
-  methods: string[]
-  redirect?: string
-}
-
 export class Auth {
   session: SessionController
 
@@ -42,7 +37,7 @@ export class Auth {
 
   providers: Provider[]
 
-  providerHandlers: Map<string, Provider>
+  providerEndpoints: Map<string, { provider: Provider; endpoint: PageEndpoint }>
 
   constructor(config: AuthConfig) {
     this.pages = {
@@ -58,11 +53,11 @@ export class Auth {
 
     this.providers = config.providers ?? []
 
-    this.providerHandlers = new Map()
+    this.providerEndpoints = new Map()
 
     this.providers.forEach((provider) => {
-      provider.routes.forEach((route) => {
-        this.providerHandlers.set(route, provider)
+      provider.managedEndpoints.forEach((endpoint) => {
+        this.providerEndpoints.set(endpoint.route, { provider, endpoint })
       })
     })
   }
@@ -84,8 +79,10 @@ export class Auth {
   }
 
   public async handleProviderRequest(request: Aponia.Request): Promise<Aponia.Response | void> {
-    if (this.providerHandlers.has(request.url.pathname)) {
-      return await this.providerHandlers.get(request.url.pathname)?.handle(request)
+    const providerEndpoint = this.providerEndpoints.get(request.url.pathname)
+
+    if (providerEndpoint?.endpoint != null && this.matches(request, providerEndpoint.endpoint)) {
+      return await providerEndpoint.provider.handle(request)
     }
   }
 

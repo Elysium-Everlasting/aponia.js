@@ -13,6 +13,7 @@ import {
   type CreateCookiesOptions,
   type OAuthCookiesOptions,
 } from '../security/cookie'
+import type { PageEndpoint } from '../types'
 import type { Awaitable, Nullish } from '../utils/types'
 
 import type { Endpoint, Provider, TokenEndpointResponse } from '.'
@@ -20,8 +21,8 @@ import type { Endpoint, Provider, TokenEndpointResponse } from '.'
 export type OAuthCheck = 'state' | 'pkce'
 
 export interface OAuthPages {
-  login: string
-  callback: string
+  login: PageEndpoint
+  callback: PageEndpoint
   redirect: string
 }
 
@@ -60,7 +61,7 @@ export class OAuthProvider<T> implements Provider {
 
   cookies: OAuthCookiesOptions
 
-  routes: string[]
+  managedEndpoints: PageEndpoint[]
 
   constructor(config: OAuthProviderConfig<T>) {
     this.config = config
@@ -70,8 +71,14 @@ export class OAuthProvider<T> implements Provider {
     this.checker = config.checker ?? DEFAULT_CHECKER
 
     this.pages = {
-      login: config.pages?.login ?? `${DEFAULT_LOGIN_ROUTE}/${this.id}`,
-      callback: config.pages?.callback ?? `${DEFAULT_CALLBACK_ROUTE}/${this.id}`,
+      login: {
+        route: config.pages?.login?.route ?? `${DEFAULT_LOGIN_ROUTE}/${this.id}`,
+        methods: config.pages?.login?.methods ?? ['GET'],
+      },
+      callback: {
+        route: config.pages?.callback?.route ?? `${DEFAULT_CALLBACK_ROUTE}/${this.id}`,
+        methods: config.pages?.callback?.methods ?? ['GET'],
+      },
       redirect: config.pages?.redirect ?? DEFAULT_CALLBACK_REDIRECT,
     }
 
@@ -105,7 +112,7 @@ export class OAuthProvider<T> implements Provider {
 
     this.cookies = createOAuthCookiesOptions(config.cookies)
 
-    this.routes = [this.pages.login, this.pages.callback]
+    this.managedEndpoints = [this.pages.login, this.pages.callback]
   }
 
   setCookiesOptions(options?: CreateCookiesOptions): void {
@@ -120,11 +127,11 @@ export class OAuthProvider<T> implements Provider {
   }
 
   async handle(request: Aponia.Request): Promise<Aponia.Response | void> {
-    if (request.url.pathname === this.pages.login) {
+    if (this.matches(request, this.pages.login)) {
       return this.login(request)
     }
 
-    if (request.url.pathname === this.pages.callback) {
+    if (this.matches(request, this.pages.callback)) {
       return this.callback(request)
     }
   }
@@ -257,5 +264,14 @@ export class OAuthProvider<T> implements Provider {
     }
 
     return response
+  }
+
+  /**
+   * Whether a {@link Aponia.Request} matches a {@link PageEndpoint}.
+   */
+  private matches(request: Aponia.Request, pageEndpoint: PageEndpoint): boolean {
+    return (
+      pageEndpoint.route === request.url.pathname && pageEndpoint.methods.includes(request.method)
+    )
   }
 }

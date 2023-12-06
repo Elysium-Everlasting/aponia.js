@@ -88,6 +88,11 @@ export interface AponiaUser {}
  */
 export interface AponiaSession {}
 
+export interface PageEndpoint {
+  route: string
+  methods: string[]
+}
+
 /**
  * A namespace in the global scope is also available for module augmentation
  *

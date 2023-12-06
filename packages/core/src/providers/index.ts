@@ -1,6 +1,7 @@
 import type * as oauth from 'oauth4webapi'
 
 import type { CreateCookiesOptions } from '../security/cookie'
+import type { PageEndpoint } from '../types'
 import type { Awaitable, Nullish } from '../utils/types'
 
 /**
@@ -11,7 +12,7 @@ export abstract class Provider {
    *
    * @example A Google provider might handle ['/auth/login/google', '/auth/callback/google']
    */
-  abstract routes: string[]
+  abstract managedEndpoints: PageEndpoint[]
 
   /**
    * Whenever a route is matched, the provider should handle the request.
