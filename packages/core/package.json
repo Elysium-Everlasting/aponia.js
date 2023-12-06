@@ -23,10 +23,10 @@
   "keywords": [],
   "type": "module",
   "exports": {
-    "./providers/*": {
-      "require": "./providers/*.ts",
-      "import": "./src/providers/*.ts",
-      "types": "./src/providers/*.ts"
+    "./*": {
+      "require": "./src/*.ts",
+      "import": "./src/*.ts",
+      "types": "./src/*.ts"
     }
   },
   "typesVersions": {
