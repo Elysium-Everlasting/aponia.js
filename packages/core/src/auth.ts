@@ -42,11 +42,7 @@ export interface PageEndpoint {
   redirect?: string
 }
 
-export type Transport = 'cookie' | 'header'
-
 export class Auth {
-  transport: Transport
-
   session: SessionController
 
   callbacks?: Partial<AuthCallbacks>
@@ -70,8 +66,6 @@ export class Auth {
     this.callbacks = config.callbacks
 
     this.session = config.session ?? new JsonSessionController()
-
-    this.transport = config.transport ?? 'cookie'
 
     this.providers = config.providers ?? []
 
@@ -151,15 +145,9 @@ export class Auth {
   }
 
   public async getTokensFromRequest(request: Aponia.Request): Promise<Tokens> {
-    if (this.transport === 'cookie') {
-      return {
-        accessToken: request.cookies[this.cookies.accessToken.name],
-        refreshToken: request.cookies[this.cookies.refreshToken.name],
-      }
-    }
-
     return {
-      accessToken: request.headers.get('Authorization')?.split(' ')[1],
+      accessToken: request.cookies[this.cookies.accessToken.name],
+      refreshToken: request.cookies[this.cookies.refreshToken.name],
     }
   }
 
@@ -168,19 +156,22 @@ export class Auth {
       return
     }
 
-    switch (this.transport) {
-      case 'cookie': {
-        response.cookies ??= []
+    response.cookies ??= []
 
-        if (tokens.accessToken) {
-          response.cookies.push({
-            name: this.cookies.accessToken.name,
-            value: tokens.accessToken,
-            options: this.cookies.accessToken.options,
-          })
-        }
-        break
-      }
+    if (tokens.accessToken) {
+      response.cookies.push({
+        name: this.cookies.accessToken.name,
+        value: tokens.accessToken,
+        options: this.cookies.accessToken.options,
+      })
+    }
+
+    if (tokens.refreshToken) {
+      response.cookies.push({
+        name: this.cookies.refreshToken.name,
+        value: tokens.refreshToken,
+        options: this.cookies.refreshToken.options,
+      })
     }
   }
 
