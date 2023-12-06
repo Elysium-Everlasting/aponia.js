@@ -1,3 +1,4 @@
+import type { PluginCoordinator } from '../plugin'
 import type { Cookie } from '../security/cookie'
 import type { Awaitable } from '../utils/types'
 
@@ -9,4 +10,6 @@ export abstract class SessionController {
   abstract parseSessionFromCookies(
     cookies: Record<string, string>,
   ): Awaitable<Aponia.Session | undefined>
+
+  abstract initialize?: (plugin: PluginCoordinator) => unknown
 }

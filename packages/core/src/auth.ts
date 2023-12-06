@@ -5,6 +5,7 @@ import {
   DEFAULT_UPDATE_ROUTE,
 } from './constants'
 import type { SessionController } from './controllers/session'
+import { PluginCoordinator } from './plugin'
 import type { Provider } from './providers'
 import type { PageEndpoint } from './types'
 
@@ -29,9 +30,9 @@ export type AuthCallbacks = {
 }
 
 export class Auth {
-  session: SessionController
+  plugin: PluginCoordinator
 
-  callbacks?: Partial<AuthCallbacks>
+  session: SessionController
 
   pages: AuthPages
 
@@ -39,15 +40,17 @@ export class Auth {
 
   providerEndpoints: Map<string, { provider: Provider; endpoint: PageEndpoint }>
 
+  callbacks?: Partial<AuthCallbacks>
+
   constructor(config: AuthConfig) {
+    this.plugin = new PluginCoordinator()
+
     this.pages = {
       logout: config.pages?.logout ?? { route: DEFAULT_LOGOUT_ROUTE, methods: ['POST'] },
       update: config.pages?.update ?? { route: DEFAULT_UPDATE_ROUTE, methods: ['POST'] },
       forgot: config.pages?.forgot ?? { route: DEFAULT_FORGOT_ROUTE, methods: ['POST'] },
       reset: config.pages?.reset ?? { route: DEFAULT_RESET_ROUTE, methods: ['POST'] },
     }
-
-    this.callbacks = config.callbacks
 
     this.session = config.session
 
@@ -56,10 +59,14 @@ export class Auth {
     this.providerEndpoints = new Map()
 
     this.providers.forEach((provider) => {
+      provider.initialize?.(this.plugin)
+
       provider.managedEndpoints.forEach((endpoint) => {
         this.providerEndpoints.set(endpoint.route, { provider, endpoint })
       })
     })
+
+    this.callbacks = config.callbacks
   }
 
   public async handle(request: Aponia.Request): Promise<Aponia.Response> {
