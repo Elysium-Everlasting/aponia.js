@@ -40,6 +40,8 @@
   },
   "dependencies": {
     "@auth/core": "^0.18.4",
+    "@panva/hkdf": "^1.1.1",
+    "jose": "^5.1.3",
     "oauth4webapi": "^2.4.0"
   }
 }
