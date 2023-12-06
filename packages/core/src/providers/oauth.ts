@@ -6,13 +6,8 @@ import {
   DEFAULT_LOGIN_ROUTE,
   ISSUER,
 } from '../constants'
-import { DEFAULT_CHECKER, type Checker } from '../security/checker'
-import {
-  createOAuthCookiesOptions,
-  type Cookie,
-  type CreateCookiesOptions,
-  type OAuthCookiesOptions,
-} from '../security/cookie'
+import { Checker, type CheckerConfig } from '../security/checker'
+import type { Cookie } from '../security/cookie'
 import type { PageEndpoint } from '../types'
 import type { Awaitable, Nullish } from '../utils/types'
 
@@ -39,8 +34,8 @@ export interface OAuthProviderConfig<T> {
   client?: oauth.Client
   pages?: Partial<OAuthPages>
   endpoints?: Partial<OAuthEndpoints<T>>
-  checker?: Checker
   profile?: (profile: T, tokens: TokenEndpointResponse) => Awaitable<Aponia.User | Nullish>
+  checker?: CheckerConfig
   cookies?: CreateCookiesOptions
 }
 
@@ -48,8 +43,6 @@ export class OAuthProvider<T> implements Provider {
   config: OAuthProviderConfig<T>
 
   id: string
-
-  checker: Checker
 
   pages: OAuthPages
 
@@ -59,16 +52,16 @@ export class OAuthProvider<T> implements Provider {
 
   authorizationServer: oauth.AuthorizationServer
 
-  cookies: OAuthCookiesOptions
-
   managedEndpoints: PageEndpoint[]
+
+  checker: Checker
+
+  cookies: OAuthCookiesOptions
 
   constructor(config: OAuthProviderConfig<T>) {
     this.config = config
 
     this.id = config.id
-
-    this.checker = config.checker ?? DEFAULT_CHECKER
 
     this.pages = {
       login: {
@@ -110,20 +103,9 @@ export class OAuthProvider<T> implements Provider {
       userinfo_endpoint: this.endpoints.userinfo.url,
     }
 
-    this.cookies = createOAuthCookiesOptions(config.cookies)
-
     this.managedEndpoints = [this.pages.login, this.pages.callback]
-  }
 
-  setCookiesOptions(options?: CreateCookiesOptions): void {
-    this.cookies = createOAuthCookiesOptions({
-      ...options,
-      serializationOptions: {
-        path: '/',
-        sameSite: 'lax',
-        ...options?.serializationOptions,
-      },
-    })
+    this.checker = new Checker(config.checker)
   }
 
   async handle(request: Aponia.Request): Promise<Aponia.Response | void> {

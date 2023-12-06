@@ -21,11 +21,15 @@ export class Checker {
 
   constructor(config: CheckerConfig = {}) {
     this.config = config
-
     this.checks = config.checks ?? ['pkce']
-
     this.encode = config.encode ?? ((value) => value)
+    this.decode = config.decode ?? ((value) => value)
+  }
 
+  setConfig(config: CheckerConfig = this.config) {
+    this.config = config
+    this.checks = config.checks ?? ['pkce']
+    this.encode = config.encode ?? ((value) => value)
     this.decode = config.decode ?? ((value) => value)
   }
 
