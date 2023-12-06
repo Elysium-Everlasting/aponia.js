@@ -92,13 +92,6 @@ export class OAuthProvider<T> implements Provider {
     }
   }
 
-  get checkParams(): checks.CheckParams {
-    return {
-      checks: this.checks,
-      cookies: this.cookiesOptions,
-    }
-  }
-
   routes(): string[] {
     return []
   }
@@ -146,7 +139,9 @@ export class OAuthProvider<T> implements Provider {
 
     const [state, stateCookie] = await checks.state.use(request, this.checkParams)
 
-    if (stateCookie) cookies.push(stateCookie)
+    if (stateCookie) {
+      cookies.push(stateCookie)
+    }
 
     const codeGrantParams = oauth.validateAuthResponse(
       this.authorizationServer,
