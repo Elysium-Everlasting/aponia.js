@@ -4,18 +4,16 @@ import {
   DEFAULT_RESET_ROUTE,
   DEFAULT_UPDATE_ROUTE,
 } from './constants'
+import type { SessionController, Tokens } from './controllers/session'
 import type { Provider } from './providers'
 import {
   createClientCookiesOptions,
   type ClientCookiesOptions,
   type CreateCookiesOptions,
 } from './security/cookie'
-import type { SessionController, Tokens } from './session-controller'
-import { JsonSessionController } from './session-controller/json'
 
 export interface AuthConfig {
-  transport?: Transport
-  session?: SessionController
+  session: SessionController
   providers?: Provider[]
   pages?: Partial<AuthPages>
   cookies?: CreateCookiesOptions
@@ -65,7 +63,7 @@ export class Auth {
 
     this.callbacks = config.callbacks
 
-    this.session = config.session ?? new JsonSessionController()
+    this.session = config.session
 
     this.providers = config.providers ?? []
 
