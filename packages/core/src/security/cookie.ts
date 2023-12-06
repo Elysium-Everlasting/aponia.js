@@ -4,7 +4,6 @@
 
 import {
   ACCESS_TOKEN_NAME,
-  CALLBACK_URL_NAME,
   CSRF_TOKEN_NAME,
   DEFAULT_COOKIE_NAME,
   DEFAULT_SECURE_PREFIX,
@@ -196,14 +195,16 @@ export interface CookieOption {
   options: CookieSerializeOptions
 }
 
-export interface CookiesOptions {
+export interface ClientCookiesOptions {
   accessToken: CookieOption
   refreshToken: CookieOption
+  csrfToken: CookieOption
+}
+
+export interface OAuthCookiesOptions {
   state: CookieOption
   nonce: CookieOption
-  csrfToken: CookieOption
   pkce: CookieOption
-  callbackUrl: CookieOption
 }
 
 export function getCookiePrefix(options?: CreateCookiesOptions): string {
@@ -213,7 +214,7 @@ export function getCookiePrefix(options?: CreateCookiesOptions): string {
   return `${options?.serializationOptions?.secure ? securePrefix : ''}${cookieName}`
 }
 
-export function createCookiesOptions(options?: CreateCookiesOptions): CookiesOptions {
+export function createClientCookiesOptions(options?: CreateCookiesOptions): ClientCookiesOptions {
   const secure = options?.serializationOptions?.secure
   const cookiePrefix = getCookiePrefix(options)
   const serializeOptions = { ...options?.serializationOptions }
@@ -227,10 +228,6 @@ export function createCookiesOptions(options?: CreateCookiesOptions): CookiesOpt
       name: `${cookiePrefix}.${REFRESH_TOKEN_NAME}`,
       options: serializeOptions,
     },
-    callbackUrl: {
-      name: `${cookiePrefix}.${CALLBACK_URL_NAME}`,
-      options: serializeOptions,
-    },
     csrfToken: {
       /**
        * Default to __Host- for CSRF token for additional protection if using secure cookies.
@@ -239,6 +236,14 @@ export function createCookiesOptions(options?: CreateCookiesOptions): CookiesOpt
       name: `${secure ? HOST_PREFIX : cookiePrefix}.${CSRF_TOKEN_NAME}`,
       options: serializeOptions,
     },
+  }
+}
+
+export function createOAuthCookiesOptions(options?: CreateCookiesOptions): OAuthCookiesOptions {
+  const cookiePrefix = getCookiePrefix(options)
+  const serializeOptions = { ...options?.serializationOptions }
+
+  return {
     pkce: {
       name: `${cookiePrefix}.${PKCE_NAME}`,
       options: {
@@ -263,4 +268,6 @@ export function createCookiesOptions(options?: CreateCookiesOptions): CookiesOpt
   }
 }
 
-export const DEFAULT_COOKIES_OPTIONS = createCookiesOptions()
+export const DEFAULT_CLIENT_COOKIES_OPTIONS = createClientCookiesOptions()
+
+export const DEFAULT_OAUTH_COOKIES_OPTIONS = createOAuthCookiesOptions()
