@@ -50,8 +50,6 @@ function createResponse(internalResponse: Aponia.Response): Response {
   const body = getBody(internalResponse)
   const headers = new Headers()
 
-  console.log({ internalResponse }, internalResponse.cookies)
-
   internalResponse.cookies?.forEach((cookie) => {
     headers.append('Set-Cookie', serialize(cookie.name, cookie.value, cookie.options))
   })
