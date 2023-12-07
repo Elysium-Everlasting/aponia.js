@@ -114,14 +114,28 @@ export class OAuthProvider<T> implements Provider {
 
     this.managedEndpoints = [this.pages.login, this.pages.callback]
 
-    this.cookies = createOAuthCookiesOptions(config.cookies)
+    this.cookies = createOAuthCookiesOptions({
+      ...config.cookies,
+      serialize: {
+        path: '/',
+        sameSite: 'lax',
+        ...config.cookies?.serialize,
+      },
+    })
 
     this.checker = new Checker(config.checker)
   }
 
   public initialize(plugin: PluginCoordinator) {
     plugin.on('cookies', (options) => {
-      this.cookies = createOAuthCookiesOptions(options)
+      this.cookies = createOAuthCookiesOptions({
+        ...options,
+        serialize: {
+          path: '/',
+          sameSite: 'lax',
+          ...options?.serialize,
+        },
+      })
     })
 
     plugin.on('checker', (config) => {
@@ -153,7 +167,7 @@ export class OAuthProvider<T> implements Provider {
     })
 
     if (!url.searchParams.has('redirect_uri')) {
-      url.searchParams.set('redirect_uri', `${request.url.origin}${this.pages.callback}`)
+      url.searchParams.set('redirect_uri', `${request.url.origin}${this.pages.callback.route}`)
     }
 
     if (this.checker.checks.includes('state')) {
@@ -169,7 +183,7 @@ export class OAuthProvider<T> implements Provider {
     }
 
     if (this.checker.checks.includes('pkce')) {
-      const [verifier, challenge] = await this.checker.createPkce()
+      const [challenge, verifier] = await this.checker.createPkce()
 
       url.searchParams.set('code_challenge', challenge)
       url.searchParams.set('code_challenge_method', 'S256')
@@ -220,8 +234,8 @@ export class OAuthProvider<T> implements Provider {
       this.authorizationServer,
       this.client,
       codeGrantParams,
-      `${request.url.origin}${this.pages.callback}`,
-      pkce ?? 'AUTH',
+      `${request.url.origin}${this.pages.callback.route}`,
+      pkce ?? 'auth',
     )
 
     const codeGrantResponse =

@@ -36,11 +36,11 @@ export class Checker {
   async createPkce() {
     const verifier = oauth.generateRandomCodeVerifier()
 
+    const encodedVerifier = await this.encode(verifier)
+
     const challenge = await oauth.calculatePKCECodeChallenge(verifier)
 
-    const encodedChallenge = await this.encode(challenge)
-
-    return [verifier, encodedChallenge] as const
+    return [challenge, encodedVerifier] as const
   }
 
   async usePkce(pkce?: string): Promise<void | string> {

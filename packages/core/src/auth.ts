@@ -4,14 +4,14 @@ import {
   DEFAULT_RESET_ROUTE,
   DEFAULT_UPDATE_ROUTE,
 } from './constants'
-import type { SessionController } from './controllers/session'
+import { SessionController } from './controllers/session'
 import { PluginCoordinator, type Plugin } from './plugin'
 import type { Provider } from './providers'
 import type { CreateCookiesOptions } from './security/cookie'
 import type { PageEndpoint } from './types'
 
 export interface AuthConfig {
-  session: SessionController
+  session?: SessionController
   providers?: Provider[]
   pages?: Partial<AuthPages>
   cookies?: CreateCookiesOptions
@@ -49,7 +49,7 @@ export class Auth {
 
   callbacks?: Partial<AuthCallbacks>
 
-  constructor(config: AuthConfig) {
+  constructor(config: AuthConfig = {}) {
     this.pluginCoordinator = new PluginCoordinator()
 
     this.pages = {
@@ -59,7 +59,7 @@ export class Auth {
       reset: config.pages?.reset ?? { route: DEFAULT_RESET_ROUTE, methods: ['POST'] },
     }
 
-    this.session = config.session
+    this.session = config.session ?? new SessionController()
 
     this.cookies = config.cookies
 

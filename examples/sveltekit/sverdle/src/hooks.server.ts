@@ -2,7 +2,7 @@ import '@aponia.js/core/types'
 
 import { OAuthProvider } from '@aponia.js/auth.js/providers/oauth'
 import { Auth } from '@aponia.js/core/auth'
-import { JwtSessionController } from '@aponia.js/core/controllers/jwt-session'
+import { jwtPlugin } from '@aponia.js/core/plugin/jwt'
 import GitHub from '@auth/core/providers/github'
 import type { Handle, RequestEvent } from '@sveltejs/kit'
 import { sequence } from '@sveltejs/kit/hooks'
@@ -17,11 +17,9 @@ const github = GitHub({
 
 const githubProvider = new OAuthProvider(github)
 
-const session = new JwtSessionController()
-
 const auth = new Auth({
-  session,
   providers: [githubProvider],
+  plugins: [jwtPlugin()],
 })
 
 const authHandle: Handle = async ({ event, resolve }) => {
