@@ -1,4 +1,5 @@
 import { ACCESS_TOKEN_NAME, DEFAULT_ACCESS_TOKEN_AGE } from '../constants'
+import type { PluginCoordinator } from '../plugin'
 import {
   getCookiePrefix,
   type Cookie,
@@ -37,6 +38,30 @@ export class SessionController {
         maxAge: DEFAULT_ACCESS_TOKEN_AGE,
         ...config.cookie?.serialize,
       },
+    })
+  }
+
+  initialize(plugin: PluginCoordinator) {
+    plugin.on('session', (config) => {
+      this.config = config
+
+      if (config.encode) {
+        this.encode = config.encode
+      }
+
+      if (config.decode) {
+        this.decode = config.decode
+      }
+
+      this.cookies = createClientCookiesOptions({
+        ...config.cookie,
+        serialize: {
+          path: '/',
+          sameSite: 'lax',
+          maxAge: DEFAULT_ACCESS_TOKEN_AGE,
+          ...config.cookie?.serialize,
+        },
+      })
     })
   }
 

@@ -1,6 +1,6 @@
+import type { SessionControllerConfig } from '../controllers/session'
 import type { CheckerConfig } from '../security/checker'
 import type { CreateCookiesOptions } from '../security/cookie'
-import type { JWTOptions } from '../security/jwt'
 
 export type Listener<T> = (data: T) => unknown
 
@@ -13,9 +13,9 @@ export interface Plugin {
 
 export class PluginCoordinator {
   listeners = {
-    cookies: new Array<Listener<CreateCookiesOptions>>(),
     checker: new Array<Listener<CheckerConfig>>(),
-    jwt: new Array<Listener<JWTOptions>>(),
+    cookies: new Array<Listener<CreateCookiesOptions>>(),
+    session: new Array<Listener<SessionControllerConfig>>(),
   }
 
   on<T extends keyof typeof this.listeners>(
