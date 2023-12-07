@@ -1,5 +1,3 @@
-import type { CookieSerializeOptions } from 'cookie'
-
 //----------------------------------------------------------------------------------------
 // Pages.
 //----------------------------------------------------------------------------------------
@@ -30,6 +28,7 @@ export const ACTIONS = [
   'update',
   'forgot',
   'reset',
+  'unknown',
 ] as const
 export type Action = (typeof ACTIONS)[number]
 
@@ -52,11 +51,6 @@ export const STATE_MAX_AGE = FIFTEEN_MINUTES_IN_SECONDS
 export const NONCE_MAX_AGE = FIFTEEN_MINUTES_IN_SECONDS
 export const DEFAULT_COOKIE_NAME = 'aponia-auth'
 export const DEFAULT_SECURE_PREFIX = '__Secure-'
-export const DEFAULT_COOKIE_SERIALIZE_OPTIONS: CookieSerializeOptions = {
-  httpOnly: !IS_BROWSER,
-  sameSite: 'lax',
-  path: '/',
-}
 export const DEFAULT_RESPONSE_TYPE = 'code'
 
 export const ACCESS_TOKEN_NAME = 'access-token'

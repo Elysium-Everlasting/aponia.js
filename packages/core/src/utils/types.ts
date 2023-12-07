@@ -1,7 +1,3 @@
-export type Awaitable<T> = PromiseLike<T> | T
+export type Awaitable<T> = T | PromiseLike<T>
 
-export type Nullish = void | undefined | null
-
-export type DeepPartial<T> = {
-  [k in keyof T]?: T[k] extends Record<string, unknown> ? DeepPartial<T[k]> : T[k]
-}
+export type Nullish = null | undefined | void

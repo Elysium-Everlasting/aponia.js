@@ -30,6 +30,7 @@ const config = {
         caughtErrorsIgnorePattern: '^_',
       },
     ],
+
     'import/order': [
       'error',
       {
@@ -39,11 +40,16 @@ const config = {
         'newlines-between': 'always',
       },
     ],
+
+    'import/no-unresolved': 'off',
   },
   settings: {
     'import/resolver': {
       typescript: true,
     },
+  },
+  env: {
+    browser: true,
   },
   ignorePatterns: ['*.config.*', '*.cjs'],
 }

@@ -1,7 +1,7 @@
 {
-  "name": "@aponia.js/core",
+  "name": "@aponia.js/auth.js",
   "version": "0.2.0",
-  "description": "aponia.js core - a web authentication framework",
+  "description": "",
   "license": "MIT",
   "homepage": "https://elysium-everlasting.github.io/aponia.js",
   "funding": "https://github.com/Elysium-Everlasting/aponia.js",
@@ -15,7 +15,7 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/Elysium-Everlasting/aponia.js",
-    "directory": "packages/core"
+    "directory": "packages/auth.js"
   },
   "bugs": {
     "url": "https://github.com/Elysium-Everlasting/aponia.js/issues"
@@ -42,9 +42,8 @@
     "test": "vitest"
   },
   "dependencies": {
-    "@panva/hkdf": "^1.1.1",
-    "jose": "^5.1.3",
-    "oauth4webapi": "^2.4.0"
+    "@aponia.js/core": "workspace:^",
+    "@auth/core": "^0.18.4"
   },
   "devDependencies": {
     "typescript": "^5.1.6"

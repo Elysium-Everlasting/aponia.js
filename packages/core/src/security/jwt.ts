@@ -2,8 +2,7 @@ import { hkdf } from '@panva/hkdf'
 import { EncryptJWT, jwtDecrypt, type JWTPayload } from 'jose'
 
 import { KEY_INFO, SALT } from '../constants'
-import { getTimestamp } from '../utils/get-timestamp'
-import type { Awaitable, Nullish } from '../utils/types'
+import type { Awaitable } from '../utils/types'
 
 export interface JWTEncodeParams<T = Record<string, any>> {
   token: T
@@ -51,10 +50,19 @@ export async function encode<T extends Record<string, any> = Record<string, any>
 
 export async function decode<T = Record<string, any>>(
   params: JWTDecodeParams,
-): Promise<(T & JWTPayload) | Nullish> {
+): Promise<(T & JWTPayload) | undefined> {
   const encryptionSecret = await getDerivedEncryptionKey(params.secret)
 
   const { payload } = await jwtDecrypt(params.token, encryptionSecret, { clockTolerance: 15 })
 
   return payload as T & JWTPayload
+}
+
+/**
+ * Convert a Date to a Unix timestamp.
+ *
+ * @default Returns the current time as a timestamp.
+ */
+export function getTimestamp(time = Date.now()) {
+  return (time / 1000) | 0
 }

@@ -1,80 +1,164 @@
-import type { OAuthConfig, OAuthUserConfig } from '@auth/core/providers'
-import type { TokenSet } from '@auth/core/types'
 import * as oauth from 'oauth4webapi'
 
 import {
   DEFAULT_CALLBACK_REDIRECT,
   DEFAULT_CALLBACK_ROUTE,
-  DEFAULT_CHECKS,
   DEFAULT_LOGIN_ROUTE,
+  FIFTEEN_MINUTES_IN_SECONDS,
   ISSUER,
+  PKCE_NAME,
+  STATE_NAME,
 } from '../constants'
-import * as checks from '../security/checks'
-import { DEFAULT_COOKIES_OPTIONS } from '../security/cookie'
-import type { Cookie, CookiesOptions } from '../security/cookie'
-import { DEFAULT_JWT_OPTIONS, type JWTOptions } from '../security/jwt'
-import type { Endpoint, InternalRequest, InternalResponse, ProviderPages } from '../types'
+import type { PluginCoordinator } from '../plugin'
+import { Checker, type CheckerConfig } from '../security/checker'
+import {
+  getCookiePrefix,
+  type Cookie,
+  type CookieOption,
+  type CreateCookiesOptions,
+} from '../security/cookie'
+import type { PageEndpoint } from '../types'
+import type { Awaitable, Nullish } from '../utils/types'
 
-export type ResolvedOAuthConfig<TProfile> = {
+import type { Endpoint, Provider, TokenEndpointResponse } from '.'
+
+export type OAuthCheck = 'state' | 'pkce'
+
+export interface OAuthPages {
+  login: PageEndpoint
+  callback: PageEndpoint
+  redirect: string
+}
+
+export interface OAuthEndpoints<T> {
+  authorization: Endpoint<OAuthProvider<T>>
+  token: Endpoint<OAuthProvider<T>, TokenEndpointResponse>
+  userinfo: Endpoint<{ provider: OAuthEndpoints<T>; tokens: TokenEndpointResponse }, T>
+}
+
+export interface OAuthProviderConfig<T> {
   id: string
+  clientId: string
+  clientSecret?: string
+  client?: oauth.Client
+  pages?: Partial<OAuthPages>
+  endpoints?: Partial<OAuthEndpoints<T>>
+  profile?: (profile: T, tokens: TokenEndpointResponse) => Awaitable<Aponia.User | Nullish>
+  checker?: CheckerConfig
+  cookies?: CreateCookiesOptions
+}
+
+export class OAuthProvider<T> implements Provider {
+  config: OAuthProviderConfig<T>
+
+  id: string
+
+  pages: OAuthPages
+
+  endpoints: OAuthEndpoints<T>
+
   client: oauth.Client
-  checks: OAuthConfig<any>['checks']
-  pages: ProviderPages
-  endpoints: {
-    authorization: Endpoint<OAuthProvider<TProfile>>
-    token: Endpoint<OAuthProvider<TProfile>, TokenSet>
-    userinfo: Endpoint<{ provider: OAuthConfig<TProfile>; tokens: TokenSet }, TProfile>
-  }
-} & OAuthConfig<TProfile>
-
-export class OAuthProvider<TProfile> {
-  static type = 'oauth' as const
-
-  type = OAuthProvider.type
-
-  config: ResolvedOAuthConfig<TProfile>
 
   authorizationServer: oauth.AuthorizationServer
 
-  cookiesOptions = DEFAULT_COOKIES_OPTIONS
+  managedEndpoints: PageEndpoint[]
 
-  jwt = DEFAULT_JWT_OPTIONS
+  checker: Checker
 
-  constructor(options: ResolvedOAuthConfig<TProfile>) {
-    this.config = options
+  cookies: OAuthCookiesOptions
+
+  constructor(config: OAuthProviderConfig<T>) {
+    this.config = config
+
+    this.id = config.id
+
+    this.pages = {
+      login: {
+        route: config.pages?.login?.route ?? `${DEFAULT_LOGIN_ROUTE}/${this.id}`,
+        methods: config.pages?.login?.methods ?? ['GET'],
+      },
+      callback: {
+        route: config.pages?.callback?.route ?? `${DEFAULT_CALLBACK_ROUTE}/${this.id}`,
+        methods: config.pages?.callback?.methods ?? ['GET'],
+      },
+      redirect: config.pages?.redirect ?? DEFAULT_CALLBACK_REDIRECT,
+    }
+
+    this.endpoints = {
+      authorization: {
+        ...config.endpoints?.authorization,
+        url: '',
+        params: {
+          client_id: '',
+          response_type: 'code',
+          ...config.endpoints?.authorization?.params,
+        },
+      },
+      token: { url: '' },
+      userinfo: { url: '' },
+      ...config.endpoints,
+    }
+
+    this.client = {
+      client_id: config.clientId,
+      client_secret: config.clientSecret,
+      ...config.client,
+    }
 
     this.authorizationServer = {
       issuer: ISSUER,
-      authorization_endpoint: options.endpoints.authorization.url,
-      token_endpoint: options.endpoints.token.url,
-      userinfo_endpoint: options.endpoints.userinfo.url,
+      authorization_endpoint: this.endpoints.authorization.url,
+      token_endpoint: this.endpoints.token.url,
+      userinfo_endpoint: this.endpoints.userinfo.url,
+    }
+
+    this.managedEndpoints = [this.pages.login, this.pages.callback]
+
+    this.cookies = createOAuthCookiesOptions({
+      ...config.cookies,
+      serialize: {
+        path: '/',
+        sameSite: 'lax',
+        ...config.cookies?.serialize,
+      },
+    })
+
+    this.checker = new Checker(config.checker)
+  }
+
+  public initialize(plugin: PluginCoordinator) {
+    plugin.on('cookies', (options) => {
+      this.cookies = createOAuthCookiesOptions({
+        ...options,
+        serialize: {
+          path: '/',
+          sameSite: 'lax',
+          ...options?.serialize,
+        },
+      })
+    })
+
+    plugin.on('checker', (config) => {
+      this.checker.setConfig(config)
+    })
+  }
+
+  public async handle(request: Aponia.Request): Promise<Aponia.Response | void> {
+    if (this.matches(request, this.pages.login)) {
+      return this.login(request)
+    }
+
+    if (this.matches(request, this.pages.callback)) {
+      return this.callback(request)
     }
   }
 
-  get checkParams(): checks.CheckParams {
-    return {
-      checks: this.config.checks,
-      cookies: this.cookiesOptions,
-      jwt: this.jwt,
-    }
-  }
+  public async login(request: Aponia.Request): Promise<Aponia.Response> {
+    const url = new URL(this.endpoints.authorization.url)
 
-  setJwtOptions(options: JWTOptions) {
-    this.jwt = options
-    return this
-  }
-
-  setCookiesOptions(options: CookiesOptions) {
-    this.cookiesOptions = options
-    return this
-  }
-
-  async login(request: InternalRequest): Promise<InternalResponse> {
-    const url = new URL(this.config.endpoints.authorization.url)
+    const params = this.endpoints.authorization.params ?? {}
 
     const cookies: Cookie[] = []
-
-    const params = this.config.endpoints.authorization.params ?? {}
 
     Object.entries(params).forEach(([key, value]) => {
       if (typeof value === 'string') {
@@ -83,38 +167,51 @@ export class OAuthProvider<TProfile> {
     })
 
     if (!url.searchParams.has('redirect_uri')) {
-      url.searchParams.set(
-        'redirect_uri',
-        `${request.url.origin}${this.config.pages.callback.route}`,
-      )
+      url.searchParams.set('redirect_uri', `${request.url.origin}${this.pages.callback.route}`)
     }
 
-    if (this.config.checks?.includes('state')) {
-      const [state, stateCookie] = await checks.state.create(this.checkParams)
+    if (this.checker.checks.includes('state')) {
+      const state = await this.checker.createState()
+
       url.searchParams.set('state', state)
-      cookies.push(stateCookie)
+
+      cookies.push({
+        name: this.cookies.state.name,
+        value: state,
+        options: this.cookies.state.options,
+      })
     }
 
-    if (this.config.checks?.includes('pkce')) {
-      const [pkce, pkceCookie] = await checks.pkce.create(this.checkParams)
-      url.searchParams.set('code_challenge', pkce)
+    if (this.checker.checks.includes('pkce')) {
+      const [challenge, verifier] = await this.checker.createPkce()
+
+      url.searchParams.set('code_challenge', challenge)
       url.searchParams.set('code_challenge_method', 'S256')
-      cookies.push(pkceCookie)
+
+      cookies.push({
+        name: this.cookies.pkce.name,
+        value: verifier,
+        options: this.cookies.pkce.options,
+      })
     }
 
     return { status: 302, redirect: url.toString(), cookies }
   }
 
-  async callback(request: InternalRequest): Promise<InternalResponse> {
+  public async callback(request: Aponia.Request): Promise<Aponia.Response> {
     const cookies: Cookie[] = []
 
-    const [state, stateCookie] = await checks.state.use(request, this.checkParams)
+    const state = await this.checker.useState(request.cookies[this.cookies.state.name])
 
-    if (stateCookie) cookies.push(stateCookie)
+    cookies.push({
+      name: this.cookies.state.name,
+      value: '',
+      options: { ...this.cookies.state.options, maxAge: 0 },
+    })
 
     const codeGrantParams = oauth.validateAuthResponse(
       this.authorizationServer,
-      this.config.client,
+      this.client,
       request.url.searchParams,
       state,
     )
@@ -123,22 +220,26 @@ export class OAuthProvider<TProfile> {
       throw new Error(codeGrantParams.error_description)
     }
 
-    const [pkce, pkceCookie] = await checks.pkce.use(request, this.checkParams)
+    const pkce = await this.checker.usePkce(request.cookies[this.cookies.pkce.name])
 
-    if (pkceCookie) {
-      cookies.push(pkceCookie)
+    if (pkce) {
+      cookies.push({
+        name: this.cookies.pkce.name,
+        value: '',
+        options: { ...this.cookies.pkce.options, maxAge: 0 },
+      })
     }
 
     const initialCodeGrantResponse = await oauth.authorizationCodeGrantRequest(
       this.authorizationServer,
-      this.config.client,
+      this.client,
       codeGrantParams,
-      `${request.url.origin}${this.config.pages.callback.route}`,
-      pkce,
+      `${request.url.origin}${this.pages.callback.route}`,
+      pkce ?? 'auth',
     )
 
     const codeGrantResponse =
-      (await this.config.endpoints.token.conform?.(initialCodeGrantResponse.clone())) ??
+      (await this.endpoints.token.conform?.(initialCodeGrantResponse.clone())) ??
       initialCodeGrantResponse
 
     const challenges = oauth.parseWwwAuthenticateChallenges(codeGrantResponse)
@@ -152,7 +253,7 @@ export class OAuthProvider<TProfile> {
 
     const tokens = await oauth.processAuthorizationCodeOAuth2Response(
       this.authorizationServer,
-      this.config.client,
+      this.client,
       codeGrantResponse,
     )
 
@@ -160,83 +261,61 @@ export class OAuthProvider<TProfile> {
       throw new Error('TODO: Handle OAuth 2.0 response body error')
     }
 
-    const profile = await (this.config.endpoints.userinfo.request?.({
-      provider: this.config,
+    const profile = await (this.endpoints.userinfo.request?.({
+      provider: this.endpoints,
       tokens,
     }) ??
       oauth
-        .userInfoRequest(this.authorizationServer, this.config.client, tokens.access_token)
+        .userInfoRequest(this.authorizationServer, this.client, tokens.access_token)
         .then((response) => response.json()))
 
     if (!profile) {
       throw new Error('TODO: Handle missing profile')
     }
 
-    const processedResponse: InternalResponse = (await this.config.onAuth?.(
-      profile,
-      tokens,
-      request,
-    )) ?? {
-      session: {
-        expires: '',
-        user: (await this.config.profile?.(profile, tokens)) ?? profile,
-      },
-      redirect: this.config.pages.callback.redirect,
+    const response: Aponia.Response = {
+      user: (await this.config.profile?.(profile, tokens)) ?? profile,
       status: 302,
+      cookies,
+      redirect: this.pages.redirect,
     }
 
-    processedResponse.cookies ??= []
-    processedResponse.cookies.push(...cookies)
+    return response
+  }
 
-    return processedResponse
+  /**
+   * Whether a {@link Aponia.Request} matches a {@link PageEndpoint}.
+   */
+  private matches(request: Aponia.Request, pageEndpoint: PageEndpoint): boolean {
+    return (
+      pageEndpoint.route === request.url.pathname && pageEndpoint.methods.includes(request.method)
+    )
   }
 }
 
-export function resolveOAuthConfig(
-  config: OAuthConfig<any> & { options?: OAuthUserConfig<any> },
-): ResolvedOAuthConfig<any> {
-  const id = config.id ?? config.options?.id ?? ''
-  const clientId = config.clientId ?? config.options?.clientId ?? ''
-  const clientSecret = config.clientSecret ?? config.options?.clientSecret ?? ''
-  const checks: any = config.checks ?? config.options?.checks ?? DEFAULT_CHECKS
-  const token = config.token ?? config.options?.token ?? {}
-  const userinfo = config.userinfo ?? config.options?.userinfo ?? {}
+export function createOAuthCookiesOptions(options?: CreateCookiesOptions): OAuthCookiesOptions {
+  const cookiePrefix = getCookiePrefix(options)
+  const serializeOptions = { ...options?.serialize }
 
   return {
-    ...config,
-    ...config.options,
-    id,
-    client: {
-      ...config.client,
-      ...config.options?.client,
-      client_id: clientId,
-      client_secret: clientSecret,
-    },
-    checks,
-    pages: {
-      login: {
-        route: `${DEFAULT_LOGIN_ROUTE}/${id}`,
-        methods: ['GET'],
-      },
-      callback: {
-        route: `${DEFAULT_CALLBACK_ROUTE}/${id}`,
-        methods: ['GET'],
-        redirect: DEFAULT_CALLBACK_REDIRECT,
+    pkce: {
+      name: `${cookiePrefix}.${PKCE_NAME}`,
+      options: {
+        maxAge: FIFTEEN_MINUTES_IN_SECONDS,
+        ...serializeOptions,
       },
     },
-    endpoints: {
-      authorization: {
-        ...config.authorization,
-        ...config.options?.authorization,
-        params: {
-          client_id: clientId,
-          response_type: 'code',
-          ...config.authorization?.params,
-          ...config.options?.authorization?.params,
-        },
+    state: {
+      name: `${cookiePrefix}.${STATE_NAME}`,
+      options: {
+        maxAge: FIFTEEN_MINUTES_IN_SECONDS,
+        ...serializeOptions,
       },
-      token: typeof token === 'string' ? { url: token } : token,
-      userinfo: typeof userinfo === 'string' ? { url: userinfo } : userinfo,
     },
   }
+}
+
+export interface OAuthCookiesOptions {
+  pkce: CookieOption
+  state: CookieOption
 }
