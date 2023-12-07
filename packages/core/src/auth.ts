@@ -7,12 +7,14 @@ import {
 import type { SessionController } from './controllers/session'
 import { PluginCoordinator, type Plugin } from './plugin'
 import type { Provider } from './providers'
+import type { CreateCookiesOptions } from './security/cookie'
 import type { PageEndpoint } from './types'
 
 export interface AuthConfig {
   session: SessionController
   providers?: Provider[]
   pages?: Partial<AuthPages>
+  cookies?: CreateCookiesOptions
   callbacks?: Partial<AuthCallbacks>
   plugins?: Plugin[]
 }
@@ -37,6 +39,8 @@ export class Auth {
 
   session: SessionController
 
+  cookies?: CreateCookiesOptions
+
   pages: AuthPages
 
   providers: Provider[]
@@ -57,6 +61,8 @@ export class Auth {
 
     this.session = config.session
 
+    this.cookies = config.cookies
+
     this.providers = config.providers ?? []
 
     this.providerEndpoints = new Map()
@@ -76,6 +82,10 @@ export class Auth {
     this.plugins.forEach((plugin) => {
       plugin.setup?.(this.pluginCoordinator)
     })
+
+    if (this.cookies) {
+      this.pluginCoordinator.emit('cookies', this.cookies)
+    }
   }
 
   public async handle(request: Aponia.Request): Promise<Aponia.Response> {
