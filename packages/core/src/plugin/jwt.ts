@@ -1,11 +1,11 @@
-import { DEFAULT_SECRET } from '../constants'
+import { DEFAULT_ACCESS_TOKEN_AGE, DEFAULT_SECRET } from '../constants'
 import { encode, decode } from '../security/jwt'
 
 import type { Plugin } from '.'
 
 export interface JwtPluginOptions {
   secret?: string
-  jwt?: boolean
+  session?: boolean
   checker?: boolean
 }
 
@@ -15,8 +15,23 @@ export function jwtPlugin(options: JwtPluginOptions = {}): Plugin {
   return {
     name: 'jwt',
     setup: (plugin) => {
-      if (options.jwt !== false) {
-        plugin.emit('jwt', { secret, encode, decode })
+      if (options.session !== false) {
+        const sessionEncode = async (session: Aponia.Session): Promise<string> => {
+          return await encode({
+            secret,
+            token: session,
+            maxAge: DEFAULT_ACCESS_TOKEN_AGE,
+          })
+        }
+
+        const sessionDecode = async (token: string): Promise<Aponia.Session | undefined> => {
+          return await decode({ secret, token })
+        }
+
+        plugin.emit('session', {
+          encode: sessionEncode,
+          decode: sessionDecode,
+        })
       }
 
       if (options.checker !== false) {

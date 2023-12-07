@@ -63,6 +63,18 @@ export class SessionController {
         },
       })
     })
+
+    plugin.on('cookies', (config) => {
+      this.cookies = createClientCookiesOptions({
+        ...config,
+        serialize: {
+          path: '/',
+          sameSite: 'lax',
+          maxAge: DEFAULT_ACCESS_TOKEN_AGE,
+          ...config.serialize,
+        },
+      })
+    })
   }
 
   async createSessionFromUser(user: Aponia.User): Promise<Aponia.Session | undefined> {
