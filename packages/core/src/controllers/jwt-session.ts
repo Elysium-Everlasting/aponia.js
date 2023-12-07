@@ -75,17 +75,13 @@ export class JwtSessionController implements SessionController {
     plugin.on('jwt', (options) => {
       this.jwt = {
         ...options,
-        maxAge: options.maxAge ?? DEFAULT_ACCESS_TOKEN_AGE,
-        secret: options.secret ?? DEFAULT_SECRET,
+        maxAge: options.maxAge ?? this.jwt.maxAge,
+        secret: options.secret ?? this.jwt.secret,
       }
-    })
 
-    plugin.on('jwtEncode', (encode) => {
-      this.encode = encode
-    })
+      this.encode = options.encode ?? this.encode
 
-    plugin.on('jwtDecode', (decode) => {
-      this.decode = decode
+      this.decode = options.decode ?? this.decode
     })
   }
 

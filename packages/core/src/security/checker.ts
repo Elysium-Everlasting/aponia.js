@@ -4,8 +4,8 @@ import type { Awaitable } from '../utils/types'
 
 export interface CheckerConfig {
   checks?: Check[]
-  encode?: (value: string) => string
-  decode?: (value: string) => string
+  encode?: (value: string) => Awaitable<string>
+  decode?: (value: string) => Awaitable<string>
 }
 
 export type Check = 'pkce' | 'state' | 'nonce'

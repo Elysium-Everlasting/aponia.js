@@ -5,7 +5,7 @@ import {
   DEFAULT_UPDATE_ROUTE,
 } from './constants'
 import type { SessionController } from './controllers/session'
-import { PluginCoordinator } from './plugin'
+import { PluginCoordinator, type Plugin } from './plugin'
 import type { Provider } from './providers'
 import type { PageEndpoint } from './types'
 
@@ -14,6 +14,7 @@ export interface AuthConfig {
   providers?: Provider[]
   pages?: Partial<AuthPages>
   callbacks?: Partial<AuthCallbacks>
+  plugins?: Plugin[]
 }
 
 export interface AuthPages {
@@ -30,7 +31,9 @@ export type AuthCallbacks = {
 }
 
 export class Auth {
-  plugin: PluginCoordinator
+  pluginCoordinator: PluginCoordinator
+
+  plugins: Plugin[]
 
   session: SessionController
 
@@ -43,7 +46,7 @@ export class Auth {
   callbacks?: Partial<AuthCallbacks>
 
   constructor(config: AuthConfig) {
-    this.plugin = new PluginCoordinator()
+    this.pluginCoordinator = new PluginCoordinator()
 
     this.pages = {
       logout: config.pages?.logout ?? { route: DEFAULT_LOGOUT_ROUTE, methods: ['POST'] },
@@ -59,7 +62,7 @@ export class Auth {
     this.providerEndpoints = new Map()
 
     this.providers.forEach((provider) => {
-      provider.initialize?.(this.plugin)
+      provider.initialize?.(this.pluginCoordinator)
 
       provider.managedEndpoints.forEach((endpoint) => {
         this.providerEndpoints.set(endpoint.route, { provider, endpoint })
@@ -67,6 +70,12 @@ export class Auth {
     })
 
     this.callbacks = config.callbacks
+
+    this.plugins = config.plugins ?? []
+
+    this.plugins.forEach((plugin) => {
+      plugin.setup?.(this.pluginCoordinator)
+    })
   }
 
   public async handle(request: Aponia.Request): Promise<Aponia.Response> {

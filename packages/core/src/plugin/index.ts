@@ -1,19 +1,21 @@
 import type { CheckerConfig } from '../security/checker'
 import type { CreateCookiesOptions } from '../security/cookie'
-import type { JWTDecodeParams, JWTEncodeParams, JWTOptions } from '../security/jwt'
-import type { Awaitable } from '../utils/types'
+import type { JWTOptions } from '../security/jwt'
 
 export type Listener<T> = (data: T) => unknown
 
-export type Plugin = (plugin: PluginCoordinator) => void
+export type PluginFn = (plugin: PluginCoordinator) => void
+
+export interface Plugin {
+  name: string
+  setup: PluginFn
+}
 
 export class PluginCoordinator {
   listeners = {
     cookies: new Array<Listener<CreateCookiesOptions>>(),
     checker: new Array<Listener<CheckerConfig>>(),
     jwt: new Array<Listener<JWTOptions>>(),
-    jwtEncode: new Array<Listener<(params: JWTEncodeParams) => Awaitable<string>>>(),
-    jwtDecode: new Array<Listener<(params: JWTDecodeParams) => Awaitable<any>>>(),
   }
 
   on<T extends keyof typeof this.listeners>(
