@@ -8,7 +8,7 @@ import { SessionController } from './controllers/session'
 import { PluginCoordinator, type Plugin } from './plugin'
 import type { Provider } from './providers'
 import type { CreateCookiesOptions } from './security/cookie'
-import type { PageEndpoint } from './types'
+import type { Route } from './types'
 
 export interface AuthConfig {
   session?: SessionController
@@ -20,10 +20,10 @@ export interface AuthConfig {
 }
 
 export interface AuthPages {
-  logout: PageEndpoint
-  update: PageEndpoint
-  forgot: PageEndpoint
-  reset: PageEndpoint
+  logout: Route
+  update: Route
+  forgot: Route
+  reset: Route
   logoutRedirect?: string
   fallback?: never
 }
@@ -35,8 +35,6 @@ export type AuthCallbacks = {
 export class Auth {
   pluginCoordinator: PluginCoordinator
 
-  plugins: Plugin[]
-
   session: SessionController
 
   cookies?: CreateCookiesOptions
@@ -45,7 +43,7 @@ export class Auth {
 
   providers: Provider[]
 
-  providerEndpoints: Map<string, { provider: Provider; endpoint: PageEndpoint }>
+  routes: Map<string, { provider: Provider; route: Route }>
 
   callbacks?: Partial<AuthCallbacks>
 
@@ -53,10 +51,10 @@ export class Auth {
     this.pluginCoordinator = new PluginCoordinator()
 
     this.pages = {
-      logout: config.pages?.logout ?? { route: DEFAULT_LOGOUT_ROUTE, methods: ['POST'] },
-      update: config.pages?.update ?? { route: DEFAULT_UPDATE_ROUTE, methods: ['POST'] },
-      forgot: config.pages?.forgot ?? { route: DEFAULT_FORGOT_ROUTE, methods: ['POST'] },
-      reset: config.pages?.reset ?? { route: DEFAULT_RESET_ROUTE, methods: ['POST'] },
+      logout: config.pages?.logout ?? { path: DEFAULT_LOGOUT_ROUTE, methods: ['POST'] },
+      update: config.pages?.update ?? { path: DEFAULT_UPDATE_ROUTE, methods: ['POST'] },
+      forgot: config.pages?.forgot ?? { path: DEFAULT_FORGOT_ROUTE, methods: ['POST'] },
+      reset: config.pages?.reset ?? { path: DEFAULT_RESET_ROUTE, methods: ['POST'] },
     }
 
     this.session = config.session ?? new SessionController()
@@ -65,75 +63,23 @@ export class Auth {
 
     this.providers = config.providers ?? []
 
-    this.providerEndpoints = new Map()
+    this.routes = new Map()
 
     this.providers.forEach((provider) => {
-      provider.initialize?.(this.pluginCoordinator)
-
-      provider.managedEndpoints.forEach((endpoint) => {
-        this.providerEndpoints.set(endpoint.route, { provider, endpoint })
+      provider.routes.forEach((endpoint) => {
+        this.routes.set(endpoint.path, { provider, route: endpoint })
       })
     })
 
     this.callbacks = config.callbacks
-
-    this.plugins = config.plugins ?? []
-
-    this.plugins.forEach((plugin) => {
-      plugin.setup?.(this.pluginCoordinator)
-    })
-
-    if (this.cookies) {
-      this.pluginCoordinator.emit('cookies', this.cookies)
-    }
   }
 
-  public async handle(request: Aponia.Request): Promise<Aponia.Response> {
-    const providerResponse = await this.handleProviderRequest(request)
+  public async handle(request: Aponia.Request): Promise<Aponia.Response | void> {
+    const providerEndpoint = this.routes.get(request.url.pathname)
 
-    if (providerResponse) {
-      return await this.handleResponseSession(providerResponse)
-    }
-
-    const staticResponse = await this.handleStaticRequest(request)
-
-    if (staticResponse) {
-      return await this.handleResponseSession(staticResponse)
-    }
-
-    return (await this.callbacks?.fallback?.(request)) ?? {}
-  }
-
-  public async handleProviderRequest(request: Aponia.Request): Promise<Aponia.Response | void> {
-    const providerEndpoint = this.providerEndpoints.get(request.url.pathname)
-
-    if (providerEndpoint?.endpoint != null && this.matches(request, providerEndpoint.endpoint)) {
+    if (providerEndpoint?.route != null && this.matches(request, providerEndpoint.route)) {
       return await providerEndpoint.provider.handle(request)
     }
-  }
-
-  public async handleStaticRequest(request: Aponia.Request): Promise<Aponia.Response | undefined> {
-    if (this.matches(request, this.pages.logout)) {
-      request.action = 'logout'
-      return await this.callbacks?.logout?.(request)
-    }
-
-    if (this.matches(request, this.pages.update)) {
-      request.action = 'update'
-      return await this.callbacks?.update?.(request)
-    }
-
-    if (this.matches(request, this.pages.forgot)) {
-      request.action = 'forgot'
-      return await this.callbacks?.forgot?.(request)
-    }
-
-    if (this.matches(request, this.pages.reset)) {
-      request.action = 'reset'
-      return await this.callbacks?.reset?.(request)
-    }
-
-    return
   }
 
   public async handleResponseSession(response: Aponia.Response): Promise<Aponia.Response> {
@@ -151,11 +97,11 @@ export class Auth {
   }
 
   /**
-   * Whether a {@link Aponia.Request} matches a {@link PageEndpoint}.
+   * Whether a {@link Aponia.Request} matches a {@link Route}.
    */
-  private matches(request: Aponia.Request, pageEndpoint: PageEndpoint): boolean {
+  private matches(request: Aponia.Request, pageEndpoint: Route): boolean {
     return (
-      pageEndpoint.route === request.url.pathname && pageEndpoint.methods.includes(request.method)
+      pageEndpoint.path === request.url.pathname && pageEndpoint.methods.includes(request.method)
     )
   }
 }

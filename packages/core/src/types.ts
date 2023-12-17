@@ -2,6 +2,7 @@
 
 import type { Action } from './constants'
 import type { Cookie } from './security/cookie'
+import type { Awaitable } from './utils/types'
 
 /**
  * The request object that the framework handles.
@@ -88,8 +89,8 @@ export interface AponiaUser {}
  */
 export interface AponiaSession {}
 
-export interface PageEndpoint {
-  route: string
+export interface Route {
+  path: string
   methods: string[]
 }
 
@@ -111,3 +112,5 @@ declare global {
     interface Session extends AponiaSession {}
   }
 }
+
+export type Handle = (request: Aponia.Request) => Awaitable<Aponia.Response | void>

@@ -17,7 +17,7 @@ import {
   type CookieOption,
   type CreateCookiesOptions,
 } from '../security/cookie'
-import type { PageEndpoint } from '../types'
+import type { Route } from '../types'
 import type { Awaitable, Nullish } from '../utils/types'
 
 import type { Endpoint, Provider, TokenEndpointResponse } from '.'
@@ -25,8 +25,8 @@ import type { Endpoint, Provider, TokenEndpointResponse } from '.'
 export type OAuthCheck = 'state' | 'pkce'
 
 export interface OAuthPages {
-  login: PageEndpoint
-  callback: PageEndpoint
+  login: Route
+  callback: Route
   redirect: string
 }
 
@@ -61,7 +61,7 @@ export class OAuthProvider<T> implements Provider {
 
   authorizationServer: oauth.AuthorizationServer
 
-  managedEndpoints: PageEndpoint[]
+  routes: Route[]
 
   checker: Checker
 
@@ -74,11 +74,11 @@ export class OAuthProvider<T> implements Provider {
 
     this.pages = {
       login: {
-        route: config.pages?.login?.route ?? `${DEFAULT_LOGIN_ROUTE}/${this.id}`,
+        path: config.pages?.login?.path ?? `${DEFAULT_LOGIN_ROUTE}/${this.id}`,
         methods: config.pages?.login?.methods ?? ['GET'],
       },
       callback: {
-        route: config.pages?.callback?.route ?? `${DEFAULT_CALLBACK_ROUTE}/${this.id}`,
+        path: config.pages?.callback?.path ?? `${DEFAULT_CALLBACK_ROUTE}/${this.id}`,
         methods: config.pages?.callback?.methods ?? ['GET'],
       },
       redirect: config.pages?.redirect ?? DEFAULT_CALLBACK_REDIRECT,
@@ -112,7 +112,7 @@ export class OAuthProvider<T> implements Provider {
       userinfo_endpoint: this.endpoints.userinfo.url,
     }
 
-    this.managedEndpoints = [this.pages.login, this.pages.callback]
+    this.routes = [this.pages.login, this.pages.callback]
 
     this.cookies = createOAuthCookiesOptions({
       ...config.cookies,
@@ -167,7 +167,7 @@ export class OAuthProvider<T> implements Provider {
     })
 
     if (!url.searchParams.has('redirect_uri')) {
-      url.searchParams.set('redirect_uri', `${request.url.origin}${this.pages.callback.route}`)
+      url.searchParams.set('redirect_uri', `${request.url.origin}${this.pages.callback.path}`)
     }
 
     if (this.checker.checks.includes('state')) {
@@ -234,7 +234,7 @@ export class OAuthProvider<T> implements Provider {
       this.authorizationServer,
       this.client,
       codeGrantParams,
-      `${request.url.origin}${this.pages.callback.route}`,
+      `${request.url.origin}${this.pages.callback.path}`,
       pkce ?? 'auth',
     )
 
@@ -284,11 +284,11 @@ export class OAuthProvider<T> implements Provider {
   }
 
   /**
-   * Whether a {@link Aponia.Request} matches a {@link PageEndpoint}.
+   * Whether a {@link Aponia.Request} matches a {@link Route}.
    */
-  private matches(request: Aponia.Request, pageEndpoint: PageEndpoint): boolean {
+  private matches(request: Aponia.Request, pageEndpoint: Route): boolean {
     return (
-      pageEndpoint.route === request.url.pathname && pageEndpoint.methods.includes(request.method)
+      pageEndpoint.path === request.url.pathname && pageEndpoint.methods.includes(request.method)
     )
   }
 }
