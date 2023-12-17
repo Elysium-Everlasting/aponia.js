@@ -21,6 +21,7 @@ export class Auth {
 
   constructor(config: AuthConfig = {}) {
     this.session = config.session ?? new SessionController()
+    this.session.setCookieOptions(config.cookies)
 
     this.cookies = config.cookies
 

@@ -29,24 +29,15 @@ export class SessionController {
 
     this.decode = config.decode ?? ((value) => JSON.parse(value))
 
-    this.cookies = createClientCookiesOptions({
-      ...config.cookie,
-      serialize: {
-        path: '/',
-        sameSite: 'lax',
-        maxAge: DEFAULT_ACCESS_TOKEN_AGE,
-        ...config.cookie?.serialize,
-      },
-    })
+    this.cookies = DEFAULT_CLIENT_COOKIES_OPTIONS
   }
 
   setCookieOptions(options?: CreateCookiesOptions) {
     this.cookies = createClientCookiesOptions({
+      ...DEFAULT_CREATE_COOKIES_OPTIONS,
       ...options,
       serialize: {
-        path: '/',
-        sameSite: 'lax',
-        maxAge: DEFAULT_ACCESS_TOKEN_AGE,
+        ...DEFAULT_CREATE_COOKIES_OPTIONS.serialize,
         ...options?.serialize,
       },
     })
@@ -98,3 +89,15 @@ export function createClientCookiesOptions(options?: CreateCookiesOptions): Clie
     },
   }
 }
+
+export const DEFAULT_CREATE_COOKIES_OPTIONS: CreateCookiesOptions = {
+  serialize: {
+    path: '/',
+    sameSite: 'lax',
+    maxAge: DEFAULT_ACCESS_TOKEN_AGE,
+  },
+}
+
+export const DEFAULT_CLIENT_COOKIES_OPTIONS = createClientCookiesOptions(
+  DEFAULT_CREATE_COOKIES_OPTIONS,
+)
