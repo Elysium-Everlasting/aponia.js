@@ -1,5 +1,5 @@
 import { SessionController } from './controllers/session'
-import type { Handler } from './handler'
+import { requestMatchesRoute, type Handler } from './handler'
 import type { CreateCookiesOptions } from './security/cookie'
 import type { Route } from './types'
 
@@ -43,7 +43,7 @@ export class Auth {
   public async handle(request: Aponia.Request): Promise<Aponia.Response | void> {
     const route = this.routes.get(request.url.pathname)
 
-    if (route?.route != null && this.matches(request, route.route)) {
+    if (route?.route != null && requestMatchesRoute(request, route.route)) {
       return await route.handler.handle(request)
     }
   }
@@ -60,13 +60,6 @@ export class Auth {
     }
 
     return response
-  }
-
-  /**
-   * Whether a {@link Aponia.Request} matches a {@link Route}.
-   */
-  private matches(request: Aponia.Request, route: Route): boolean {
-    return route.path === request.url.pathname && route.methods.includes(request.method)
   }
 }
 

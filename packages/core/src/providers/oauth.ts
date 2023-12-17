@@ -9,7 +9,7 @@ import {
   PKCE_NAME,
   STATE_NAME,
 } from '../constants'
-import type { Handler } from '../handler'
+import { requestMatchesRoute, type Handler } from '../handler'
 import { Checker, type CheckerConfig } from '../security/checker'
 import {
   getCookiePrefix,
@@ -141,11 +141,11 @@ export class OAuthProvider<T> implements Handler {
   }
 
   public async handle(request: Aponia.Request): Promise<Aponia.Response | void> {
-    if (this.matches(request, this.pages.login)) {
+    if (requestMatchesRoute(request, this.pages.login)) {
       return this.login(request)
     }
 
-    if (this.matches(request, this.pages.callback)) {
+    if (requestMatchesRoute(request, this.pages.callback)) {
       return this.callback(request)
     }
   }
@@ -278,15 +278,6 @@ export class OAuthProvider<T> implements Handler {
     }
 
     return response
-  }
-
-  /**
-   * Whether a {@link Aponia.Request} matches a {@link Route}.
-   */
-  private matches(request: Aponia.Request, pageEndpoint: Route): boolean {
-    return (
-      pageEndpoint.path === request.url.pathname && pageEndpoint.methods.includes(request.method)
-    )
   }
 }
 

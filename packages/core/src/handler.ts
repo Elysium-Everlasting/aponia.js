@@ -13,3 +13,10 @@ export abstract class Handler {
    */
   abstract handle: Handle
 }
+
+/**
+ * Whether a {@link Aponia.Request} matches a {@link Route}.
+ */
+export function requestMatchesRoute(request: Aponia.Request, route: Route): boolean {
+  return route.path === request.url.pathname && route.methods.includes(request.method)
+}
