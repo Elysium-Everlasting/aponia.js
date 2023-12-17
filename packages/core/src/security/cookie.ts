@@ -190,3 +190,10 @@ export function getCookiePrefix(options?: CreateCookiesOptions): string {
 
   return `${options?.serialize?.secure ? securePrefix : ''}${cookieName}`
 }
+
+export const DEFAULT_CREATE_COOKIES_OPTIONS: CreateCookiesOptions = {
+  serialize: {
+    path: '/',
+    sameSite: 'lax',
+  },
+}

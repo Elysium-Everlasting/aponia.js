@@ -4,6 +4,7 @@ import {
   type Cookie,
   type CookieOption,
   type CreateCookiesOptions,
+  DEFAULT_CREATE_COOKIES_OPTIONS,
 } from '../security/cookie'
 import type { Awaitable } from '../utils/types'
 
@@ -85,17 +86,12 @@ export function createClientCookiesOptions(options?: CreateCookiesOptions): Clie
   return {
     accessToken: {
       name: `${cookiePrefix}.${ACCESS_TOKEN_NAME}`,
-      options: serializeOptions,
+      options: {
+        maxAge: DEFAULT_ACCESS_TOKEN_AGE,
+        ...serializeOptions,
+      },
     },
   }
-}
-
-export const DEFAULT_CREATE_COOKIES_OPTIONS: CreateCookiesOptions = {
-  serialize: {
-    path: '/',
-    sameSite: 'lax',
-    maxAge: DEFAULT_ACCESS_TOKEN_AGE,
-  },
 }
 
 export const DEFAULT_CLIENT_COOKIES_OPTIONS = createClientCookiesOptions(

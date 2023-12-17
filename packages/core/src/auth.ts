@@ -1,12 +1,11 @@
 import { SessionController } from './controllers/session'
 import type { Handler } from './handler'
-import type { Provider } from './providers'
 import type { CreateCookiesOptions } from './security/cookie'
 import type { Route } from './types'
 
 export interface AuthConfig {
   session?: SessionController
-  providers?: Provider[]
+  providers?: Handler[]
   cookies?: CreateCookiesOptions
 }
 
@@ -17,7 +16,7 @@ export class Auth {
 
   handlers: Handler[]
 
-  routes: Map<string, { provider: Provider; route: Route }>
+  routes: Map<string, { handler: Handler; route: Route }>
 
   constructor(config: AuthConfig = {}) {
     this.session = config.session ?? new SessionController()
@@ -31,7 +30,7 @@ export class Auth {
 
     this.handlers.forEach((provider) => {
       provider.routes.forEach((endpoint) => {
-        this.routes.set(endpoint.path, { provider, route: endpoint })
+        this.routes.set(endpoint.path, { handler: provider, route: endpoint })
       })
     })
   }
@@ -40,7 +39,7 @@ export class Auth {
     const providerEndpoint = this.routes.get(request.url.pathname)
 
     if (providerEndpoint?.route != null && this.matches(request, providerEndpoint.route)) {
-      return await providerEndpoint.provider.handle(request)
+      return await providerEndpoint.handler.handle(request)
     }
   }
 

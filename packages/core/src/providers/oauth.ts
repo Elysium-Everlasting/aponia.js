@@ -9,18 +9,28 @@ import {
   PKCE_NAME,
   STATE_NAME,
 } from '../constants'
-import type { PluginCoordinator } from '../plugin'
+import type { Handler } from '../handler'
 import { Checker, type CheckerConfig } from '../security/checker'
 import {
   getCookiePrefix,
   type Cookie,
   type CookieOption,
   type CreateCookiesOptions,
+  DEFAULT_CREATE_COOKIES_OPTIONS,
 } from '../security/cookie'
 import type { Route } from '../types'
 import type { Awaitable, Nullish } from '../utils/types'
 
-import type { Endpoint, Provider, TokenEndpointResponse } from '.'
+export interface Endpoint<TContext = any, TResponse = any> {
+  url: string
+  params?: Record<string, any>
+  request?: (context: TContext) => Awaitable<TResponse>
+  conform?: (response: Response) => Awaitable<Response | Nullish>
+}
+
+export type TokenEndpointResponse =
+  | oauth.OAuth2TokenEndpointResponse
+  | oauth.OpenIDTokenEndpointResponse
 
 export type OAuthCheck = 'state' | 'pkce'
 
@@ -48,7 +58,7 @@ export interface OAuthProviderConfig<T> {
   cookies?: CreateCookiesOptions
 }
 
-export class OAuthProvider<T> implements Provider {
+export class OAuthProvider<T> implements Handler {
   config: OAuthProviderConfig<T>
 
   id: string
@@ -114,32 +124,19 @@ export class OAuthProvider<T> implements Provider {
 
     this.routes = [this.pages.login, this.pages.callback]
 
-    this.cookies = createOAuthCookiesOptions({
-      ...config.cookies,
-      serialize: {
-        path: '/',
-        sameSite: 'lax',
-        ...config.cookies?.serialize,
-      },
-    })
+    this.cookies = DEFAULT_OAUTH_COOKIES_OPTIONS
 
     this.checker = new Checker(config.checker)
   }
 
-  public initialize(plugin: PluginCoordinator) {
-    plugin.on('cookies', (options) => {
-      this.cookies = createOAuthCookiesOptions({
-        ...options,
-        serialize: {
-          path: '/',
-          sameSite: 'lax',
-          ...options?.serialize,
-        },
-      })
-    })
-
-    plugin.on('checker', (config) => {
-      this.checker.setConfig(config)
+  setCookiesOptions(options?: CreateCookiesOptions) {
+    this.cookies = createOAuthCookiesOptions({
+      ...DEFAULT_CREATE_COOKIES_OPTIONS,
+      ...options,
+      serialize: {
+        ...DEFAULT_CREATE_COOKIES_OPTIONS.serialize,
+        ...options?.serialize,
+      },
     })
   }
 
@@ -293,6 +290,11 @@ export class OAuthProvider<T> implements Provider {
   }
 }
 
+export interface OAuthCookiesOptions {
+  pkce: CookieOption
+  state: CookieOption
+}
+
 export function createOAuthCookiesOptions(options?: CreateCookiesOptions): OAuthCookiesOptions {
   const cookiePrefix = getCookiePrefix(options)
   const serializeOptions = { ...options?.serialize }
@@ -315,7 +317,6 @@ export function createOAuthCookiesOptions(options?: CreateCookiesOptions): OAuth
   }
 }
 
-export interface OAuthCookiesOptions {
-  pkce: CookieOption
-  state: CookieOption
-}
+export const DEFAULT_OAUTH_COOKIES_OPTIONS = createOAuthCookiesOptions(
+  DEFAULT_CREATE_COOKIES_OPTIONS,
+)
