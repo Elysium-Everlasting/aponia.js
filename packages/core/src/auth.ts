@@ -9,6 +9,11 @@ export interface AuthConfig {
   cookies?: CreateCookiesOptions
 }
 
+export interface InternalRoute {
+  handler: Handler
+  route: Route
+}
+
 export class Auth {
   cookies?: CreateCookiesOptions
 
@@ -16,30 +21,30 @@ export class Auth {
 
   handlers: Handler[]
 
-  routes: Map<string, { handler: Handler; route: Route }>
+  routes: Map<string, InternalRoute>
 
   constructor(config: AuthConfig = {}) {
-    this.session = config.session ?? new SessionController()
-    this.session.setCookieOptions(config.cookies)
-
     this.cookies = config.cookies
+
+    this.session = config.session ?? new SessionController()
+    this.session.setCookieOptions(this.cookies)
 
     this.handlers = config.providers ?? []
 
     this.routes = new Map()
 
-    this.handlers.forEach((provider) => {
-      provider.routes.forEach((endpoint) => {
-        this.routes.set(endpoint.path, { handler: provider, route: endpoint })
+    this.handlers.forEach((handler) => {
+      handler.routes.forEach((route) => {
+        this.routes.set(route.path, { handler, route })
       })
     })
   }
 
   public async handle(request: Aponia.Request): Promise<Aponia.Response | void> {
-    const providerEndpoint = this.routes.get(request.url.pathname)
+    const route = this.routes.get(request.url.pathname)
 
-    if (providerEndpoint?.route != null && this.matches(request, providerEndpoint.route)) {
-      return await providerEndpoint.handler.handle(request)
+    if (route?.route != null && this.matches(request, route.route)) {
+      return await route.handler.handle(request)
     }
   }
 
@@ -60,10 +65,8 @@ export class Auth {
   /**
    * Whether a {@link Aponia.Request} matches a {@link Route}.
    */
-  private matches(request: Aponia.Request, pageEndpoint: Route): boolean {
-    return (
-      pageEndpoint.path === request.url.pathname && pageEndpoint.methods.includes(request.method)
-    )
+  private matches(request: Aponia.Request, route: Route): boolean {
+    return route.path === request.url.pathname && route.methods.includes(request.method)
   }
 }
 
