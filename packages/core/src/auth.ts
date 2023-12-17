@@ -1,11 +1,5 @@
-import {
-  DEFAULT_FORGOT_ROUTE,
-  DEFAULT_LOGOUT_ROUTE,
-  DEFAULT_RESET_ROUTE,
-  DEFAULT_UPDATE_ROUTE,
-} from './constants'
 import { SessionController } from './controllers/session'
-import { PluginCoordinator, type Plugin } from './plugin'
+import type { Handler } from './handler'
 import type { Provider } from './providers'
 import type { CreateCookiesOptions } from './security/cookie'
 import type { Route } from './types'
@@ -13,65 +7,32 @@ import type { Route } from './types'
 export interface AuthConfig {
   session?: SessionController
   providers?: Provider[]
-  pages?: Partial<AuthPages>
   cookies?: CreateCookiesOptions
-  callbacks?: Partial<AuthCallbacks>
-  plugins?: Plugin[]
-}
-
-export interface AuthPages {
-  logout: Route
-  update: Route
-  forgot: Route
-  reset: Route
-  logoutRedirect?: string
-  fallback?: never
-}
-
-export type AuthCallbacks = {
-  [k in keyof AuthPages]?: (request: Aponia.Request) => Promise<Aponia.Response>
 }
 
 export class Auth {
-  pluginCoordinator: PluginCoordinator
+  cookies?: CreateCookiesOptions
 
   session: SessionController
 
-  cookies?: CreateCookiesOptions
-
-  pages: AuthPages
-
-  providers: Provider[]
+  handlers: Handler[]
 
   routes: Map<string, { provider: Provider; route: Route }>
 
-  callbacks?: Partial<AuthCallbacks>
-
   constructor(config: AuthConfig = {}) {
-    this.pluginCoordinator = new PluginCoordinator()
-
-    this.pages = {
-      logout: config.pages?.logout ?? { path: DEFAULT_LOGOUT_ROUTE, methods: ['POST'] },
-      update: config.pages?.update ?? { path: DEFAULT_UPDATE_ROUTE, methods: ['POST'] },
-      forgot: config.pages?.forgot ?? { path: DEFAULT_FORGOT_ROUTE, methods: ['POST'] },
-      reset: config.pages?.reset ?? { path: DEFAULT_RESET_ROUTE, methods: ['POST'] },
-    }
-
     this.session = config.session ?? new SessionController()
 
     this.cookies = config.cookies
 
-    this.providers = config.providers ?? []
+    this.handlers = config.providers ?? []
 
     this.routes = new Map()
 
-    this.providers.forEach((provider) => {
+    this.handlers.forEach((provider) => {
       provider.routes.forEach((endpoint) => {
         this.routes.set(endpoint.path, { provider, route: endpoint })
       })
     })
-
-    this.callbacks = config.callbacks
   }
 
   public async handle(request: Aponia.Request): Promise<Aponia.Response | void> {
