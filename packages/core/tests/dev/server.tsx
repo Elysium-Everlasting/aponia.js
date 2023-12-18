@@ -1,19 +1,8 @@
 import express from 'express'
 import React from 'react'
-import { useState } from 'react'
 import { renderToString } from 'react-dom/server'
 
-function MyComponent() {
-  const [count, setCount] = useState(0)
-
-  return (
-    <div>
-      <h1>Hello, World!</h1>
-      <p>Count: {count}</p>
-      <button onClick={() => setCount((currentCount) => currentCount + 1)}>Increment</button>
-    </div>
-  )
-}
+import { MyComponent } from '../../src/client/components/my-component'
 
 const PORT = 8080
 
