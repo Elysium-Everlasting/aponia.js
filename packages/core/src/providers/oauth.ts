@@ -146,7 +146,7 @@ export class OAuthProvider<T> implements Handler {
     })
   }
 
-  public async handle(request: Aponia.Request): Promise<Aponia.Response | void> {
+  public async handle(request: Aponia.Request): Promise<Aponia.Response> {
     if (requestMatchesRoute(request, this.pages.login)) {
       return this.login(request)
     }
@@ -154,6 +154,8 @@ export class OAuthProvider<T> implements Handler {
     if (requestMatchesRoute(request, this.pages.callback)) {
       return this.callback(request)
     }
+
+    return {}
   }
 
   public async login(request: Aponia.Request): Promise<Aponia.Response> {

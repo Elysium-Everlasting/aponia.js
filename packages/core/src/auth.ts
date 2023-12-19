@@ -40,12 +40,15 @@ export class Auth {
     })
   }
 
-  public async handle(request: Aponia.Request): Promise<Aponia.Response | void> {
+  public async handle(request: Aponia.Request): Promise<Aponia.Response> {
     const route = this.routes.get(request.url.pathname)
 
     if (route?.route != null && requestMatchesRoute(request, route.route)) {
-      return await route.handler.handle(request)
+      const response = await route.handler.handle(request)
+      return response ?? {}
     }
+
+    return {}
   }
 
   public async handleResponseSession(response: Aponia.Response): Promise<Aponia.Response> {

@@ -1,6 +1,8 @@
 import crypto from 'node:crypto'
 
 import { OAuthProvider } from '@aponia.js/core/providers/oauth'
+import { serialize } from 'cookie'
+import cookieParser from 'cookie-parser'
 import { config } from 'dotenv'
 import express from 'express'
 
@@ -59,18 +61,44 @@ const github = new OAuthProvider({
 function main() {
   const app = express()
 
-  app.get('/', async (req, res) => {
-    const response = await github.login({
-      url: new URL(req.protocol + '://' + req.get('host') + req.originalUrl),
-      method: req.method,
-      cookies: req.cookies,
-      headers: new Headers(),
-      action: 'unknown',
+  app.use(cookieParser())
+
+  app.get('/', async (_req, res) => {
+    res.send(`
+<div>
+<a href="/">Home</a>
+<a href="/auth/login/github">Login with github</a>
+</div>
+`)
+  })
+
+  github.routes.forEach((route) => {
+    app.get(route.path, async (req, res) => {
+      const response = await github.handle({
+        url: new URL(req.protocol + '://' + req.get('host') + req.originalUrl),
+        method: req.method,
+        cookies: req.cookies,
+        headers: new Headers(),
+      })
+
+      console.log(response)
+
+      if (response.status != null) {
+        res.status(response.status)
+      }
+
+      response.cookies?.forEach((cookie) => {
+        res.appendHeader('Set-Cookie', serialize(cookie.name, cookie.value, cookie.options))
+      })
+
+      if (response.redirect != null) {
+        res.redirect(response.redirect)
+      }
+
+      if (response.body) {
+        res.send(response.body)
+      }
     })
-
-    console.log(response)
-
-    res.send('Hello, World!')
   })
 
   app.listen(PORT, () => {

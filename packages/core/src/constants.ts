@@ -14,18 +14,6 @@ export const DAY_IN_SECONDS = 24 * HOUR_IN_SECONDS
 export const WEEK_IN_SECONDS = 7 * DAY_IN_SECONDS
 export const IS_BROWSER = typeof window !== 'undefined'
 
-export const ACTIONS = [
-  'login',
-  'register',
-  'callback',
-  'logout',
-  'update',
-  'forgot',
-  'reset',
-  'unknown',
-] as const
-export type Action = (typeof ACTIONS)[number]
-
 //----------------------------------------------------------------------------------------
 // Logistical.
 //----------------------------------------------------------------------------------------

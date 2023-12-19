@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-namespace */
 
-import type { Action } from './constants'
 import type { Cookie } from './security/cookie'
 import type { Awaitable } from './utils/types'
 
@@ -27,11 +26,6 @@ export interface AponiaRequest {
    * Relevant headers sent with the request.
    */
   headers: Headers
-
-  /**
-   * The desired auth action.
-   */
-  action: Action
 }
 
 /**
