@@ -10,6 +10,7 @@ import {
   STATE_MAX_AGE,
   STATE_NAME,
 } from '../constants'
+import { Logger } from '../controllers/logger'
 import { requestMatchesRoute, type Handler } from '../handler'
 import { Checker, type CheckerConfig } from '../security/checker'
 import {
@@ -57,6 +58,7 @@ export interface OAuthProviderConfig<T> {
   profile?: (profile: T, tokens: TokenEndpointResponse) => Awaitable<Aponia.User | Nullish>
   checker?: CheckerConfig
   cookies?: CreateCookiesOptions
+  logger?: Logger
 }
 
 export class OAuthProvider<T = any> implements Handler {
@@ -77,6 +79,8 @@ export class OAuthProvider<T = any> implements Handler {
   checker: Checker
 
   cookies: OAuthCookiesOptions
+
+  logger: Logger
 
   constructor(config: OAuthProviderConfig<T>) {
     this.config = config
@@ -133,9 +137,15 @@ export class OAuthProvider<T = any> implements Handler {
     this.cookies = DEFAULT_OAUTH_COOKIES_OPTIONS
 
     this.checker = new Checker(config.checker)
+
+    this.logger = config.logger ?? new Logger()
   }
 
-  setCookiesOptions(options?: CreateCookiesOptions) {
+  public setLogger(logger = this.logger) {
+    this.logger = logger
+  }
+
+  public setCookiesOptions(options?: CreateCookiesOptions) {
     this.cookies = createOAuthCookiesOptions({
       ...DEFAULT_CREATE_COOKIES_OPTIONS,
       ...options,
@@ -172,32 +182,44 @@ export class OAuthProvider<T = any> implements Handler {
     })
 
     if (!url.searchParams.has('redirect_uri')) {
-      url.searchParams.set('redirect_uri', `${request.url.origin}${this.pages.callback.path}`)
+      const redirectUri = `${request.url.origin}${this.pages.callback.path}`
+
+      this.logger.debug(`Automatically adding redirect_uri: ${redirectUri}`)
+
+      url.searchParams.set('redirect_uri', redirectUri)
     }
 
     if (this.checker.checks.includes('state')) {
-      const state = await this.checker.createState()
+      try {
+        const state = await this.checker.createState()
 
-      url.searchParams.set('state', state)
+        url.searchParams.set('state', state)
 
-      cookies.push({
-        name: this.cookies.state.name,
-        value: state,
-        options: this.cookies.state.options,
-      })
+        cookies.push({
+          name: this.cookies.state.name,
+          value: state,
+          options: this.cookies.state.options,
+        })
+      } catch (error) {
+        this.logger.error(`Failed to create state: ${error}`)
+      }
     }
 
     if (this.checker.checks.includes('pkce')) {
-      const [challenge, verifier] = await this.checker.createPkce()
+      try {
+        const [challenge, verifier] = await this.checker.createPkce()
 
-      url.searchParams.set('code_challenge', challenge)
-      url.searchParams.set('code_challenge_method', 'S256')
+        url.searchParams.set('code_challenge', challenge)
+        url.searchParams.set('code_challenge_method', 'S256')
 
-      cookies.push({
-        name: this.cookies.pkce.name,
-        value: verifier,
-        options: this.cookies.pkce.options,
-      })
+        cookies.push({
+          name: this.cookies.pkce.name,
+          value: verifier,
+          options: this.cookies.pkce.options,
+        })
+      } catch (error) {
+        this.logger.error(`Failed to create PKCE: ${error}`)
+      }
     }
 
     return { status: 302, redirect: url.toString(), cookies }
@@ -222,7 +244,11 @@ export class OAuthProvider<T = any> implements Handler {
     )
 
     if (oauth.isOAuth2Error(codeGrantParams)) {
-      throw new Error(codeGrantParams.error_description)
+      const error = new Error(codeGrantParams.error_description)
+
+      this.logger.error(error)
+
+      return { error }
     }
 
     const pkce = await this.checker.usePkce(request.cookies[this.cookies.pkce.name])
@@ -253,7 +279,12 @@ export class OAuthProvider<T = any> implements Handler {
       challenges.forEach((challenge) => {
         console.log('challenge', challenge)
       })
-      throw new Error('TODO: Handle www-authenticate challenges as needed')
+
+      const error = new Error('TODO: Handle www-authenticate challenges as needed')
+
+      this.logger.error(error)
+
+      return { error }
     }
 
     const tokens = await oauth.processAuthorizationCodeOAuth2Response(
@@ -263,7 +294,11 @@ export class OAuthProvider<T = any> implements Handler {
     )
 
     if (oauth.isOAuth2Error(tokens)) {
-      throw new Error('TODO: Handle OAuth 2.0 response body error')
+      const error = new Error(tokens.error_description)
+
+      this.logger.error(error)
+
+      return { error }
     }
 
     const profile = await (this.endpoints.userinfo.request?.({
@@ -274,18 +309,28 @@ export class OAuthProvider<T = any> implements Handler {
         .userInfoRequest(this.authorizationServer, this.client, tokens.access_token)
         .then((response) => response.json()))
 
-    if (!profile) {
-      throw new Error('TODO: Handle missing profile')
+    if (profile == null) {
+      const error = new Error('TODO: Handle missing profile')
+
+      this.logger.error(error)
+
+      return { error }
     }
 
-    const response: Aponia.Response = {
-      user: (await this.config.profile?.(profile, tokens)) ?? profile,
-      status: 302,
-      cookies,
-      redirect: this.pages.redirect,
-    }
+    try {
+      const response: Aponia.Response = {
+        user: (await this.config.profile?.(profile, tokens)) ?? profile,
+        status: 302,
+        cookies,
+        redirect: this.pages.redirect,
+      }
 
-    return response
+      return response
+    } catch (error: any) {
+      this.logger.error(error)
+
+      return { error }
+    }
   }
 }
 

@@ -1,3 +1,5 @@
+import type { Logger } from './controllers/logger'
+import type { CreateCookiesOptions } from './security/cookie'
 import type { Handle, Route } from './types'
 
 /**
@@ -11,14 +13,18 @@ export abstract class Handler {
    *
    * @example A Google provider might handle ['/auth/login/google', '/auth/callback/google']
    */
-  abstract routes: Route[]
+  public abstract routes: Route[]
 
   /**
    * When any of the routes match, this method will be called.
    *
    * The handler should differentiate between requested routes and return an appropriate response.
    */
-  abstract handle: Handle
+  public abstract handle: Handle
+
+  public abstract setCookiesOptions?: (options?: CreateCookiesOptions) => unknown
+
+  public abstract setLogger?: (logger: Logger) => unknown
 }
 
 /**

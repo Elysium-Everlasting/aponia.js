@@ -1,9 +1,11 @@
+import { Logger } from './controllers/logger'
 import { SessionController } from './controllers/session'
 import { requestMatchesRoute, type Handler } from './handler'
 import type { CreateCookiesOptions } from './security/cookie'
 import type { Route } from './types'
 
 export interface AuthConfig {
+  logger?: Logger
   session?: SessionController
   handlers?: Handler[]
   cookies?: CreateCookiesOptions
@@ -15,6 +17,8 @@ export interface InternalRoute {
 }
 
 export class Auth {
+  logger: Logger
+
   cookies?: CreateCookiesOptions
 
   session: SessionController
@@ -24,16 +28,21 @@ export class Auth {
   routes: Map<string, InternalRoute>
 
   constructor(config: AuthConfig = {}) {
+    this.logger = config.logger ?? new Logger()
+
     this.cookies = config.cookies
 
     this.session = config.session ?? new SessionController()
     this.session.setCookieOptions(this.cookies)
+    this.session.setLogger(this.logger)
 
     this.handlers = config.handlers ?? []
 
     this.routes = new Map()
 
     this.handlers.forEach((handler) => {
+      handler.setCookiesOptions?.(this.cookies)
+      handler.setLogger?.(this.logger)
       handler.routes.forEach((route) => {
         this.routes.set(route.path, { handler, route })
       })
@@ -51,8 +60,9 @@ export class Auth {
       }
 
       try {
-        return this.handleResponseSession(response)
+        return await this.handleResponseSession(response)
       } catch (error: any) {
+        this.logger.error(error)
         return { error }
       }
     }
@@ -64,8 +74,8 @@ export class Auth {
     if (response.session == null && response.user != null) {
       try {
         response.session = await this.session.createSessionFromUser(response.user)
-      } catch {
-        /* noop */
+      } catch (error) {
+        this.logger.error(error)
       }
     }
 
@@ -74,8 +84,8 @@ export class Auth {
         const cookies = await this.session.createCookiesFromSession(response.session)
         response.cookies ??= []
         response.cookies.push(...cookies)
-      } catch {
-        /* noop */
+      } catch (error) {
+        this.logger.error(error)
       }
     }
 
