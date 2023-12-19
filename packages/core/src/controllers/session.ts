@@ -26,9 +26,9 @@ export class SessionController {
   constructor(config: SessionControllerConfig = {}) {
     this.config = config
 
-    this.encode = config.encode ?? ((value) => JSON.stringify(value))
+    this.encode = config.encode ?? JSON.stringify
 
-    this.decode = config.decode ?? ((value) => JSON.parse(value))
+    this.decode = config.decode ?? JSON.parse
 
     this.cookies = DEFAULT_SESSION_COOKIES_OPTIONS
   }
