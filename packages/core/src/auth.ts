@@ -5,7 +5,7 @@ import type { Route } from './types'
 
 export interface AuthConfig {
   session?: SessionController
-  providers?: Handler[]
+  handlers?: Handler[]
   cookies?: CreateCookiesOptions
 }
 
@@ -29,7 +29,7 @@ export class Auth {
     this.session = config.session ?? new SessionController()
     this.session.setCookieOptions(this.cookies)
 
-    this.handlers = config.providers ?? []
+    this.handlers = config.handlers ?? []
 
     this.routes = new Map()
 

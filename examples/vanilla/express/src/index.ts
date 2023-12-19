@@ -1,5 +1,6 @@
 import crypto from 'node:crypto'
 
+import { Auth } from '@aponia.js/core/auth'
 import { OAuthProvider } from '@aponia.js/core/providers/oauth'
 import { serialize } from 'cookie'
 import cookieParser from 'cookie-parser'
@@ -58,10 +59,50 @@ const github = new OAuthProvider({
   },
 })
 
+const auth = new Auth({
+  handlers: [github],
+})
+
 function main() {
   const app = express()
 
   app.use(cookieParser())
+
+  app.use(async (req, res, next) => {
+    const request: Aponia.Request = {
+      url: new URL(req.protocol + '://' + req.get('host') + req.originalUrl),
+      method: req.method,
+      cookies: req.cookies,
+      headers: new Headers(),
+    }
+
+    const response = await auth.handle(request)
+
+    if (response.status != null) {
+      res.status(response.status)
+    }
+
+    response.cookies?.forEach((cookie) => {
+      res.appendHeader('Set-Cookie', serialize(cookie.name, cookie.value, cookie.options))
+    })
+
+    if (response.redirect != null) {
+      res.redirect(response.redirect)
+      return
+    }
+
+    if (response.body != null) {
+      res.send(response.body)
+      return
+    }
+
+    if (response.error != null) {
+      res.send(response.error)
+      return
+    }
+
+    next()
+  })
 
   app.get('/', async (_req, res) => {
     res.send(`
@@ -70,35 +111,6 @@ function main() {
 <a href="/auth/login/github">Login with github</a>
 </div>
 `)
-  })
-
-  github.routes.forEach((route) => {
-    app.get(route.path, async (req, res) => {
-      const response = await github.handle({
-        url: new URL(req.protocol + '://' + req.get('host') + req.originalUrl),
-        method: req.method,
-        cookies: req.cookies,
-        headers: new Headers(),
-      })
-
-      console.log(response)
-
-      if (response.status != null) {
-        res.status(response.status)
-      }
-
-      response.cookies?.forEach((cookie) => {
-        res.appendHeader('Set-Cookie', serialize(cookie.name, cookie.value, cookie.options))
-      })
-
-      if (response.redirect != null) {
-        res.redirect(response.redirect)
-      }
-
-      if (response.body) {
-        res.send(response.body)
-      }
-    })
   })
 
   app.listen(PORT, () => {
