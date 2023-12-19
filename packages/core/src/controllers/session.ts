@@ -8,18 +8,22 @@ import {
 } from '../security/cookie'
 import type { Awaitable } from '../utils/types'
 
+export type SessionEncoder = (session: Aponia.Session) => Awaitable<string>
+
+export type SessionDecoder = (token: string) => Awaitable<Aponia.Session | undefined>
+
 export interface SessionControllerConfig {
-  encode?: (session: Aponia.Session) => Awaitable<string>
-  decode?: (token: string) => Awaitable<Aponia.Session | undefined>
+  encode?: SessionEncoder
+  decode?: SessionDecoder
   cookie?: CreateCookiesOptions
 }
 
 export class SessionController {
   config: SessionControllerConfig
 
-  encode: (session: Aponia.Session) => Awaitable<string>
+  encode: SessionEncoder
 
-  decode: (token: string) => Awaitable<Aponia.Session | undefined>
+  decode: SessionDecoder
 
   cookies: SessionCookiesOptions
 
