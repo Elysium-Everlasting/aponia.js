@@ -57,6 +57,14 @@ const github = new OAuthProvider({
       },
     },
   },
+  profile(profile) {
+    return {
+      id: profile.id.toString(),
+      name: profile.name ?? profile.login,
+      email: profile.email,
+      image: profile.avatar_url,
+    }
+  },
 })
 
 const auth = new Auth({

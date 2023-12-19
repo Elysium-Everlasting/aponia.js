@@ -45,7 +45,7 @@ export class Auth {
 
     if (route?.route != null && requestMatchesRoute(request, route.route)) {
       const response = await route.handler.handle(request)
-      return response ?? {}
+      return response ? this.handleResponseSession(response) : {}
     }
 
     return {}

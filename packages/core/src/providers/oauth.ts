@@ -59,7 +59,7 @@ export interface OAuthProviderConfig<T> {
   cookies?: CreateCookiesOptions
 }
 
-export class OAuthProvider<T> implements Handler {
+export class OAuthProvider<T = any> implements Handler {
   config: OAuthProviderConfig<T>
 
   id: string
