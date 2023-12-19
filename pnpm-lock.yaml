@@ -129,6 +129,12 @@ importers:
         specifier: ^4.4.2
         version: 4.4.9(@types/node@20.4.5)
 
+  examples/vanilla/node:
+    dependencies:
+      '@aponia.js/core':
+        specifier: workspace:^
+        version: link:../../../packages/core
+
   packages/auth.js:
     dependencies:
       '@aponia.js/core':
