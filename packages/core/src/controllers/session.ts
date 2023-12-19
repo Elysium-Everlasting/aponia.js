@@ -30,7 +30,7 @@ export class SessionController {
 
     this.decode = config.decode ?? ((value) => JSON.parse(value))
 
-    this.cookies = DEFAULT_CLIENT_COOKIES_OPTIONS
+    this.cookies = DEFAULT_SESSION_COOKIES_OPTIONS
   }
 
   setCookieOptions(options?: CreateCookiesOptions) {
@@ -94,6 +94,6 @@ export function createClientCookiesOptions(options?: CreateCookiesOptions): Clie
   }
 }
 
-export const DEFAULT_CLIENT_COOKIES_OPTIONS = createClientCookiesOptions(
+export const DEFAULT_SESSION_COOKIES_OPTIONS = createClientCookiesOptions(
   DEFAULT_CREATE_COOKIES_OPTIONS,
 )
