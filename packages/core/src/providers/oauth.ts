@@ -4,9 +4,10 @@ import {
   DEFAULT_CALLBACK_REDIRECT,
   DEFAULT_CALLBACK_ROUTE,
   DEFAULT_LOGIN_ROUTE,
-  FIFTEEN_MINUTES_IN_SECONDS,
   ISSUER,
+  PKCE_MAX_AGE,
   PKCE_NAME,
+  STATE_MAX_AGE,
   STATE_NAME,
 } from '../constants'
 import { requestMatchesRoute, type Handler } from '../handler'
@@ -294,14 +295,14 @@ export function createOAuthCookiesOptions(options?: CreateCookiesOptions): OAuth
     pkce: {
       name: `${cookiePrefix}.${PKCE_NAME}`,
       options: {
-        maxAge: FIFTEEN_MINUTES_IN_SECONDS,
+        maxAge: PKCE_MAX_AGE,
         ...serializeOptions,
       },
     },
     state: {
       name: `${cookiePrefix}.${STATE_NAME}`,
       options: {
-        maxAge: FIFTEEN_MINUTES_IN_SECONDS,
+        maxAge: STATE_MAX_AGE,
         ...serializeOptions,
       },
     },

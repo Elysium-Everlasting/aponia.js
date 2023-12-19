@@ -2,35 +2,36 @@ import * as oauth from 'oauth4webapi'
 
 import type { Awaitable } from '../utils/types'
 
+export type TokenEncoder = (value: string) => Awaitable<string>
+
+export type TokenDecoder = (value: string) => Awaitable<string>
+
 export interface CheckerConfig {
   checks?: Check[]
-  encode?: (value: string) => Awaitable<string>
-  decode?: (value: string) => Awaitable<string>
+  encode?: TokenEncoder
+  decode?: TokenDecoder
 }
 
 export type Check = 'pkce' | 'state' | 'nonce'
 
 export class Checker {
-  config: CheckerConfig
-
   checks: Check[]
 
-  encode: (value: string) => Awaitable<string>
+  encode: TokenEncoder
 
-  decode: (value: string) => Awaitable<string>
+  decode: TokenDecoder
 
-  constructor(config: CheckerConfig = {}) {
-    this.config = config
-    this.checks = config.checks ?? ['pkce']
-    this.encode = config.encode ?? ((value) => value)
-    this.decode = config.decode ?? ((value) => value)
+  constructor(public config: CheckerConfig = {}) {
+    this.checks = config.checks ?? DEFAULT_CHECKS
+    this.encode = config.encode ?? defaultEncoderDecoder
+    this.decode = config.decode ?? defaultEncoderDecoder
   }
 
   setConfig(config: CheckerConfig = this.config) {
     this.config = config
-    this.checks = config.checks ?? ['pkce']
-    this.encode = config.encode ?? ((value) => value)
-    this.decode = config.decode ?? ((value) => value)
+    this.checks = config.checks ?? DEFAULT_CHECKS
+    this.encode = config.encode ?? defaultEncoderDecoder
+    this.decode = config.decode ?? defaultEncoderDecoder
   }
 
   async createPkce() {
@@ -104,4 +105,10 @@ export class Checker {
 
     return decodedNonce
   }
+}
+
+export const DEFAULT_CHECKS: Check[] = ['pkce']
+
+function defaultEncoderDecoder(value: string) {
+  return value
 }
