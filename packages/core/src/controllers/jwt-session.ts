@@ -1,5 +1,4 @@
 import { DEFAULT_ACCESS_TOKEN_AGE, DEFAULT_SECRET } from '../constants'
-import type { Cookie } from '../security/cookie'
 import { encode, decode } from '../security/jwt'
 
 import { SessionController, type SessionControllerConfig } from './session'
@@ -26,35 +25,5 @@ export class JwtSessionController extends SessionController {
     super(config)
 
     this.secret = config.secret
-  }
-
-  override async createSessionFromUser(user: Aponia.User): Promise<Aponia.Session | undefined> {
-    return user
-  }
-
-  override async createCookiesFromSession(session: Aponia.Session): Promise<Cookie[]> {
-    const accessToken = await this.encode(session)
-
-    const sessionCookie: Cookie = {
-      name: this.cookies.accessToken.name,
-      value: accessToken,
-      options: this.cookies.accessToken.options,
-    }
-
-    return [sessionCookie]
-  }
-
-  override async parseSessionFromCookies(
-    cookies: Record<string, string>,
-  ): Promise<Aponia.Session | undefined> {
-    const rawAccessToken = cookies[this.cookies.accessToken.name]
-
-    if (rawAccessToken == null) {
-      return
-    }
-
-    const accessToken = await this.decode(rawAccessToken)
-
-    return accessToken
   }
 }

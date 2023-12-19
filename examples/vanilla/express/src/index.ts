@@ -1,6 +1,7 @@
 import crypto from 'node:crypto'
 
 import { Auth } from '@aponia.js/core/auth'
+import { JwtSessionController } from '@aponia.js/core/controllers/jwt-session'
 import { OAuthProvider } from '@aponia.js/core/providers/oauth'
 import { serialize } from 'cookie'
 import cookieParser from 'cookie-parser'
@@ -67,7 +68,10 @@ const github = new OAuthProvider({
   },
 })
 
+const session = new JwtSessionController()
+
 const auth = new Auth({
+  session,
   handlers: [github],
 })
 
@@ -75,6 +79,14 @@ function main() {
   const app = express()
 
   app.use(cookieParser())
+
+  app.use(async (req, _res, next) => {
+    const session = await auth.session.parseSessionFromCookies(req.cookies)
+
+    console.log({ session })
+
+    next()
+  })
 
   app.use(async (req, res, next) => {
     const request: Aponia.Request = {

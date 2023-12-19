@@ -45,7 +45,16 @@ export class Auth {
 
     if (route?.route != null && requestMatchesRoute(request, route.route)) {
       const response = await route.handler.handle(request)
-      return response ? this.handleResponseSession(response) : {}
+
+      if (response == null) {
+        return {}
+      }
+
+      try {
+        return this.handleResponseSession(response)
+      } catch (error: any) {
+        return { error }
+      }
     }
 
     return {}
@@ -53,13 +62,21 @@ export class Auth {
 
   public async handleResponseSession(response: Aponia.Response): Promise<Aponia.Response> {
     if (response.session == null && response.user != null) {
-      response.session = await this.session.createSessionFromUser(response.user)
+      try {
+        response.session = await this.session.createSessionFromUser(response.user)
+      } catch {
+        /* noop */
+      }
     }
 
     if (response.session != null) {
-      const cookies = await this.session.createCookiesFromSession(response.session)
-      response.cookies ??= []
-      response.cookies.push(...cookies)
+      try {
+        const cookies = await this.session.createCookiesFromSession(response.session)
+        response.cookies ??= []
+        response.cookies.push(...cookies)
+      } catch {
+        /* noop */
+      }
     }
 
     return response

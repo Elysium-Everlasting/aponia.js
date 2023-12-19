@@ -53,15 +53,19 @@ export class SessionController {
   }
 
   async createCookiesFromSession(session: Aponia.Session): Promise<Cookie[]> {
-    const accessToken = await this.encode(session)
+    try {
+      const accessToken = await this.encode(session)
 
-    const sessionCookie: Cookie = {
-      name: this.cookies.accessToken.name,
-      value: accessToken,
-      options: this.cookies.accessToken.options,
+      const sessionCookie: Cookie = {
+        name: this.cookies.accessToken.name,
+        value: accessToken,
+        options: this.cookies.accessToken.options,
+      }
+
+      return [sessionCookie]
+    } catch {
+      return []
     }
-
-    return [sessionCookie]
   }
 
   async parseSessionFromCookies(
@@ -73,9 +77,12 @@ export class SessionController {
       return
     }
 
-    const accessToken = await this.decode(rawAccessToken)
-
-    return accessToken
+    try {
+      const accessToken = await this.decode(rawAccessToken)
+      return accessToken
+    } catch {
+      return
+    }
   }
 }
 
