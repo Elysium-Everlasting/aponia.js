@@ -21,7 +21,7 @@ export class SessionController {
 
   decode: (token: string) => Awaitable<Aponia.Session | undefined>
 
-  cookies: ClientCookiesOptions
+  cookies: SessionCookiesOptions
 
   constructor(config: SessionControllerConfig = {}) {
     this.config = config
@@ -34,7 +34,7 @@ export class SessionController {
   }
 
   setCookieOptions(options?: CreateCookiesOptions) {
-    this.cookies = createClientCookiesOptions({
+    this.cookies = createSessionCookiesOptions({
       ...DEFAULT_CREATE_COOKIES_OPTIONS,
       ...options,
       serialize: {
@@ -75,11 +75,11 @@ export class SessionController {
   }
 }
 
-export interface ClientCookiesOptions {
+export interface SessionCookiesOptions {
   accessToken: CookieOption
 }
 
-export function createClientCookiesOptions(options?: CreateCookiesOptions): ClientCookiesOptions {
+export function createSessionCookiesOptions(options?: CreateCookiesOptions): SessionCookiesOptions {
   const cookiePrefix = getCookiePrefix(options)
   const serializeOptions = { ...options?.serialize }
 
@@ -94,6 +94,6 @@ export function createClientCookiesOptions(options?: CreateCookiesOptions): Clie
   }
 }
 
-export const DEFAULT_SESSION_COOKIES_OPTIONS = createClientCookiesOptions(
+export const DEFAULT_SESSION_COOKIES_OPTIONS = createSessionCookiesOptions(
   DEFAULT_CREATE_COOKIES_OPTIONS,
 )
