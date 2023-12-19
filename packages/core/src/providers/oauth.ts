@@ -98,16 +98,21 @@ export class OAuthProvider<T> implements Handler {
     this.endpoints = {
       authorization: {
         ...config.endpoints?.authorization,
-        url: '',
+        url: config.endpoints?.authorization?.url ?? '',
         params: {
-          client_id: '',
+          client_id: config.clientId,
           response_type: 'code',
           ...config.endpoints?.authorization?.params,
         },
       },
-      token: { url: '' },
-      userinfo: { url: '' },
-      ...config.endpoints,
+      token: {
+        url: config.endpoints?.token?.url ?? '',
+        ...config.endpoints?.token,
+      },
+      userinfo: {
+        url: config.endpoints?.userinfo?.url ?? '',
+        ...config.endpoints?.userinfo,
+      },
     }
 
     this.client = {
