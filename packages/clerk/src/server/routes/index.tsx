@@ -2,7 +2,7 @@ import express from 'express'
 import React from 'react'
 import { renderToString } from 'react-dom/server'
 
-import { MyComponent } from '../../src/client/components/my-component'
+import { MyComponent } from '../../components/my-component'
 
 const PORT = 8080
 

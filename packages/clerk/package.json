@@ -38,7 +38,7 @@
     }
   },
   "scripts": {
-    "dev": "tsx tests/dev/server.tsx",
+    "dev": "tsx src/server/index.tsx",
     "format": "prettier --write --cache .",
     "lint": "eslint --cache .",
     "test": "vitest"
