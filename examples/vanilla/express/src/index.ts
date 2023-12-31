@@ -10,12 +10,15 @@ import express from 'express'
 
 globalThis.crypto = crypto as typeof globalThis.crypto
 
-config({
-  path: '../../../.env',
-})
+config({ path: '../../../.env' })
 
 const PORT = process.env['PORT'] ?? 8080
 
+/**
+ * GitHub provider based on [Auth.js's implementation](https://github.com/nextauthjs/next-auth/blob/main/packages/core/src/providers/github.ts)
+ * Implemented in the core API.
+ * Full Auth.js interop will also be offered in a separate library.
+ */
 const github = new OAuthProvider({
   id: 'github',
   clientId: process.env['GITHUB_ID'] ?? '',
@@ -30,26 +33,28 @@ const github = new OAuthProvider({
     },
     userinfo: {
       url: 'https://api.github.com/user',
-      async request({ tokens, provider }) {
+      request: async ({ tokens, provider }) => {
         const profile = await fetch(provider.userinfo?.url, {
           headers: {
             Authorization: `Bearer ${tokens.access_token}`,
             'User-Agent': 'authjs',
           },
-        }).then(async (res) => await res.json())
+        }).then((response) => response.json())
 
         if (!profile.email) {
-          // If the user does not have a public email, get another via the GitHub API
-          // See https://docs.github.com/en/rest/users/emails#list-public-email-addresses-for-the-authenticated-user
-          const res = await fetch('https://api.github.com/user/emails', {
+          /**
+           * If the user does not have a public email, get another via the GitHub API
+           * @see {https://docs.github.com/en/rest/users/emails#list-public-email-addresses-for-the-authenticated-user}
+           */
+          const response = await fetch('https://api.github.com/user/emails', {
             headers: {
               Authorization: `Bearer ${tokens.access_token}`,
               'User-Agent': 'authjs',
             },
           })
 
-          if (res.ok) {
-            const emails = await res.json()
+          if (response.ok) {
+            const emails = await response.json()
             profile.email = (emails.find((e: any) => e.primary) ?? emails[0]).email
           }
         }
@@ -58,7 +63,7 @@ const github = new OAuthProvider({
       },
     },
   },
-  profile(profile) {
+  profile: (profile) => {
     return {
       id: profile.id.toString(),
       name: profile.name ?? profile.login,
