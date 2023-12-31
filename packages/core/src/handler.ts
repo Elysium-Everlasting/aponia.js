@@ -1,4 +1,4 @@
-import type { Logger } from './controllers/logger'
+import type { Logger } from './logger'
 import type { CreateCookiesOptions } from './security/cookie'
 import type { Handle, Route } from './types'
 

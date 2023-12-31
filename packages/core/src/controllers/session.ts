@@ -1,4 +1,5 @@
 import { ACCESS_TOKEN_NAME, DEFAULT_ACCESS_TOKEN_AGE } from '../constants'
+import { Logger } from '../logger'
 import {
   getCookiePrefix,
   type Cookie,
@@ -7,8 +8,6 @@ import {
   DEFAULT_CREATE_COOKIES_OPTIONS,
 } from '../security/cookie'
 import type { Awaitable } from '../utils/types'
-
-import { Logger } from './logger'
 
 export type SessionEncoder = (session: Aponia.Session) => Awaitable<string>
 

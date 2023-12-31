@@ -1,6 +1,6 @@
-import { Logger } from './controllers/logger'
 import { SessionController } from './controllers/session'
 import { requestMatchesRoute, type Handler } from './handler'
+import { Logger } from './logger'
 import type { CreateCookiesOptions } from './security/cookie'
 import type { Route } from './types'
 

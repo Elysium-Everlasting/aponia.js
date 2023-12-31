@@ -10,8 +10,8 @@ import {
   STATE_MAX_AGE,
   STATE_NAME,
 } from '../constants'
-import { Logger } from '../controllers/logger'
 import { requestMatchesRoute, type Handler } from '../handler'
+import { Logger } from '../logger'
 import { Checker, type CheckerConfig } from '../security/checker'
 import {
   getCookiePrefix,
