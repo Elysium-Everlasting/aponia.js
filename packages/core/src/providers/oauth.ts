@@ -48,6 +48,9 @@ export interface Endpoint<TContext = any, TResponse = any> {
   conform?: (response: Response) => Awaitable<Response | Nullish>
 }
 
+/**
+ * Tokens that can be returned by the token endpoint.
+ */
 export type TokenEndpointResponse =
   | oauth.OAuth2TokenEndpointResponse
   | oauth.OpenIDTokenEndpointResponse
