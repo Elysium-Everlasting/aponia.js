@@ -165,9 +165,7 @@ export class OAuthProvider<T = any> implements Handler {
 
     if (!url.searchParams.has('redirect_uri')) {
       const redirectUri = `${request.url.origin}${this.pages.callback.path}`
-
       this.logger.debug(`Automatically adding redirect_uri: ${redirectUri}`)
-
       url.searchParams.set('redirect_uri', redirectUri)
     }
 
@@ -190,10 +188,8 @@ export class OAuthProvider<T = any> implements Handler {
     if (this.checker.checks.includes('pkce')) {
       try {
         const [challenge, verifier] = await this.checker.createPkce()
-
         url.searchParams.set('code_challenge', challenge)
         url.searchParams.set('code_challenge_method', 'S256')
-
         cookies.push({
           name: this.cookies.pkce.name,
           value: verifier,
