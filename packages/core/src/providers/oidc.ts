@@ -212,6 +212,7 @@ export class OIDCProvider<T = any> implements Handler {
     const cookies: Cookie[] = []
 
     const state = await this.checker.useState(request.cookies[this.cookies.state.name])
+
     if (state != oauth.skipStateCheck) {
       cookies.push({
         name: this.cookies.state.name,
@@ -226,6 +227,7 @@ export class OIDCProvider<T = any> implements Handler {
       request.url.searchParams,
       state,
     )
+
     if (oauth.isOAuth2Error(codeGrantParams)) {
       throw new Error(codeGrantParams.error_description)
     }
@@ -254,13 +256,12 @@ export class OIDCProvider<T = any> implements Handler {
     const challenges = oauth.parseWwwAuthenticateChallenges(codeGrantResponse)
 
     if (challenges) {
-      challenges.forEach((challenge) => {
-        console.log('challenge', challenge)
-      })
+      challenges.forEach((challenge) => console.log('challenge', challenge))
       throw new Error('TODO: Handle www-authenticate challenges as needed')
     }
 
     const nonce = await this.checker.useNonce(request.cookies[this.cookies.nonce.name])
+
     if (nonce) {
       cookies.push({
         name: this.cookies.nonce.name,
@@ -289,11 +290,9 @@ export class OIDCProvider<T = any> implements Handler {
         cookies,
         redirect: this.pages.redirect,
       }
-
       return response
     } catch (error: any) {
       this.logger.error(error)
-
       return { error }
     }
   }
