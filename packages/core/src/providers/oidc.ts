@@ -28,21 +28,75 @@ import {
   type OAuthProviderConfig,
 } from './oauth'
 
+/**
+ * OIDC provider configuration.
+ */
 export interface OIDCProviderConfig<T> extends OAuthProviderConfig<T> {
+  /**
+   * The OIDC issuer endpoint for discovery.
+   * @see https://openid.net/specs/openid-connect-discovery-1_0.html
+   */
   issuer: string
 }
 
+/**
+ * OIDC (OpenID Connect) provider.
+ */
 export class OIDCProvider<T = any> implements Handler {
+  /**
+   * The originally provided configuration.
+   */
   config: OIDCProviderConfig<T>
+
+  /**
+   * Unique identifier for the provider. May be used by other integrations.
+   */
   id: string
+
+  /**
+   * The OIDC issuer endpoint for discovery.
+   * @see https://openid.net/specs/openid-connect-discovery-1_0.html
+   */
   issuer: string
+
+  /**
+   * Information about pages that are recognized by this provider.
+   */
   pages: OAuthPages
+
+  /**
+   * Customize the endpoints used by this provider.
+   */
   endpoints: OAuthEndpoints<T>
+
+  /**
+   * OAuth client configuration used to interface with the {@link oauth} library.
+   */
   client: oauth.Client
+
+  /**
+   * Authorization server.
+   */
   authorizationServer: oauth.AuthorizationServer
+
+  /**
+   * Array of routes to register for this provider.
+   */
   routes: Route[]
+
+  /**
+   * Applies security checks to the OAuth request.
+   */
   checker: Checker
+
+  /**
+   * Cookie options used by this provider when setting the security cookies.
+   */
   cookies: OIDCCookiesOptions
+
+  /**
+   * Logger.
+   */
   logger: Logger
 
   constructor(config: OIDCProviderConfig<T>) {
@@ -212,6 +266,7 @@ export class OIDCProvider<T = any> implements Handler {
     const cookies: Cookie[] = []
 
     const state = await this.checker.useState(request.cookies[this.cookies.state.name])
+
     if (state != oauth.skipStateCheck) {
       cookies.push({
         name: this.cookies.state.name,
@@ -226,6 +281,7 @@ export class OIDCProvider<T = any> implements Handler {
       request.url.searchParams,
       state,
     )
+
     if (oauth.isOAuth2Error(codeGrantParams)) {
       throw new Error(codeGrantParams.error_description)
     }
@@ -254,13 +310,12 @@ export class OIDCProvider<T = any> implements Handler {
     const challenges = oauth.parseWwwAuthenticateChallenges(codeGrantResponse)
 
     if (challenges) {
-      challenges.forEach((challenge) => {
-        console.log('challenge', challenge)
-      })
+      challenges.forEach((challenge) => console.log('challenge', challenge))
       throw new Error('TODO: Handle www-authenticate challenges as needed')
     }
 
     const nonce = await this.checker.useNonce(request.cookies[this.cookies.nonce.name])
+
     if (nonce) {
       cookies.push({
         name: this.cookies.nonce.name,
@@ -289,11 +344,9 @@ export class OIDCProvider<T = any> implements Handler {
         cookies,
         redirect: this.pages.redirect,
       }
-
       return response
     } catch (error: any) {
       this.logger.error(error)
-
       return { error }
     }
   }
