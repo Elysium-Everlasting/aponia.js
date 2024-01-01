@@ -207,15 +207,18 @@ export class OIDCProvider<T = any> implements Handler {
   }
 
   public async callback(request: Aponia.Request): Promise<Aponia.Response> {
+    await this.initialize()
+
     const cookies: Cookie[] = []
 
     const state = await this.checker.useState(request.cookies[this.cookies.state.name])
-
-    cookies.push({
-      name: this.cookies.state.name,
-      value: '',
-      options: { ...this.cookies.state.options, maxAge: 0 },
-    })
+    if (state != oauth.skipStateCheck) {
+      cookies.push({
+        name: this.cookies.state.name,
+        value: '',
+        options: { ...this.cookies.state.options, maxAge: 0 },
+      })
+    }
 
     const codeGrantParams = oauth.validateAuthResponse(
       this.authorizationServer,
@@ -223,17 +226,11 @@ export class OIDCProvider<T = any> implements Handler {
       request.url.searchParams,
       state,
     )
-
     if (oauth.isOAuth2Error(codeGrantParams)) {
-      const error = new Error(codeGrantParams.error_description)
-
-      this.logger.error(error)
-
-      return { error }
+      throw new Error(codeGrantParams.error_description)
     }
 
     const pkce = await this.checker.usePkce(request.cookies[this.cookies.pkce.name])
-
     if (pkce) {
       cookies.push({
         name: this.cookies.pkce.name,
@@ -251,7 +248,7 @@ export class OIDCProvider<T = any> implements Handler {
     )
 
     const codeGrantResponse =
-      (await this.endpoints.token.conform?.(initialCodeGrantResponse.clone())) ??
+      (await this.config.endpoints?.token?.conform?.(initialCodeGrantResponse.clone())) ??
       initialCodeGrantResponse
 
     const challenges = oauth.parseWwwAuthenticateChallenges(codeGrantResponse)
@@ -260,43 +257,30 @@ export class OIDCProvider<T = any> implements Handler {
       challenges.forEach((challenge) => {
         console.log('challenge', challenge)
       })
-
-      const error = new Error('TODO: Handle www-authenticate challenges as needed')
-
-      this.logger.error(error)
-
-      return { error }
+      throw new Error('TODO: Handle www-authenticate challenges as needed')
     }
 
-    const tokens = await oauth.processAuthorizationCodeOAuth2Response(
+    const nonce = await this.checker.useNonce(request.cookies[this.cookies.nonce.name])
+    if (nonce) {
+      cookies.push({
+        name: this.cookies.nonce.name,
+        value: '',
+        options: { ...this.cookies.nonce.options, maxAge: 0 },
+      })
+    }
+
+    const tokens = await oauth.processAuthorizationCodeOpenIDResponse(
       this.authorizationServer,
       this.client,
       codeGrantResponse,
+      nonce,
     )
 
     if (oauth.isOAuth2Error(tokens)) {
-      const error = new Error(tokens.error_description)
-
-      this.logger.error(error)
-
-      return { error }
+      throw new Error('TODO: Handle OIDC response body error')
     }
 
-    const profile = await (this.endpoints.userinfo.request?.({
-      provider: this.endpoints,
-      tokens,
-    }) ??
-      oauth
-        .userInfoRequest(this.authorizationServer, this.client, tokens.access_token)
-        .then((response) => response.json()))
-
-    if (profile == null) {
-      const error = new Error('TODO: Handle missing profile')
-
-      this.logger.error(error)
-
-      return { error }
-    }
+    const profile: any = oauth.getValidatedIdTokenClaims(tokens)
 
     try {
       const response: Aponia.Response = {

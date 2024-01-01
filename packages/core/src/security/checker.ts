@@ -92,7 +92,7 @@ export class Checker {
     return encodedNonce
   }
 
-  async useNonce(nonce: string) {
+  async useNonce(nonce?: string) {
     if (!this.checks.includes('nonce')) {
       return oauth.expectNoNonce
     }
