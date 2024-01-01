@@ -28,21 +28,74 @@ import {
   type OAuthProviderConfig,
 } from './oauth'
 
+/**
+ * OIDC provider configuration.
+ */
 export interface OIDCProviderConfig<T> extends OAuthProviderConfig<T> {
+  /**
+   * The OIDC issuer endpoint for discovery.
+   * @see https://openid.net/specs/openid-connect-discovery-1_0.html
+   */
   issuer: string
 }
 
+/**
+ * OIDC (OpenID Connect) provider.
+ */
 export class OIDCProvider<T = any> implements Handler {
+  /**
+   * The originally provided configuration.
+   */
   config: OIDCProviderConfig<T>
+
+  /**
+   * Unique identifier for the provider. May be used by other integrations.
+   */
   id: string
+
+  /**
+   * The OIDC issuer endpoint for discovery.
+   * @see https://openid.net/specs/openid-connect-discovery-1_0.html
+   */
   issuer: string
+
+  /**
+   * Information about pages that are recognized by this provider.
+   */
   pages: OAuthPages
+
+  /**
+   * Customize the endpoints used by this provider.
+   */
   endpoints: OAuthEndpoints<T>
+
+  /**
+   * OAuth client configuration used to interface with the {@link oauth} library.
+   */
   client: oauth.Client
+
+  /**
+   */
   authorizationServer: oauth.AuthorizationServer
+
+  /**
+   * Array of routes to register for this provider.
+   */
   routes: Route[]
+
+  /**
+   * Applies security checks to the OAuth request.
+   */
   checker: Checker
+
+  /**
+   * Cookie options used by this provider when setting the security cookies.
+   */
   cookies: OIDCCookiesOptions
+
+  /**
+   * Logger.
+   */
   logger: Logger
 
   constructor(config: OIDCProviderConfig<T>) {
