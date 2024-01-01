@@ -63,30 +63,19 @@ export interface OAuthProviderConfig<T> {
 
 export class OAuthProvider<T = any> implements Handler {
   config: OAuthProviderConfig<T>
-
   id: string
-
   pages: OAuthPages
-
   endpoints: OAuthEndpoints<T>
-
   client: oauth.Client
-
   authorizationServer: oauth.AuthorizationServer
-
   routes: Route[]
-
   checker: Checker
-
   cookies: OAuthCookiesOptions
-
   logger: Logger
 
   constructor(config: OAuthProviderConfig<T>) {
     this.config = config
-
     this.id = config.id
-
     this.pages = {
       login: {
         path: config.pages?.login?.path ?? `${DEFAULT_LOGIN_ROUTE}/${this.id}`,
@@ -98,7 +87,6 @@ export class OAuthProvider<T = any> implements Handler {
       },
       redirect: config.pages?.redirect ?? DEFAULT_CALLBACK_REDIRECT,
     }
-
     this.endpoints = {
       authorization: {
         ...config.endpoints?.authorization,
@@ -118,26 +106,20 @@ export class OAuthProvider<T = any> implements Handler {
         ...config.endpoints?.userinfo,
       },
     }
-
     this.client = {
       client_id: config.clientId,
       client_secret: config.clientSecret,
       ...config.client,
     }
-
     this.authorizationServer = {
       issuer: ISSUER,
       authorization_endpoint: this.endpoints.authorization.url,
       token_endpoint: this.endpoints.token.url,
       userinfo_endpoint: this.endpoints.userinfo.url,
     }
-
     this.routes = [this.pages.login, this.pages.callback]
-
     this.cookies = DEFAULT_OAUTH_COOKIES_OPTIONS
-
     this.checker = new Checker(config.checker)
-
     this.logger = config.logger ?? new Logger()
   }
 
