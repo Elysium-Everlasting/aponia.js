@@ -12,7 +12,7 @@ import {
 } from '../constants'
 import { requestMatchesRoute, type Handler } from '../handler'
 import { Logger } from '../logger'
-import { Checker, type CheckerConfig } from '../security/checker'
+import { Checker } from '../security/checker'
 import {
   getCookiePrefix,
   type Cookie,
@@ -21,72 +21,30 @@ import {
   DEFAULT_CREATE_COOKIES_OPTIONS,
 } from '../security/cookie'
 import type { Route } from '../types'
-import type { Awaitable, Nullish } from '../utils/types'
 
-export interface Endpoint<TContext = any, TResponse = any> {
-  url: string
-  params?: Record<string, any>
-  request?: (context: TContext) => Awaitable<TResponse>
-  conform?: (response: Response) => Awaitable<Response | Nullish>
+import type { OAuthEndpoints, OAuthPages, OAuthProviderConfig } from './oauth'
+
+export interface OIDCProviderConfig<T> extends OAuthProviderConfig<T> {
+  issuer: string
 }
 
-export type TokenEndpointResponse =
-  | oauth.OAuth2TokenEndpointResponse
-  | oauth.OpenIDTokenEndpointResponse
-
-export type OAuthCheck = 'state' | 'pkce'
-
-export interface OAuthPages {
-  login: Route
-  callback: Route
-  redirect: string
-}
-
-export interface OAuthEndpoints<T> {
-  authorization: Endpoint<OAuthProvider<T>>
-  token: Endpoint<OAuthProvider<T>, TokenEndpointResponse>
-  userinfo: Endpoint<{ provider: OAuthEndpoints<T>; tokens: TokenEndpointResponse }, T>
-}
-
-export interface OAuthProviderConfig<T> {
+export class OIDCProvider<T = any> implements Handler {
+  config: OIDCProviderConfig<T>
   id: string
-  clientId: string
-  clientSecret?: string
-  client?: oauth.Client
-  pages?: Partial<OAuthPages>
-  endpoints?: Partial<OAuthEndpoints<T>>
-  profile?: (profile: T, tokens: TokenEndpointResponse) => Awaitable<Aponia.User | Nullish>
-  checker?: CheckerConfig
-  cookies?: CreateCookiesOptions
-  logger?: Logger
-}
-
-export class OAuthProvider<T = any> implements Handler {
-  config: OAuthProviderConfig<T>
-
-  id: string
-
+  issuer: string
   pages: OAuthPages
-
   endpoints: OAuthEndpoints<T>
-
   client: oauth.Client
-
   authorizationServer: oauth.AuthorizationServer
-
   routes: Route[]
-
   checker: Checker
-
   cookies: OAuthCookiesOptions
-
   logger: Logger
 
-  constructor(config: OAuthProviderConfig<T>) {
+  constructor(config: OIDCProviderConfig<T>) {
     this.config = config
-
     this.id = config.id
-
+    this.issuer = config.issuer
     this.pages = {
       login: {
         path: config.pages?.login?.path ?? `${DEFAULT_LOGIN_ROUTE}/${this.id}`,
@@ -98,7 +56,6 @@ export class OAuthProvider<T = any> implements Handler {
       },
       redirect: config.pages?.redirect ?? DEFAULT_CALLBACK_REDIRECT,
     }
-
     this.endpoints = {
       authorization: {
         ...config.endpoints?.authorization,
@@ -118,27 +75,37 @@ export class OAuthProvider<T = any> implements Handler {
         ...config.endpoints?.userinfo,
       },
     }
-
     this.client = {
       client_id: config.clientId,
       client_secret: config.clientSecret,
       ...config.client,
     }
-
     this.authorizationServer = {
       issuer: ISSUER,
       authorization_endpoint: this.endpoints.authorization.url,
       token_endpoint: this.endpoints.token.url,
       userinfo_endpoint: this.endpoints.userinfo.url,
     }
-
     this.routes = [this.pages.login, this.pages.callback]
-
     this.cookies = DEFAULT_OAUTH_COOKIES_OPTIONS
-
     this.checker = new Checker(config.checker)
-
     this.logger = config.logger ?? new Logger()
+  }
+
+  async initialize() {
+    const issuer = new URL(this.authorizationServer.issuer)
+
+    const discoveryResponse = await oauth.discoveryRequest(issuer)
+
+    const authorizationServer = await oauth.processDiscoveryResponse(issuer, discoveryResponse)
+
+    const supportsPKCE = authorizationServer.code_challenge_methods_supported?.includes('S256')
+
+    if (this.checker.checks?.includes('pkce') && !supportsPKCE) {
+      this.checker.checks = ['nonce']
+    }
+
+    this.authorizationServer = authorizationServer
   }
 
   public setLogger(logger = this.logger) {

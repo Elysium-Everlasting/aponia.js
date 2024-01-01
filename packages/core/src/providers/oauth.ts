@@ -51,7 +51,7 @@ export interface OAuthEndpoints<T> {
 export interface OAuthProviderConfig<T> {
   id: string
   clientId: string
-  clientSecret?: string
+  clientSecret: string
   client?: oauth.Client
   pages?: Partial<OAuthPages>
   endpoints?: Partial<OAuthEndpoints<T>>
