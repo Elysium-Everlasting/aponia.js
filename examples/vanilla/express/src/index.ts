@@ -1,18 +1,20 @@
-import crypto from 'node:crypto'
-
 import { Auth } from '@aponia.js/core/auth'
 import { JwtSessionController } from '@aponia.js/core/controllers/jwt-session'
 import { OAuthProvider } from '@aponia.js/core/providers/oauth'
+import { OIDCProvider } from '@aponia.js/core/providers/oidc'
 import { serialize } from 'cookie'
 import cookieParser from 'cookie-parser'
 import { config } from 'dotenv'
 import express from 'express'
 
-globalThis.crypto = crypto as typeof globalThis.crypto
-
 config({ path: '../../../.env' })
 
 const PORT = process.env['PORT'] ?? 8080
+
+const GITHUB_ID = process.env['GITHUB_ID'] ?? ''
+const GITHUB_SECRET = process.env['GITHUB_SECRET'] ?? ''
+const GOOGLE_ID = process.env['GOOGLE_ID'] ?? ''
+const GOOGLE_SECRET = process.env['GOOGLE_SECRET'] ?? ''
 
 /**
  * GitHub provider based on [Auth.js's implementation](https://github.com/nextauthjs/next-auth/blob/main/packages/core/src/providers/github.ts)
@@ -21,12 +23,15 @@ const PORT = process.env['PORT'] ?? 8080
  */
 const github = new OAuthProvider({
   id: 'github',
-  clientId: process.env['GITHUB_ID'] ?? '',
-  clientSecret: process.env['GITHUB_SECRET'] ?? '',
+  clientId: GITHUB_ID,
+  clientSecret: GITHUB_SECRET,
   endpoints: {
     authorization: {
       url: 'https://github.com/login/oauth/authorize',
-      params: { scope: 'read:user user:email' },
+      params: {
+        client_id: GITHUB_ID,
+        scope: 'read:user user:email',
+      },
     },
     token: {
       url: 'https://github.com/login/oauth/access_token',
@@ -73,11 +78,27 @@ const github = new OAuthProvider({
   },
 })
 
+const google = new OIDCProvider({
+  id: 'google',
+  clientId: GOOGLE_ID,
+  clientSecret: GOOGLE_SECRET,
+  issuer: 'https://accounts.google.com',
+  endpoints: {
+    authorization: {
+      params: {
+        client_id: GOOGLE_ID,
+        response_type: 'code',
+        scope: 'openid profile email',
+      },
+    },
+  },
+})
+
 const session = new JwtSessionController()
 
 const auth = new Auth({
   session,
-  handlers: [github],
+  handlers: [github, google],
 })
 
 function main() {
@@ -134,6 +155,7 @@ function main() {
 <div>
 <a href="/">Home</a>
 <a href="/auth/login/github">Login with github</a>
+<a href="/auth/login/google">Login with google</a>
 </div>
 `)
   })

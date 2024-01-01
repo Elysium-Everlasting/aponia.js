@@ -26,7 +26,7 @@ import type { Awaitable, Nullish } from '../utils/types'
 /**
  * Custom endpoint to use during the OAuth flow.
  */
-export interface Endpoint<TContext = any, TResponse = any> {
+export interface OAuthEndpoint<TContext = any, TResponse = any> {
   /**
    * The URL to use for the endpoint.
    */
@@ -82,17 +82,17 @@ export interface OAuthEndpoints<T> {
   /**
    * Authorization.
    */
-  authorization: Endpoint<OAuthProvider<T>>
+  authorization: OAuthEndpoint<OAuthProvider<T>>
 
   /**
    * Token.
    */
-  token: Endpoint<OAuthProvider<T>, TokenEndpointResponse>
+  token: OAuthEndpoint<OAuthProvider<T>, TokenEndpointResponse>
 
   /**
    * User info.
    */
-  userinfo: Endpoint<{ provider: OAuthEndpoints<T>; tokens: TokenEndpointResponse }, T>
+  userinfo: OAuthEndpoint<{ provider: OAuthEndpoints<T>; tokens: TokenEndpointResponse }, T>
 }
 
 /**
@@ -214,23 +214,34 @@ export class OAuthProvider<T = any> implements Handler {
       },
       redirect: config.pages?.redirect ?? DEFAULT_CALLBACK_REDIRECT,
     }
+
+    const authorizationUrl = config.endpoints?.authorization?.url
+    if (authorizationUrl == null) {
+      throw new Error('Missing authorization URL')
+    }
+
+    const tokenUrl = config.endpoints?.token?.url
+    if (tokenUrl == null) {
+      throw new Error('Missing token URL')
+    }
+
+    const userinfoUrl = config.endpoints?.userinfo?.url
+    if (userinfoUrl == null) {
+      throw new Error('Missing userinfo URL')
+    }
+
     this.endpoints = {
       authorization: {
         ...config.endpoints?.authorization,
-        url: config.endpoints?.authorization?.url ?? '',
-        params: {
-          client_id: config.clientId,
-          response_type: 'code',
-          ...config.endpoints?.authorization?.params,
-        },
+        url: authorizationUrl,
       },
       token: {
-        url: config.endpoints?.token?.url ?? '',
         ...config.endpoints?.token,
+        url: tokenUrl,
       },
       userinfo: {
-        url: config.endpoints?.userinfo?.url ?? '',
         ...config.endpoints?.userinfo,
+        url: userinfoUrl,
       },
     }
     this.client = {
@@ -279,10 +290,8 @@ export class OAuthProvider<T = any> implements Handler {
 
   public async login(request: Aponia.Request): Promise<Aponia.Response> {
     const url = new URL(this.endpoints.authorization.url)
-
-    const params = this.endpoints.authorization.params ?? {}
-
     const cookies: Cookie[] = []
+    const params = this.endpoints.authorization.params ?? {}
 
     Object.entries(params).forEach(([key, value]) => {
       if (typeof value === 'string') {

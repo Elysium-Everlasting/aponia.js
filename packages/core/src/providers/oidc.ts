@@ -19,6 +19,7 @@ import {
   DEFAULT_CREATE_COOKIES_OPTIONS,
 } from '../security/cookie'
 import type { Route } from '../types'
+import type { DeepPartial } from '../utils/types'
 
 import {
   createOAuthCookiesOptions,
@@ -29,15 +30,26 @@ import {
 } from './oauth'
 
 /**
+ * If the OIDC provider supports discovery, then explicitly defined endpoints are not required.
+ */
+export interface OIDCProviderDiscoveryConfig<T> {
+  issuer: string
+  endpoints?: DeepPartial<OAuthEndpoints<T>>
+}
+
+/**
+ * If the OIDC provider supports discovery, then explicitly defined endpoints are not required.
+ */
+export interface OIDCProviderNoDiscoveryConfig<T> {
+  issuer?: never
+  endpoints: OAuthEndpoints<T>
+}
+
+/**
  * OIDC provider configuration.
  */
-export interface OIDCProviderConfig<T> extends OAuthProviderConfig<T> {
-  /**
-   * The OIDC issuer endpoint for discovery.
-   * @see https://openid.net/specs/openid-connect-discovery-1_0.html
-   */
-  issuer: string
-}
+export type OIDCProviderConfig<T> = Omit<OAuthProviderConfig<T>, 'endpoints'> &
+  (OIDCProviderDiscoveryConfig<T> | OIDCProviderNoDiscoveryConfig<T>)
 
 /**
  * OIDC (OpenID Connect) provider.
@@ -57,17 +69,12 @@ export class OIDCProvider<T = any> implements Handler {
    * The OIDC issuer endpoint for discovery.
    * @see https://openid.net/specs/openid-connect-discovery-1_0.html
    */
-  issuer: string
+  issuer?: string
 
   /**
    * Information about pages that are recognized by this provider.
    */
   pages: OAuthPages
-
-  /**
-   * Customize the endpoints used by this provider.
-   */
-  endpoints: OAuthEndpoints<T>
 
   /**
    * OAuth client configuration used to interface with the {@link oauth} library.
@@ -114,25 +121,6 @@ export class OIDCProvider<T = any> implements Handler {
       },
       redirect: config.pages?.redirect ?? DEFAULT_CALLBACK_REDIRECT,
     }
-    this.endpoints = {
-      authorization: {
-        ...config.endpoints?.authorization,
-        url: config.endpoints?.authorization?.url ?? '',
-        params: {
-          client_id: config.clientId,
-          response_type: 'code',
-          ...config.endpoints?.authorization?.params,
-        },
-      },
-      token: {
-        url: config.endpoints?.token?.url ?? '',
-        ...config.endpoints?.token,
-      },
-      userinfo: {
-        url: config.endpoints?.userinfo?.url ?? '',
-        ...config.endpoints?.userinfo,
-      },
-    }
     this.client = {
       client_id: config.clientId,
       client_secret: config.clientSecret,
@@ -140,9 +128,9 @@ export class OIDCProvider<T = any> implements Handler {
     }
     this.authorizationServer = {
       issuer: ISSUER,
-      authorization_endpoint: this.endpoints.authorization.url,
-      token_endpoint: this.endpoints.token.url,
-      userinfo_endpoint: this.endpoints.userinfo.url,
+      authorization_endpoint: config.endpoints?.authorization?.url,
+      token_endpoint: config.endpoints?.token?.url,
+      userinfo_endpoint: config.endpoints?.userinfo?.url,
     }
     this.routes = [this.pages.login, this.pages.callback]
     this.cookies = DEFAULT_OIDC_COOKIES_OPTIONS
@@ -151,7 +139,11 @@ export class OIDCProvider<T = any> implements Handler {
   }
 
   async initialize() {
-    const issuer = new URL(this.authorizationServer.issuer)
+    if (this.issuer == null) {
+      return
+    }
+
+    const issuer = new URL(this.issuer)
     const discoveryResponse = await oauth.discoveryRequest(issuer)
     const authorizationServer = await oauth.processDiscoveryResponse(issuer, discoveryResponse)
     const supportsPKCE = authorizationServer.code_challenge_methods_supported?.includes('S256')
@@ -201,8 +193,9 @@ export class OIDCProvider<T = any> implements Handler {
 
     const url = new URL(this.authorizationServer.authorization_endpoint)
     const cookies: Cookie[] = []
+    const params = this.config.endpoints?.authorization?.params ?? {}
 
-    Object.entries(this.config.endpoints?.authorization?.params ?? {}).forEach(([key, value]) => {
+    Object.entries(params).forEach(([key, value]) => {
       if (typeof value === 'string') {
         url.searchParams.set(key, value)
       }
@@ -212,10 +205,6 @@ export class OIDCProvider<T = any> implements Handler {
       const redirectUri = `${request.url.origin}${this.pages.callback.path}`
       this.logger.debug(`Automatically adding redirect_uri: ${redirectUri}`)
       url.searchParams.set('redirect_uri', redirectUri)
-    }
-
-    if (!url.searchParams.has('scope')) {
-      url.searchParams.set('scope', 'openid profile email')
     }
 
     if (this.checker.checks?.includes('state')) {
