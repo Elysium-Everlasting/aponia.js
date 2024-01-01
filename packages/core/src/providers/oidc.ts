@@ -75,6 +75,7 @@ export class OIDCProvider<T = any> implements Handler {
   client: oauth.Client
 
   /**
+   * Authorization server.
    */
   authorizationServer: oauth.AuthorizationServer
 

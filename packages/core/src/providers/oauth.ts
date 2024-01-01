@@ -23,10 +23,28 @@ import {
 import type { Route } from '../types'
 import type { Awaitable, Nullish } from '../utils/types'
 
+/**
+ * Custom endpoint to use during the OAuth flow.
+ */
 export interface Endpoint<TContext = any, TResponse = any> {
+  /**
+   * The URL to use for the endpoint.
+   */
   url: string
+
+  /**
+   * The URLSearchParams to append.
+   */
   params?: Record<string, any>
+
+  /**
+   * Override the default request function.
+   */
   request?: (context: TContext) => Awaitable<TResponse>
+
+  /**
+   * Process the response returned by the default request function.
+   */
   conform?: (response: Response) => Awaitable<Response | Nullish>
 }
 
@@ -34,43 +52,149 @@ export type TokenEndpointResponse =
   | oauth.OAuth2TokenEndpointResponse
   | oauth.OpenIDTokenEndpointResponse
 
-export type OAuthCheck = 'state' | 'pkce'
-
+/**
+ * Pages that are recognized by the provider.
+ */
 export interface OAuthPages {
+  /**
+   * Login.
+   */
   login: Route
+
+  /**
+   * Callback.
+   */
   callback: Route
+
+  /**
+   * Where to redirect after logging in.
+   */
   redirect: string
 }
 
+/**
+ * Endpoints used during the OAuth flow.
+ */
 export interface OAuthEndpoints<T> {
+  /**
+   * Authorization.
+   */
   authorization: Endpoint<OAuthProvider<T>>
+
+  /**
+   * Token.
+   */
   token: Endpoint<OAuthProvider<T>, TokenEndpointResponse>
+
+  /**
+   * User info.
+   */
   userinfo: Endpoint<{ provider: OAuthEndpoints<T>; tokens: TokenEndpointResponse }, T>
 }
 
+/**
+ * Configuration for an OAuth provider.
+ */
 export interface OAuthProviderConfig<T> {
+  /**
+   * Unique identifier for the provider. May be used by other integrations.
+   */
   id: string
+
+  /**
+   * Client ID.
+   */
   clientId: string
+
+  /**
+   * Client secret.
+   */
   clientSecret: string
+
+  /**
+   * OAuth client.
+   */
   client?: oauth.Client
+
+  /**
+   * Information about pages that are recognized by this provider.
+   */
   pages?: Partial<OAuthPages>
+
+  /**
+   * Customize the endpoints used by this provider.
+   */
   endpoints?: Partial<OAuthEndpoints<T>>
+
+  /**
+   * Transform the profile returned by the user info endpoint.
+   */
   profile?: (profile: T, tokens: TokenEndpointResponse) => Awaitable<Aponia.User | Nullish>
+
+  /**
+   * Applies security checks to the OAuth request.
+   */
   checker?: CheckerConfig
+
+  /**
+   * Cookie options used by this provider when setting the security cookies.
+   */
   cookies?: CreateCookiesOptions
+
+  /**
+   * Logger.
+   */
   logger?: Logger
 }
 
 export class OAuthProvider<T = any> implements Handler {
+  /**
+   * The originally provided configuration.
+   */
   config: OAuthProviderConfig<T>
+
+  /**
+   */
   id: string
+
+  /**
+   * Information about pages that are recognized by this provider.
+   */
   pages: OAuthPages
+
+  /**
+   * Customize the endpoints used by this provider.
+   */
   endpoints: OAuthEndpoints<T>
+
+  /**
+   * OAuth client configuration used to interface with the {@link oauth} library.
+   */
   client: oauth.Client
+
+  /**
+   * Authorization server.
+   */
   authorizationServer: oauth.AuthorizationServer
+
+  /**
+   * Array of routes to register for this provider.
+   */
   routes: Route[]
+
+  /**
+   * Applies security checks to the OAuth request.
+   */
   checker: Checker
+
+  /**
+   * Cookie options used by this provider when setting the security cookies.
+   */
   cookies: OAuthCookiesOptions
+
+  /**
+   * Logger.
+   */
   logger: Logger
 
   constructor(config: OAuthProviderConfig<T>) {
