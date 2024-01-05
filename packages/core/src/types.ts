@@ -71,6 +71,16 @@ export interface AponiaResponse {
    * TODO: custom auth pages for displaying payloads.
    */
   body?: unknown
+
+  /**
+   * The type of provider that generated this response (if any).
+   */
+  providerType?: string
+
+  /**
+   * The ID of the provider that generated this response (if any).
+   */
+  providerId?: string
 }
 
 /**

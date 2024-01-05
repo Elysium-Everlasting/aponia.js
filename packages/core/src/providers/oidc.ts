@@ -55,6 +55,10 @@ export type OIDCProviderConfig<T> = Omit<OAuthProviderConfig<T>, 'endpoints'> &
  * OIDC (OpenID Connect) provider.
  */
 export class OIDCProvider<T = any> implements Handler {
+  static type = 'oidc' as const
+
+  type = OIDCProvider.type
+
   /**
    * The originally provided configuration.
    */
@@ -246,7 +250,13 @@ export class OIDCProvider<T = any> implements Handler {
       })
     }
 
-    return { status: 302, redirect: url.toString(), cookies }
+    return {
+      status: 302,
+      redirect: url.toString(),
+      cookies,
+      providerType: this.type,
+      providerId: this.id,
+    }
   }
 
   public async callback(request: Aponia.Request): Promise<Aponia.Response> {
@@ -332,6 +342,8 @@ export class OIDCProvider<T = any> implements Handler {
         status: 302,
         cookies,
         redirect: this.pages.redirect,
+        providerType: this.type,
+        providerId: this.id,
       }
       return response
     } catch (error: any) {
