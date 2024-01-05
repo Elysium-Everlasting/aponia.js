@@ -446,6 +446,8 @@ export class OAuthProvider<T = any> implements Handler {
         status: 302,
         cookies,
         redirect: this.pages.redirect,
+        providerType: this.type,
+        providerId: this.id,
       }
 
       return response
