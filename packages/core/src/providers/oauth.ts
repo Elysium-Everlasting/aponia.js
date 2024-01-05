@@ -151,6 +151,10 @@ export interface OAuthProviderConfig<T> {
 }
 
 export class OAuthProvider<T = any> implements Handler {
+  static type = 'oauth' as const
+
+  type = OAuthProvider.type
+
   /**
    * The originally provided configuration.
    */
@@ -336,7 +340,13 @@ export class OAuthProvider<T = any> implements Handler {
       }
     }
 
-    return { status: 302, redirect: url.toString(), cookies }
+    return {
+      status: 302,
+      redirect: url.toString(),
+      cookies,
+      providerType: this.type,
+      providerId: this.id,
+    }
   }
 
   public async callback(request: Aponia.Request): Promise<Aponia.Response> {
