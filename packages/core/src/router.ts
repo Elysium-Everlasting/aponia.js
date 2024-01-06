@@ -33,7 +33,7 @@ export type RoutePostHandler = (
  */
 function defineDynamicClass(): {
   new (): {
-    [M in Methods]: () => void
+    [M in Methods]: RouteCreator
   } & {
     pre: PreRouteCreator
     post: PostRouteCreator
