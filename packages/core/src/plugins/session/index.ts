@@ -61,7 +61,11 @@ export class SessionPlugin implements Plugin {
     context.router.post(this.handle.bind(this))
   }
 
-  async handle(_request: Aponia.Request, response: Aponia.Response): Promise<void> {
+  async handle(_request: Aponia.Request, response?: Aponia.Response): Promise<void> {
+    if (response == null) {
+      return
+    }
+
     if (response.session == null && response.user != null) {
       try {
         response.session = await this.createSessionFromUser(response.user)
