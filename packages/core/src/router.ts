@@ -24,7 +24,7 @@ export type RoutePreHandler = (request: Aponia.Request) => Awaitable<Aponia.Requ
 
 export type RoutePostHandler = (
   request: Aponia.Request,
-  response: Aponia.Response,
+  response?: Aponia.Response,
 ) => Awaitable<Aponia.Response | Nullish>
 
 /**
@@ -39,7 +39,7 @@ function defineDynamicClass(): {
     post: PostRouteCreator
   }
 } {
-  return class {} as never
+  return class {} as any
 }
 
 export class Router extends defineDynamicClass() {
