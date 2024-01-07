@@ -43,10 +43,12 @@ function defineDynamicClass(): {
 }
 
 export class Router extends defineDynamicClass() {
-  routers: Record<string, RadixRouter> = {}
+  routers: Record<Methods | 'pre' | 'post', RadixRouter>
 
   constructor() {
     super()
+
+    this.routers = {} as any
 
     METHODS.forEach((method) => {
       this[method] = (...args: any[]) => {
@@ -69,31 +71,46 @@ export class Router extends defineDynamicClass() {
   }
 
   private addRoute(rawMethod: string, path: string, handler: RouteHandler) {
-    const method = rawMethod.toUpperCase()
+    const method = rawMethod.toUpperCase() as Methods
 
     this.routers[method] ??= createRouter()
     this.routers[method]?.insert(path, { handler })
   }
 
   private addPreRoute(path = '', handler: RoutePreHandler) {
-    this.routers['pre'] ??= createRouter()
+    this.routers.pre ??= createRouter()
 
-    const data = this.routers['pre'].lookup(path)
+    const data = this.routers.pre.lookup(path)
 
     const handlers: RoutePreHandler[] = data?.['handlers'] ?? []
     handlers.push(handler)
 
-    this.routers['pre'].insert(path, { handlers })
+    this.routers.pre.insert(path, { handlers })
   }
 
   private addPostRoute(path = '', handler: RoutePostHandler) {
-    this.routers['post'] ??= createRouter()
+    this.routers.post ??= createRouter()
 
-    const data = this.routers['post'].lookup(path)
+    const data = this.routers.post.lookup(path)
 
     const handlers: RoutePostHandler[] = data?.['handlers'] ?? []
     handlers.push(handler)
 
-    this.routers['post'].insert(path, { handlers })
+    this.routers.post.insert(path, { handlers })
+  }
+
+  public getHandler(path: string, method: Methods): RouteHandler | undefined {
+    const data = this.routers[method]?.lookup(path)
+    return data?.['handler']
+  }
+
+  public getPreHandlers(path: string): RoutePreHandler[] {
+    const data = this.routers.pre?.lookup(path)
+    return data?.['handlers'] ?? []
+  }
+
+  public getPostHandlers(path: string): RoutePostHandler[] {
+    const data = this.routers.post?.lookup(path)
+    return data?.['handlers'] ?? []
   }
 }
