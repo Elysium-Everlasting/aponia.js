@@ -4,7 +4,7 @@ import type { Awaitable, Nullish } from './utils/types'
 
 export const METHODS = ['get', 'post', 'put', 'delete', 'options', 'patch'] as const
 
-export type Methods = (typeof METHODS)[number]
+export type Method = (typeof METHODS)[number]
 
 export type RouteCreator = (path: string, handler: RouteHandler) => void
 
@@ -24,7 +24,7 @@ export type RoutePreHandler = (request: Aponia.Request) => Awaitable<Aponia.Requ
 
 export type RoutePostHandler = (
   request: Aponia.Request,
-  response?: Aponia.Response,
+  response?: Aponia.Response | Nullish,
 ) => Awaitable<Aponia.Response | Nullish>
 
 /**
@@ -33,7 +33,7 @@ export type RoutePostHandler = (
  */
 function defineDynamicClass(): {
   new (): {
-    [M in Methods]: RouteCreator
+    [M in Method]: RouteCreator
   } & {
     pre: PreRouteCreator
     post: PostRouteCreator
@@ -43,7 +43,7 @@ function defineDynamicClass(): {
 }
 
 export class Router extends defineDynamicClass() {
-  routers: Record<Methods | 'pre' | 'post', RadixRouter>
+  routers: Record<Method | 'pre' | 'post', RadixRouter>
 
   constructor() {
     super()
@@ -71,7 +71,7 @@ export class Router extends defineDynamicClass() {
   }
 
   private addRoute(rawMethod: string, path: string, handler: RouteHandler) {
-    const method = rawMethod.toUpperCase() as Methods
+    const method = rawMethod.toUpperCase() as Method
 
     this.routers[method] ??= createRouter()
     this.routers[method]?.insert(path, { handler })
@@ -99,7 +99,7 @@ export class Router extends defineDynamicClass() {
     this.routers.post.insert(path, { handlers })
   }
 
-  public getHandler(path: string, method: Methods): RouteHandler | undefined {
+  public getHandler(method: Method, path: string): RouteHandler | undefined {
     const data = this.routers[method]?.lookup(path)
     return data?.['handler']
   }

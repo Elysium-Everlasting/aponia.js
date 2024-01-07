@@ -1,6 +1,6 @@
 import { Logger } from './logger'
 import type { Plugin, PluginContext, PluginOptions } from './plugins/plugin'
-import { Router } from './router'
+import { Router, type Method } from './router'
 import type { CreateCookiesOptions } from './security/cookie'
 
 export interface AuthConfig {
@@ -42,12 +42,28 @@ export class Auth {
     }
   }
 
-  public async handle(request: Aponia.Request): Promise<Aponia.Response> {
-    request
-    // pre-handlers
-    // main handler
-    // post-handlers
-    return {}
+  public async handle(request: Aponia.Request): Promise<Aponia.Response | undefined> {
+    const preHandlers = this.router.getPreHandlers(request.url.pathname)
+    const mainHandler = this.router.getHandler(request.method as Method, request.url.pathname)
+    const postHandlers = this.router.getPostHandlers(request.url.pathname)
+
+    for (const preHandler of preHandlers) {
+      const modifiedRequest = await preHandler(request)
+      if (modifiedRequest) {
+        request = modifiedRequest
+      }
+    }
+
+    let response = await mainHandler?.(request)
+
+    for (const postHandler of postHandlers) {
+      const modifiedResponse = await postHandler(request, response)
+      if (modifiedResponse) {
+        response = modifiedResponse
+      }
+    }
+
+    return response ?? undefined
   }
 }
 
