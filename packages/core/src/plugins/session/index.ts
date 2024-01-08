@@ -7,7 +7,7 @@ import {
   type CreateCookiesOptions,
   DEFAULT_CREATE_COOKIES_OPTIONS,
 } from '../../security/cookie'
-import type { Awaitable } from '../../utils/types'
+import type { Awaitable, Nullish } from '../../utils/types'
 import type { Plugin, PluginContext, PluginOptions } from '../plugin'
 
 export type SessionEncoder = (session: Aponia.Session) => Awaitable<string>
@@ -58,10 +58,10 @@ export class SessionPlugin implements Plugin {
       },
     })
 
-    context.router.post(this.handle.bind(this))
+    context.router.postHandle(this.handle.bind(this))
   }
 
-  async handle(_request: Aponia.Request, response?: Aponia.Response): Promise<void> {
+  async handle(_request: Aponia.Request, response?: Aponia.Response | Nullish): Promise<void> {
     if (response == null) {
       return
     }

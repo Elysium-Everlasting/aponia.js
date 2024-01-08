@@ -35,15 +35,15 @@ function defineDynamicClass(): {
   new (): {
     [M in Method]: RouteCreator
   } & {
-    pre: PreRouteCreator
-    post: PostRouteCreator
+    preHandle: PreRouteCreator
+    postHandle: PostRouteCreator
   }
 } {
   return class {} as any
 }
 
 export class Router extends defineDynamicClass() {
-  routers: Record<Method | 'pre' | 'post', RadixRouter>
+  routers: Record<Uppercase<Method> | 'pre' | 'post', RadixRouter>
 
   constructor() {
     super()
@@ -52,32 +52,32 @@ export class Router extends defineDynamicClass() {
 
     METHODS.forEach((method) => {
       this[method] = (...args: any[]) => {
-        this.addRoute(method, args[0], args[1])
+        this.addHandler(method, args[0], args[1])
         return this as any
       }
     })
 
-    this.pre = (...args: any[]) => {
+    this.preHandle = (...args: any[]) => {
       return args.length === 2
-        ? this.addPreRoute(args[0], args[1])
-        : this.addPreRoute(undefined, args[0])
+        ? this.addPreHandler(args[0], args[1])
+        : this.addPreHandler(undefined, args[0])
     }
 
-    this.post = (...args: any[]) => {
+    this.postHandle = (...args: any[]) => {
       return args.length === 2
-        ? this.addPostRoute(args[0], args[1])
-        : this.addPostRoute(undefined, args[0])
+        ? this.addPostHandler(args[0], args[1])
+        : this.addPostHandler(undefined, args[0])
     }
   }
 
-  private addRoute(rawMethod: string, path: string, handler: RouteHandler) {
+  private addHandler(rawMethod: string, path: string, handler: RouteHandler) {
     const method = rawMethod.toUpperCase() as Method
 
     this.routers[method] ??= createRouter()
     this.routers[method]?.insert(path, { handler })
   }
 
-  private addPreRoute(path = '', handler: RoutePreHandler) {
+  private addPreHandler(path = '', handler: RoutePreHandler) {
     this.routers.pre ??= createRouter()
 
     const data = this.routers.pre.lookup(path)
@@ -88,7 +88,7 @@ export class Router extends defineDynamicClass() {
     this.routers.pre.insert(path, { handlers })
   }
 
-  private addPostRoute(path = '', handler: RoutePostHandler) {
+  private addPostHandler(path = '', handler: RoutePostHandler) {
     this.routers.post ??= createRouter()
 
     const data = this.routers.post.lookup(path)

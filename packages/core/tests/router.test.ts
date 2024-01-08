@@ -11,7 +11,7 @@ describe('Router', () => {
 
     router.get(route, handler)
 
-    expect(router.routers['GET']?.lookup(route)?.['handler']).toBe(handler)
+    expect(router.routers.GET.lookup(route)?.['handler']).toBe(handler)
   })
 
   test('can add multiple pre routes', () => {
@@ -21,8 +21,8 @@ describe('Router', () => {
     const handler = () => {}
     const numberHandlers = 5
 
-    Array.from(Array(numberHandlers).keys()).forEach(() => router.pre(route, handler))
+    Array.from(Array(numberHandlers).keys()).forEach(() => router.preHandle(route, handler))
 
-    expect(router.routers['pre']?.lookup(route)?.['handlers']).toHaveLength(numberHandlers)
+    expect(router.routers.pre?.lookup(route)?.['handlers']).toHaveLength(numberHandlers)
   })
 })
