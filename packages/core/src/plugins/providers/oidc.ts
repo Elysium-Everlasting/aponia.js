@@ -7,19 +7,19 @@ import {
   ISSUER,
   NONCE_MAX_AGE,
   NONCE_NAME,
-} from '../constants'
-import { requestMatchesRoute, type Handler } from '../handler'
-import { Logger } from '../logger'
-import { Checker } from '../security/checker'
+} from '../../constants'
+import { requestMatchesRoute, type Handler } from '../../handler'
+import { Logger } from '../../logger'
+import { Checker } from '../../security/checker'
 import {
   getCookiePrefix,
   type Cookie,
   type CookieOption,
   type CreateCookiesOptions,
   DEFAULT_CREATE_COOKIES_OPTIONS,
-} from '../security/cookie'
-import type { Route } from '../types'
-import type { DeepPartial } from '../utils/types'
+} from '../../security/cookie'
+import type { Route } from '../../types'
+import type { DeepPartial } from '../../utils/types'
 
 import {
   createOAuthCookiesOptions,
