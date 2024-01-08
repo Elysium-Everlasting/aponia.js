@@ -8,7 +8,6 @@ import {
   NONCE_MAX_AGE,
   NONCE_NAME,
 } from '../../constants'
-import { requestMatchesRoute, type Handler } from '../../handler'
 import { Logger } from '../../logger'
 import { Checker } from '../../security/checker'
 import {
@@ -19,7 +18,8 @@ import {
   DEFAULT_CREATE_COOKIES_OPTIONS,
 } from '../../security/cookie'
 import type { Route } from '../../types'
-import type { DeepPartial } from '../../utils/types'
+import type { Awaitable, DeepPartial } from '../../utils/types'
+import type { Plugin, PluginContext, PluginOptions } from '../plugin'
 
 import {
   createOAuthCookiesOptions,
@@ -54,7 +54,7 @@ export type OIDCProviderConfig<T> = Omit<OAuthProviderConfig<T>, 'endpoints'> &
 /**
  * OIDC (OpenID Connect) provider.
  */
-export class OIDCProvider<T = any> implements Handler {
+export class OIDCProvider<T = any> implements Plugin {
   static type = 'oidc' as const
 
   type = OIDCProvider.type
@@ -142,7 +142,7 @@ export class OIDCProvider<T = any> implements Handler {
     this.logger = config.logger ?? new Logger()
   }
 
-  async initialize() {
+  async initializeAuthorizationServer() {
     if (this.issuer == null) {
       return
     }
@@ -159,35 +159,26 @@ export class OIDCProvider<T = any> implements Handler {
     this.authorizationServer = authorizationServer
   }
 
-  public setLogger(logger = this.logger) {
-    this.logger = logger
-  }
+  initialize(context: PluginContext, options: PluginOptions): Awaitable<void> {
+    if (options.logger) {
+      this.logger = options.logger
+    }
 
-  public setCookiesOptions(options?: CreateCookiesOptions) {
     this.cookies = createOIDCCookiesOptions({
       ...DEFAULT_CREATE_COOKIES_OPTIONS,
       ...options,
       serialize: {
         ...DEFAULT_CREATE_COOKIES_OPTIONS.serialize,
-        ...options?.serialize,
+        ...options?.cookieOptions?.serialize,
       },
     })
-  }
 
-  public async handle(request: Aponia.Request): Promise<Aponia.Response> {
-    if (requestMatchesRoute(request, this.pages.login)) {
-      return this.login(request)
-    }
-
-    if (requestMatchesRoute(request, this.pages.callback)) {
-      return this.callback(request)
-    }
-
-    return {}
+    context.router.get(this.pages.login.path, this.login.bind(this))
+    context.router.get(this.pages.callback.path, this.callback.bind(this))
   }
 
   public async login(request: Aponia.Request): Promise<Aponia.Response> {
-    await this.initialize()
+    await this.initializeAuthorizationServer()
 
     if (!this.authorizationServer.authorization_endpoint) {
       throw new TypeError(
@@ -260,7 +251,7 @@ export class OIDCProvider<T = any> implements Handler {
   }
 
   public async callback(request: Aponia.Request): Promise<Aponia.Response> {
-    await this.initialize()
+    await this.initializeAuthorizationServer()
 
     const cookies: Cookie[] = []
 
