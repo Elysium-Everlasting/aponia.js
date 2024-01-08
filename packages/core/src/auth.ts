@@ -1,19 +1,12 @@
-import { SessionController } from './controllers/session'
-import { requestMatchesRoute, type Handler } from './handler'
 import { Logger } from './logger'
+import type { Plugin, PluginContext, PluginOptions } from './plugins/plugin'
+import { Router, type Method } from './router'
 import type { CreateCookiesOptions } from './security/cookie'
-import type { Route } from './types'
 
 export interface AuthConfig {
   logger?: Logger
-  session?: SessionController
-  handlers?: Handler[]
   cookies?: CreateCookiesOptions
-}
-
-export interface InternalRoute {
-  handler: Handler
-  route: Route
+  plugins?: Plugin[]
 }
 
 export class Auth {
@@ -21,75 +14,56 @@ export class Auth {
 
   cookies?: CreateCookiesOptions
 
-  session: SessionController
+  plugins: Plugin[]
 
-  handlers: Handler[]
+  router: Router
 
-  routes: Map<string, InternalRoute>
+  pluginContext: PluginContext
 
   constructor(config: AuthConfig = {}) {
     this.logger = config.logger ?? new Logger()
-
     this.cookies = config.cookies
+    this.plugins = config.plugins ?? []
 
-    this.session = config.session ?? new SessionController()
-    this.session.setCookieOptions(this.cookies)
-    this.session.setLogger(this.logger)
+    this.router = new Router()
+    this.pluginContext = {
+      router: this.router,
+    }
 
-    this.handlers = config.handlers ?? []
-
-    this.routes = new Map()
-
-    this.handlers.forEach((handler) => {
-      handler.setCookiesOptions?.(this.cookies)
-      handler.setLogger?.(this.logger)
-      handler.routes.forEach((route) => {
-        this.routes.set(route.path, { handler, route })
-      })
+    this.plugins.forEach((plugin) => {
+      plugin.initialize(this.pluginContext, this.pluginOptions)
     })
   }
 
-  public async handle(request: Aponia.Request): Promise<Aponia.Response> {
-    const route = this.routes.get(request.url.pathname)
-
-    if (route?.route != null && requestMatchesRoute(request, route.route)) {
-      const response = await route.handler.handle(request)
-
-      if (response == null) {
-        return {}
-      }
-
-      try {
-        return await this.handleResponseSession(response)
-      } catch (error: any) {
-        this.logger.error(error)
-        return { error }
-      }
+  get pluginOptions(): PluginOptions {
+    return {
+      cookieOptions: this.cookies,
+      logger: this.logger,
     }
-
-    return {}
   }
 
-  public async handleResponseSession(response: Aponia.Response): Promise<Aponia.Response> {
-    if (response.session == null && response.user != null) {
-      try {
-        response.session = await this.session.createSessionFromUser(response.user)
-      } catch (error) {
-        this.logger.error(error)
+  public async handle(request: Aponia.Request): Promise<Aponia.Response | undefined> {
+    const preHandlers = this.router.getPreHandlers(request.url.pathname)
+    const mainHandler = this.router.getHandler(request.method as Method, request.url.pathname)
+    const postHandlers = this.router.getPostHandlers(request.url.pathname)
+
+    for (const preHandler of preHandlers) {
+      const modifiedRequest = await preHandler(request)
+      if (modifiedRequest) {
+        request = modifiedRequest
       }
     }
 
-    if (response.session != null) {
-      try {
-        const cookies = await this.session.createCookiesFromSession(response.session)
-        response.cookies ??= []
-        response.cookies.push(...cookies)
-      } catch (error) {
-        this.logger.error(error)
+    let response = await mainHandler?.(request)
+
+    for (const postHandler of postHandlers) {
+      const modifiedResponse = await postHandler(request, response)
+      if (modifiedResponse) {
+        response = modifiedResponse
       }
     }
 
-    return response
+    return response ?? undefined
   }
 }
 

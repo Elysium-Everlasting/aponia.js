@@ -4,7 +4,7 @@ import type { Awaitable, Nullish } from './utils/types'
 
 export const METHODS = ['get', 'post', 'put', 'delete', 'options', 'patch'] as const
 
-export type Methods = (typeof METHODS)[number]
+export type Method = (typeof METHODS)[number]
 
 export type RouteCreator = (path: string, handler: RouteHandler) => void
 
@@ -24,7 +24,7 @@ export type RoutePreHandler = (request: Aponia.Request) => Awaitable<Aponia.Requ
 
 export type RoutePostHandler = (
   request: Aponia.Request,
-  response?: Aponia.Response,
+  response?: Aponia.Response | Nullish,
 ) => Awaitable<Aponia.Response | Nullish>
 
 /**
@@ -33,7 +33,7 @@ export type RoutePostHandler = (
  */
 function defineDynamicClass(): {
   new (): {
-    [M in Methods]: RouteCreator
+    [M in Method]: RouteCreator
   } & {
     pre: PreRouteCreator
     post: PostRouteCreator
@@ -43,10 +43,12 @@ function defineDynamicClass(): {
 }
 
 export class Router extends defineDynamicClass() {
-  routers: Record<string, RadixRouter> = {}
+  routers: Record<Method | 'pre' | 'post', RadixRouter>
 
   constructor() {
     super()
+
+    this.routers = {} as any
 
     METHODS.forEach((method) => {
       this[method] = (...args: any[]) => {
@@ -69,31 +71,46 @@ export class Router extends defineDynamicClass() {
   }
 
   private addRoute(rawMethod: string, path: string, handler: RouteHandler) {
-    const method = rawMethod.toUpperCase()
+    const method = rawMethod.toUpperCase() as Method
 
     this.routers[method] ??= createRouter()
     this.routers[method]?.insert(path, { handler })
   }
 
   private addPreRoute(path = '', handler: RoutePreHandler) {
-    this.routers['pre'] ??= createRouter()
+    this.routers.pre ??= createRouter()
 
-    const data = this.routers['pre'].lookup(path)
+    const data = this.routers.pre.lookup(path)
 
     const handlers: RoutePreHandler[] = data?.['handlers'] ?? []
     handlers.push(handler)
 
-    this.routers['pre'].insert(path, { handlers })
+    this.routers.pre.insert(path, { handlers })
   }
 
   private addPostRoute(path = '', handler: RoutePostHandler) {
-    this.routers['post'] ??= createRouter()
+    this.routers.post ??= createRouter()
 
-    const data = this.routers['post'].lookup(path)
+    const data = this.routers.post.lookup(path)
 
     const handlers: RoutePostHandler[] = data?.['handlers'] ?? []
     handlers.push(handler)
 
-    this.routers['post'].insert(path, { handlers })
+    this.routers.post.insert(path, { handlers })
+  }
+
+  public getHandler(method: Method, path: string): RouteHandler | undefined {
+    const data = this.routers[method]?.lookup(path)
+    return data?.['handler']
+  }
+
+  public getPreHandlers(path: string): RoutePreHandler[] {
+    const data = this.routers.pre?.lookup(path)
+    return data?.['handlers'] ?? []
+  }
+
+  public getPostHandlers(path: string): RoutePostHandler[] {
+    const data = this.routers.post?.lookup(path)
+    return data?.['handlers'] ?? []
   }
 }
