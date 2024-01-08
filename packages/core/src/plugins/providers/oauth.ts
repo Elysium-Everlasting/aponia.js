@@ -9,19 +9,19 @@ import {
   PKCE_NAME,
   STATE_MAX_AGE,
   STATE_NAME,
-} from '../constants'
-import { requestMatchesRoute, type Handler } from '../handler'
-import { Logger } from '../logger'
-import { Checker, type CheckerConfig } from '../security/checker'
+} from '../../constants'
+import { requestMatchesRoute, type Handler } from '../../handler'
+import { Logger } from '../../logger'
+import { Checker, type CheckerConfig } from '../../security/checker'
 import {
   getCookiePrefix,
   type Cookie,
   type CookieOption,
   type CreateCookiesOptions,
   DEFAULT_CREATE_COOKIES_OPTIONS,
-} from '../security/cookie'
-import type { Route } from '../types'
-import type { Awaitable, Nullish } from '../utils/types'
+} from '../../security/cookie'
+import type { Route } from '../../types'
+import type { Awaitable, Nullish } from '../../utils/types'
 
 /**
  * Custom endpoint to use during the OAuth flow.
