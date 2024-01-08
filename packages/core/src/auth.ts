@@ -18,21 +18,22 @@ export class Auth {
 
   router: Router
 
-  pluginContext: PluginContext
-
   constructor(config: AuthConfig = {}) {
     this.logger = config.logger ?? new Logger()
     this.cookies = config.cookies
     this.plugins = config.plugins ?? []
 
     this.router = new Router()
-    this.pluginContext = {
-      router: this.router,
-    }
 
     this.plugins.forEach((plugin) => {
       plugin.initialize(this.pluginContext, this.pluginOptions)
     })
+  }
+
+  get pluginContext(): PluginContext {
+    return {
+      router: this.router,
+    }
   }
 
   get pluginOptions(): PluginOptions {
