@@ -4,17 +4,17 @@ import {
   DEFAULT_LOGIN_ROUTE,
 } from '@aponia.js/core/constants'
 import {
-  OAuthProvider as CoreOAuthProvider,
-  type OAuthProviderConfig,
-} from '@aponia.js/core/plugins/providers/oauth'
+  OIDCProvider as CoreOIDCProvider,
+  type OIDCProviderConfig,
+} from '@aponia.js/core/plugins/providers/oidc'
 import type { OAuthConfig, OAuthUserConfig } from '@auth/core/providers/oauth'
 
-export class OAuthProvider<T> extends CoreOAuthProvider<T> {
+export class OIDCProvider<T> extends CoreOIDCProvider<T> {
   authConfig: OAuthConfig<T>
 
   constructor(
     config: OAuthConfig<T> & { options?: OAuthUserConfig<T> },
-    coreConfig?: OAuthProviderConfig<T>,
+    coreConfig?: OIDCProviderConfig<T>,
   ) {
     const id = coreConfig?.id ?? config.id ?? config.options?.id ?? ''
     const clientId = coreConfig?.clientId ?? config.clientId ?? config.options?.clientId ?? ''
@@ -23,7 +23,7 @@ export class OAuthProvider<T> extends CoreOAuthProvider<T> {
     const userinfo =
       coreConfig?.endpoints?.userinfo ?? config.userinfo ?? config.options?.userinfo ?? {}
 
-    const resolvedConfig: OAuthProviderConfig<T> = {
+    const resolvedConfig: OIDCProviderConfig<T> = {
       ...config,
       ...config.options,
       id,

@@ -19,7 +19,6 @@ import {
   type CreateCookiesOptions,
   DEFAULT_CREATE_COOKIES_OPTIONS,
 } from '../../security/cookie'
-import type { Route } from '../../types'
 import type { Awaitable, Nullish } from '../../utils/types'
 import type { Plugin, PluginContext, PluginOptions } from '../plugin'
 
@@ -62,12 +61,12 @@ export interface OAuthPages {
   /**
    * Login.
    */
-  login: Route
+  login: string
 
   /**
    * Callback.
    */
-  callback: Route
+  callback: string
 
   /**
    * Where to redirect after logging in.
@@ -185,11 +184,6 @@ export class OAuthProvider<T = any> implements Plugin {
   authorizationServer: oauth.AuthorizationServer
 
   /**
-   * Array of routes to register for this provider.
-   */
-  routes: Route[]
-
-  /**
    * Applies security checks to the OAuth request.
    */
   checker: Checker
@@ -208,14 +202,8 @@ export class OAuthProvider<T = any> implements Plugin {
     this.config = config
     this.id = config.id
     this.pages = {
-      login: {
-        path: config.pages?.login?.path ?? `${DEFAULT_LOGIN_ROUTE}/${this.id}`,
-        methods: config.pages?.login?.methods ?? ['GET'],
-      },
-      callback: {
-        path: config.pages?.callback?.path ?? `${DEFAULT_CALLBACK_ROUTE}/${this.id}`,
-        methods: config.pages?.callback?.methods ?? ['GET'],
-      },
+      login: config.pages?.login ?? `${DEFAULT_LOGIN_ROUTE}/${this.id}`,
+      callback: config.pages?.callback ?? `${DEFAULT_CALLBACK_ROUTE}/${this.id}`,
       redirect: config.pages?.redirect ?? DEFAULT_CALLBACK_REDIRECT,
     }
 
@@ -259,7 +247,6 @@ export class OAuthProvider<T = any> implements Plugin {
       token_endpoint: this.endpoints.token.url,
       userinfo_endpoint: this.endpoints.userinfo.url,
     }
-    this.routes = [this.pages.login, this.pages.callback]
     this.cookies = DEFAULT_OAUTH_COOKIES_OPTIONS
     this.checker = new Checker(config.checker)
     this.logger = config.logger ?? new Logger()
@@ -279,8 +266,8 @@ export class OAuthProvider<T = any> implements Plugin {
       },
     })
 
-    context.router.get(this.pages.login.path, this.login.bind(this))
-    context.router.get(this.pages.callback.path, this.callback.bind(this))
+    context.router.get(this.pages.login, this.login.bind(this))
+    context.router.get(this.pages.callback, this.callback.bind(this))
   }
 
   public async login(request: Aponia.Request): Promise<Aponia.Response> {
@@ -295,7 +282,7 @@ export class OAuthProvider<T = any> implements Plugin {
     })
 
     if (!url.searchParams.has('redirect_uri')) {
-      const redirectUri = `${request.url.origin}${this.pages.callback.path}`
+      const redirectUri = `${request.url.origin}${this.pages.callback}`
       this.logger.debug(`Automatically adding redirect_uri: ${redirectUri}`)
       url.searchParams.set('redirect_uri', redirectUri)
     }
@@ -379,7 +366,7 @@ export class OAuthProvider<T = any> implements Plugin {
       this.authorizationServer,
       this.client,
       codeGrantParams,
-      `${request.url.origin}${this.pages.callback.path}`,
+      `${request.url.origin}${this.pages.callback}`,
       pkce ?? 'auth',
     )
 
