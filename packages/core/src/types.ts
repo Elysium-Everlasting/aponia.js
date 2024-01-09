@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-namespace */
 
 import type { Cookie } from './security/cookie'
-import type { Awaitable } from './utils/types'
 
 /**
  * The request object that the framework handles.
@@ -93,11 +92,6 @@ export interface AponiaUser {}
  */
 export interface AponiaSession {}
 
-export interface Route {
-  path: string
-  methods: string[]
-}
-
 /**
  * A namespace in the global scope is also available for module augmentation
  *
@@ -116,5 +110,3 @@ declare global {
     interface Session extends AponiaSession {}
   }
 }
-
-export type Handle = (request: Aponia.Request) => Awaitable<Aponia.Response | void>

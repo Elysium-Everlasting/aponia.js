@@ -17,7 +17,6 @@ import {
   type CreateCookiesOptions,
   DEFAULT_CREATE_COOKIES_OPTIONS,
 } from '../../security/cookie'
-import type { Route } from '../../types'
 import type { Awaitable, DeepPartial } from '../../utils/types'
 import type { Plugin, PluginContext, PluginOptions } from '../plugin'
 
@@ -91,11 +90,6 @@ export class OIDCProvider<T = any> implements Plugin {
   authorizationServer: oauth.AuthorizationServer
 
   /**
-   * Array of routes to register for this provider.
-   */
-  routes: Route[]
-
-  /**
    * Applies security checks to the OAuth request.
    */
   checker: Checker
@@ -115,14 +109,8 @@ export class OIDCProvider<T = any> implements Plugin {
     this.id = config.id
     this.issuer = config.issuer
     this.pages = {
-      login: {
-        path: config.pages?.login?.path ?? `${DEFAULT_LOGIN_ROUTE}/${this.id}`,
-        methods: config.pages?.login?.methods ?? ['GET'],
-      },
-      callback: {
-        path: config.pages?.callback?.path ?? `${DEFAULT_CALLBACK_ROUTE}/${this.id}`,
-        methods: config.pages?.callback?.methods ?? ['GET'],
-      },
+      login: config.pages?.login ?? `${DEFAULT_LOGIN_ROUTE}/${this.id}`,
+      callback: config.pages?.callback ?? `${DEFAULT_CALLBACK_ROUTE}/${this.id}`,
       redirect: config.pages?.redirect ?? DEFAULT_CALLBACK_REDIRECT,
     }
     this.client = {
@@ -136,7 +124,6 @@ export class OIDCProvider<T = any> implements Plugin {
       token_endpoint: config.endpoints?.token?.url,
       userinfo_endpoint: config.endpoints?.userinfo?.url,
     }
-    this.routes = [this.pages.login, this.pages.callback]
     this.cookies = DEFAULT_OIDC_COOKIES_OPTIONS
     this.checker = new Checker(config.checker)
     this.logger = config.logger ?? new Logger()
@@ -173,8 +160,8 @@ export class OIDCProvider<T = any> implements Plugin {
       },
     })
 
-    context.router.get(this.pages.login.path, this.login.bind(this))
-    context.router.get(this.pages.callback.path, this.callback.bind(this))
+    context.router.get(this.pages.login, this.login.bind(this))
+    context.router.get(this.pages.callback, this.callback.bind(this))
   }
 
   public async login(request: Aponia.Request): Promise<Aponia.Response> {
@@ -197,7 +184,7 @@ export class OIDCProvider<T = any> implements Plugin {
     })
 
     if (!url.searchParams.has('redirect_uri')) {
-      const redirectUri = `${request.url.origin}${this.pages.callback.path}`
+      const redirectUri = `${request.url.origin}${this.pages.callback}`
       this.logger.debug(`Automatically adding redirect_uri: ${redirectUri}`)
       url.searchParams.set('redirect_uri', redirectUri)
     }
@@ -289,7 +276,7 @@ export class OIDCProvider<T = any> implements Plugin {
       this.authorizationServer,
       this.client,
       codeGrantParams,
-      `${request.url.origin}${this.pages.callback.path}`,
+      `${request.url.origin}${this.pages.callback}`,
       pkce ?? 'auth',
     )
 
