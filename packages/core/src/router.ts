@@ -71,13 +71,13 @@ export class Router extends defineDynamicClass() {
   }
 
   private addHandler(rawMethod: string, path: string, handler: RouteHandler) {
-    const method = rawMethod.toUpperCase() as Method
+    const method = rawMethod.toUpperCase() as Uppercase<Method>
 
     this.routers[method] ??= createRouter()
     this.routers[method]?.insert(path, { handler })
   }
 
-  private addPreHandler(path = '', handler: RoutePreHandler) {
+  private addPreHandler(path = '**', handler: RoutePreHandler) {
     this.routers.pre ??= createRouter()
 
     const data = this.routers.pre.lookup(path)
@@ -88,7 +88,7 @@ export class Router extends defineDynamicClass() {
     this.routers.pre.insert(path, { handlers })
   }
 
-  private addPostHandler(path = '', handler: RoutePostHandler) {
+  private addPostHandler(path = '**', handler: RoutePostHandler) {
     this.routers.post ??= createRouter()
 
     const data = this.routers.post.lookup(path)
@@ -99,7 +99,8 @@ export class Router extends defineDynamicClass() {
     this.routers.post.insert(path, { handlers })
   }
 
-  public getHandler(method: Method, path: string): RouteHandler | undefined {
+  public getHandler(rawMethod: Method, path: string): RouteHandler | undefined {
+    const method = rawMethod.toUpperCase() as Uppercase<Method>
     const data = this.routers[method]?.lookup(path)
     return data?.['handler']
   }
