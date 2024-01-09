@@ -183,6 +183,12 @@ export class OIDCProvider<T = any> implements Plugin {
       }
     })
 
+    if (!url.searchParams.has('scope')) {
+      const scope = 'openid profile email'
+      this.logger.debug(`Automatically adding scope: ${scope}`)
+      url.searchParams.set('scope', scope)
+    }
+
     if (!url.searchParams.has('redirect_uri')) {
       const redirectUri = `${request.url.origin}${this.pages.callback}`
       this.logger.debug(`Automatically adding redirect_uri: ${redirectUri}`)
