@@ -1,7 +1,7 @@
 import { Auth } from '@aponia.js/core/auth'
-import { JwtSessionController } from '@aponia.js/core/controllers/jwt-session'
-import { OAuthProvider } from '@aponia.js/core/providers/oauth'
-import { OIDCProvider } from '@aponia.js/core/providers/oidc'
+import { OAuthProvider } from '@aponia.js/core/plugins/providers/oauth'
+import { OIDCProvider } from '@aponia.js/core/plugins/providers/oidc'
+import { JwtSessionPlugin } from '@aponia.js/core/plugins/session/jwt'
 import { serialize } from 'cookie'
 import cookieParser from 'cookie-parser'
 import { config } from 'dotenv'
@@ -94,11 +94,10 @@ const google = new OIDCProvider({
   },
 })
 
-const session = new JwtSessionController()
+const session = new JwtSessionPlugin()
 
 const auth = new Auth({
-  session,
-  handlers: [github, google],
+  plugins: [github, google, session],
 })
 
 function main() {
@@ -107,9 +106,9 @@ function main() {
   app.use(cookieParser())
 
   app.use(async (req, _res, next) => {
-    const session = await auth.session.parseSessionFromCookies(req.cookies)
+    const parsedSession = await session.parseSessionFromCookies(req.cookies)
 
-    console.log({ session })
+    console.log({ parsedSession })
 
     next()
   })
@@ -124,25 +123,25 @@ function main() {
 
     const response = await auth.handle(request)
 
-    if (response.status != null) {
+    if (response?.status != null) {
       res.status(response.status)
     }
 
-    response.cookies?.forEach((cookie) => {
+    response?.cookies?.forEach((cookie) => {
       res.appendHeader('Set-Cookie', serialize(cookie.name, cookie.value, cookie.options))
     })
 
-    if (response.redirect != null) {
+    if (response?.redirect != null) {
       res.redirect(response.redirect)
       return
     }
 
-    if (response.body != null) {
+    if (response?.body != null) {
       res.send(response.body)
       return
     }
 
-    if (response.error != null) {
+    if (response?.error != null) {
       res.send(response.error)
       return
     }
