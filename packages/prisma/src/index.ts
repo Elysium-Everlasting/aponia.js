@@ -69,7 +69,11 @@ export class PrismaSessionPlugin implements Plugin {
   }
 
   findUserAccounts(...args: any): void {
-    console.log('findExistingAccounts', args)
+    this.prisma.account.findMany({
+      where: {
+        user: args.user,
+      },
+    })
   }
 
   createAccount(...args: any): void {
