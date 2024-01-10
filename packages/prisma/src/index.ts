@@ -1,8 +1,13 @@
 import '@aponia.js/core/types'
 import type { Plugin, PluginContext, PluginOptions } from '@aponia.js/core/plugins/plugin'
+import { PrismaClient } from '@prisma/client'
 
 export class PrismaSessionPlugin implements Plugin {
-  constructor() {}
+  prisma: PrismaClient
+
+  constructor(prisma: PrismaClient) {
+    this.prisma = prisma
+  }
 
   initialize(context: PluginContext, _options: PluginOptions): void {
     context.router.postHandle(this.handle.bind(this))
