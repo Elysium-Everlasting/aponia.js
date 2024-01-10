@@ -55,7 +55,7 @@ export class Auth {
       }
     }
 
-    let response = await mainHandler?.(request)
+    let response = (await mainHandler?.(request)) ?? undefined
 
     for (const postHandler of postHandlers) {
       const modifiedResponse = await postHandler(request, response)
