@@ -46,7 +46,14 @@ export class PrismaSessionPlugin implements Plugin {
   }
 
   findAccount(...args: any): void {
-    console.log('findAccount', args)
+    this.prisma.account.findUnique({
+      where: {
+        provider_providerAccountId: {
+          provider: args.providerId,
+          providerAccountId: args.providerAccountId,
+        },
+      },
+    })
   }
 
   findUser(...args: any): void {
