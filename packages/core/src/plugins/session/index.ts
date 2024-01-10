@@ -62,26 +62,20 @@ export class SessionPlugin implements Plugin {
   }
 
   async handle(_request: Aponia.Request, response?: Aponia.Response | Nullish): Promise<void> {
-    if (response == null) {
+    if (response?.user == null) {
       return
     }
 
-    if (response.session == null && response.user != null) {
-      try {
-        response.session = await this.createSessionFromUser(response.user)
-      } catch (error) {
-        this.logger.error(error)
-      }
-    }
+    try {
+      const session = await this.createSessionFromUser(response.user)
 
-    if (response.session != null) {
-      try {
-        const cookies = await this.createCookiesFromSession(response.session)
+      if (session != null) {
+        const cookies = await this.createCookiesFromSession(session)
         response.cookies ??= []
         response.cookies.push(...cookies)
-      } catch (error) {
-        this.logger.error(error)
       }
+    } catch (error) {
+      this.logger.error(error)
     }
   }
 
