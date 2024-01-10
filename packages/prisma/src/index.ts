@@ -63,7 +63,9 @@ export class PrismaSessionPlugin implements Plugin {
   }
 
   createUser(...args: any): void {
-    console.log('createUser', args)
+    this.prisma.user.create({
+      data: args.user,
+    })
   }
 
   findUserAccounts(...args: any): void {
