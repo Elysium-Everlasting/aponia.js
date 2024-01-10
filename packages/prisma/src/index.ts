@@ -87,6 +87,14 @@ export class PrismaSessionPlugin implements Plugin {
   }
 
   createSession(...args: any): void {
-    console.log('createSession', args)
+    this.prisma.session.create({
+      data: {
+        user: args.user,
+        expires: args.expires,
+        sessionToken: args.sessionToken,
+        accessToken: args.accessToken,
+        accessTokenExpires: args.accessTokenExpires,
+      },
+    })
   }
 }
