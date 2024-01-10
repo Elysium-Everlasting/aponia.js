@@ -91,9 +91,20 @@ export class PrismaSessionPlugin implements Plugin {
       data: {
         user: args.user,
         expires: args.expires,
-        sessionToken: args.sessionToken,
-        accessToken: args.accessToken,
-        accessTokenExpires: args.accessTokenExpires,
+      },
+    })
+  }
+
+  getUserFromSession(...args: any): void {
+    this.prisma.session.findUnique({
+      where: {
+        id: args.sessionId,
+        expires: {
+          gt: args.expires,
+        },
+      },
+      include: {
+        user: true,
       },
     })
   }
