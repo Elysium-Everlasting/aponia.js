@@ -43,9 +43,11 @@
     "test": "vitest"
   },
   "dependencies": {
-    "@aponia.js/core": "workspace:^"
+    "@aponia.js/core": "workspace:^",
+    "@prisma/client": "^5.8.0"
   },
   "devDependencies": {
+    "prisma": "^5.8.0",
     "typescript": "^5.1.6"
   },
   "packageManager": "pnpm@8.6.12",
