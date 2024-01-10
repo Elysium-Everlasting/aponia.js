@@ -57,7 +57,9 @@ export class PrismaSessionPlugin implements Plugin {
   }
 
   findUser(...args: any): void {
-    console.log('findUser', args)
+    this.prisma.user.findUnique({
+      where: args.user,
+    })
   }
 
   createUser(...args: any): void {
