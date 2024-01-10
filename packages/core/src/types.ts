@@ -80,6 +80,11 @@ export interface AponiaResponse {
    * The ID of the account from the provider that generated this response (if any).
    */
   providerAccountId?: string
+
+  /**
+   * The username of the account from the provider that generated this response (if any).
+   */
+  providerAccountUsername?: string
 }
 
 /**
