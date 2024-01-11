@@ -47,6 +47,7 @@ export class PrismaSessionPlugin implements Plugin {
 
   /**
    * Find an existing account.
+   * If an account exists, then it can be used to find an existing user.
    */
   findAccount(...args: any): void {
     this.prisma.account.findUnique({
@@ -61,6 +62,7 @@ export class PrismaSessionPlugin implements Plugin {
 
   /**
    * Given an existing account, find the user that owns the account.
+   * If a user exists, then it can be used to create a new session.
    */
   findUser(...args: any): void {
     this.prisma.user.findUnique({
@@ -79,6 +81,8 @@ export class PrismaSessionPlugin implements Plugin {
 
   /**
    * Find all accounts linked to a user.
+   * If no accounts exist, then a new account can be created and linked to the user.
+   * If an account exists, then the user must sign in with the existing account before linking a new account with their user.
    */
   findUserAccounts(...args: any): void {
     this.prisma.account.findMany({
@@ -103,6 +107,7 @@ export class PrismaSessionPlugin implements Plugin {
 
   /**
    * Link an existing account with a user.
+   * The user can now sign in with this account, i.e. via that provider.
    */
   linkAccount(...args: any): void {
     this.prisma.account.update({
@@ -120,6 +125,7 @@ export class PrismaSessionPlugin implements Plugin {
 
   /**
    * Unlink an existing account from a user.
+   * The user can no longer sign in with this account, i.e. via that provider.
    */
   unlinkAccount(...args: any): void {
     this.prisma.account.update({
