@@ -45,6 +45,9 @@ export class PrismaSessionPlugin implements Plugin {
     this.createSession(response)
   }
 
+  /**
+   * Find an existing account.
+   */
   findAccount(...args: any): void {
     this.prisma.account.findUnique({
       where: {
@@ -56,18 +59,27 @@ export class PrismaSessionPlugin implements Plugin {
     })
   }
 
+  /**
+   * Given an existing account, find the user that owns the account.
+   */
   findUser(...args: any): void {
     this.prisma.user.findUnique({
       where: args.user,
     })
   }
 
+  /**
+   * Create a new user.
+   */
   createUser(...args: any): void {
     this.prisma.user.create({
       data: args.user,
     })
   }
 
+  /**
+   * Find all accounts linked to a user.
+   */
   findUserAccounts(...args: any): void {
     this.prisma.account.findMany({
       where: {
@@ -76,6 +88,9 @@ export class PrismaSessionPlugin implements Plugin {
     })
   }
 
+  /**
+   * Create a new account and link it with a user.
+   */
   createAccount(...args: any): void {
     this.prisma.account.create({
       data: {
@@ -86,6 +101,9 @@ export class PrismaSessionPlugin implements Plugin {
     })
   }
 
+  /**
+   * Link an existing account with a user.
+   */
   linkAccount(...args: any): void {
     this.prisma.account.update({
       where: {
@@ -100,6 +118,9 @@ export class PrismaSessionPlugin implements Plugin {
     })
   }
 
+  /**
+   * Unlink an existing account from a user.
+   */
   unlinkAccount(...args: any): void {
     this.prisma.account.update({
       where: {
@@ -114,6 +135,9 @@ export class PrismaSessionPlugin implements Plugin {
     })
   }
 
+  /**
+   * Create a new session.
+   */
   createSession(...args: any): void {
     this.prisma.session.create({
       data: {
@@ -123,6 +147,9 @@ export class PrismaSessionPlugin implements Plugin {
     })
   }
 
+  /**
+   * Update an existing session.
+   */
   renewSession(...args: any): void {
     this.prisma.session.update({
       where: {
@@ -134,6 +161,9 @@ export class PrismaSessionPlugin implements Plugin {
     })
   }
 
+  /**
+   * Invalidate an existing session.
+   */
   invalidateSession(...args: any): void {
     this.prisma.session.delete({
       where: {
@@ -142,6 +172,9 @@ export class PrismaSessionPlugin implements Plugin {
     })
   }
 
+  /**
+   * Get session information.
+   */
   getSessionInformation(...args: any): void {
     this.prisma.session.findUnique({
       where: {
