@@ -86,6 +86,34 @@ export class PrismaSessionPlugin implements Plugin {
     })
   }
 
+  linkAccount(...args: any): void {
+    this.prisma.account.update({
+      where: {
+        provider_providerAccountId: {
+          provider: args.providerId,
+          providerAccountId: args.providerAccountId,
+        },
+      },
+      data: {
+        user: args.user,
+      },
+    })
+  }
+
+  unlinkAccount(...args: any): void {
+    this.prisma.account.update({
+      where: {
+        provider_providerAccountId: {
+          provider: args.providerId,
+          providerAccountId: args.providerAccountId,
+        },
+      },
+      data: {
+        user: null,
+      },
+    })
+  }
+
   createSession(...args: any): void {
     this.prisma.session.create({
       data: {
@@ -95,7 +123,26 @@ export class PrismaSessionPlugin implements Plugin {
     })
   }
 
-  getUserFromSession(...args: any): void {
+  renewSession(...args: any): void {
+    this.prisma.session.update({
+      where: {
+        id: args.sessionId,
+      },
+      data: {
+        expires: args.expires,
+      },
+    })
+  }
+
+  invalidateSession(...args: any): void {
+    this.prisma.session.delete({
+      where: {
+        id: args.sessionId,
+      },
+    })
+  }
+
+  getSessionInformation(...args: any): void {
     this.prisma.session.findUnique({
       where: {
         id: args.sessionId,
