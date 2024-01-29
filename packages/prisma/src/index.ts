@@ -1,15 +1,8 @@
 import '@aponia.js/core/types'
 import type { Plugin, PluginContext, PluginOptions } from '@aponia.js/core/plugins/plugin'
-import type { SessionPlugin } from '@aponia.js/core/plugins/session/index'
 import type { Nullish } from 'packages/core/src/utils/types'
 
-export class PrismaSessionPlugin implements Plugin {
-  session: SessionPlugin
-
-  constructor(session: SessionPlugin) {
-    this.session = session
-  }
-
+export class DatabasePlugin implements Plugin {
   initialize(context: PluginContext, _options: PluginOptions): void {
     context.router.preHandle(this.handleSession.bind(this))
     context.router.postHandle(this.handle.bind(this))
@@ -141,17 +134,10 @@ export class PrismaSessionPlugin implements Plugin {
    * Create a new session.
    */
   async createSession(
-    user: Aponia.User,
+    _user: Aponia.User,
     _account: Aponia.Account,
-    response: Aponia.Response,
-  ): Promise<any> {
-    const session = user
-
-    const sessionCookie = await this.session.createCookiesFromSession(session)
-
-    response.cookies ??= []
-    response.cookies.push(...sessionCookie)
-  }
+    _response: Aponia.Response,
+  ): Promise<any> {}
 
   async getSessionFromRequest(request: Aponia.Request): Promise<string | undefined> {
     return request.cookies['session']
@@ -172,13 +158,6 @@ export class PrismaSessionPlugin implements Plugin {
    * Invalidate an existing session.
    */
   invalidateSession(...args: any): any {
-    return args as any
-  }
-
-  /**
-   * Get session information.
-   */
-  getSessionInformation(...args: any): any {
     return args as any
   }
 
