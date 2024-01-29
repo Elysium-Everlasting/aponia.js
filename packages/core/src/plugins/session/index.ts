@@ -14,10 +14,13 @@ export type SessionEncoder = (session: Aponia.Session) => Awaitable<string>
 
 export type SessionDecoder = (token: string) => Awaitable<Aponia.Session | undefined>
 
+export type SessionGetter = (response: Aponia.Response) => Awaitable<Aponia.Session | undefined>
+
 export interface SessionPluginConfig {
   logger?: Logger
   encode?: SessionEncoder
   decode?: SessionDecoder
+  getter?: SessionGetter
   cookie?: CreateCookiesOptions
 }
 
@@ -30,17 +33,16 @@ export class SessionPlugin implements Plugin {
 
   decode: SessionDecoder
 
+  getter?: SessionGetter
+
   cookies: SessionCookiesOptions
 
   constructor(config: SessionPluginConfig = {}) {
     this.config = config
-
     this.logger = config.logger ?? new Logger()
-
     this.encode = config.encode ?? JSON.stringify
-
     this.decode = config.decode ?? JSON.parse
-
+    this.getter = config.getter
     this.cookies = DEFAULT_SESSION_COOKIES_OPTIONS
   }
 
@@ -67,7 +69,7 @@ export class SessionPlugin implements Plugin {
     }
 
     try {
-      const session = await this.createSessionFromUser(response.user)
+      const session = await this.getSessionFromResponse(response)
 
       if (session != null) {
         const cookies = await this.createCookiesFromSession(session)
@@ -79,11 +81,11 @@ export class SessionPlugin implements Plugin {
     }
   }
 
-  public async createSessionFromUser(user: Aponia.User): Promise<Aponia.Session | undefined> {
-    return user
+  async getSessionFromResponse(response: Aponia.Response): Promise<Aponia.Session | undefined> {
+    return this.getter?.(response) ?? response.user
   }
 
-  public async createCookiesFromSession(session: Aponia.Session): Promise<Cookie[]> {
+  async createCookiesFromSession(session: Aponia.Session): Promise<Cookie[]> {
     try {
       const accessToken = await this.encode(session)
 
@@ -100,9 +102,7 @@ export class SessionPlugin implements Plugin {
     }
   }
 
-  public async parseSessionFromCookies(
-    cookies: Record<string, string>,
-  ): Promise<Aponia.Session | void> {
+  async parseSessionFromCookies(cookies: Record<string, string>): Promise<Aponia.Session | void> {
     const rawAccessToken = cookies[this.cookies.accessToken.name]
 
     if (rawAccessToken == null) {
