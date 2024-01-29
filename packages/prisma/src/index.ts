@@ -145,6 +145,36 @@ export class PrismaSessionPlugin implements Plugin {
     })
   }
 
+  async handleSession(request: Aponia.Request): Promise<void> {
+    // Check if session is expired.
+    // 1. parse a session string from headers or cookies.
+    // 2. Run decode function
+    // It should either parse the string into some JSON value,
+    // or search for a session in the database, or some combination of both.
+    //
+    // if session is expired, try renewing it or making a new one.
+    // if session is not expired, then decode it.
+    const sessionString = await this.getSessionFromRequest(request)
+    const s = this.decodeSession(sessionString, request)
+
+    if (s == null) {
+      const refresh = await this.getRefreshFromRequest(request)
+      this.refreshSession(refresh, request)
+    }
+  }
+
+  async decodeSession(sessionString: string | undefined, request: Aponia.Request): Promise<any> {
+    sessionString
+    request
+    return
+  }
+
+  async refreshSession(refresh: string | undefined, request: Aponia.Request): Promise<void> {
+    refresh
+    request
+    return
+  }
+
   /**
    * Create a new session.
    */
@@ -161,18 +191,18 @@ export class PrismaSessionPlugin implements Plugin {
       },
     })
 
-    // Check if session is expired.
-    // 1. parse a session string from headers or cookies.
-    // 2. Run decode function
-    // It should either parse the string into some JSON value,
-    // or search for a session in the database, or some combination of both.
-    //
-    // if session is expired, try renewing it or making a new one.
-    // if session is not expired, then decode it.
     const sessionCookie = await this.session.createCookiesFromSession(session)
 
     response.cookies ??= []
     response.cookies.push(...sessionCookie)
+  }
+
+  async getSessionFromRequest(request: Aponia.Request): Promise<string | undefined> {
+    return request.cookies['session']
+  }
+
+  async getRefreshFromRequest(request: Aponia.Request): Promise<string | undefined> {
+    return request.cookies['refresh']
   }
 
   /**
