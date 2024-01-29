@@ -1,12 +1,19 @@
 import '@aponia.js/core/types'
 import type { Plugin, PluginContext, PluginOptions } from '@aponia.js/core/plugins/plugin'
+import type { SessionPlugin } from '@aponia.js/core/plugins/session/index'
 import { PrismaClient } from '@prisma/client'
 
 export class PrismaSessionPlugin implements Plugin {
   prisma: PrismaClient
 
-  constructor(prisma: PrismaClient) {
+  session: SessionPlugin
+
+  constructor(prisma: PrismaClient, session: SessionPlugin) {
     this.prisma = prisma
+    this.session = session
+    if (this.session.getter == null) {
+      this.session.getter = this.createSessionFromResponse.bind(this)
+    }
   }
 
   initialize(context: PluginContext, _options: PluginOptions): void {
@@ -26,7 +33,7 @@ export class PrismaSessionPlugin implements Plugin {
 
     if (account != null) {
       response.user = this.getUserFromAccount(account)
-      return this.createSession(response)
+      return this.createSessionFromResponse(response)
     }
 
     const user = this.findUser(response)
@@ -34,7 +41,7 @@ export class PrismaSessionPlugin implements Plugin {
     if (user == null) {
       response.user = this.createUser(response)
       this.createAccount(response)
-      return this.createSession(response)
+      return this.createSessionFromResponse(response)
     }
 
     const existingAccounts = this.findUserAccounts(response)
@@ -45,13 +52,9 @@ export class PrismaSessionPlugin implements Plugin {
 
     response.user = user
     this.createAccount(response)
-    return this.createSession(response)
+    return this.createSessionFromResponse(response)
   }
 
-  /**
-   * Find an existing account.
-   * If an account exists, then it can be used to find an existing user.
-   */
   findAccount(...args: any): any {
     return this.prisma.account.findUnique({
       where: {
@@ -67,8 +70,8 @@ export class PrismaSessionPlugin implements Plugin {
    * Given an existing account, find the user that owns the account.
    * If a user exists, then it can be used to create a new session.
    */
-  findUser(...args: any): void {
-    this.prisma.user.findUnique({
+  findUser(...args: any): any {
+    return this.prisma.user.findUnique({
       where: args.user,
     })
   }
@@ -77,7 +80,7 @@ export class PrismaSessionPlugin implements Plugin {
    * Create a new user.
    */
   createUser(...args: any): any {
-    this.prisma.user.create({
+    return this.prisma.user.create({
       data: args.user,
     })
   }
@@ -98,8 +101,8 @@ export class PrismaSessionPlugin implements Plugin {
   /**
    * Create a new account and link it with a user.
    */
-  createAccount(...args: any): void {
-    this.prisma.account.create({
+  createAccount(...args: any): any {
+    return this.prisma.account.create({
       data: {
         user: args.user,
         provider: args.providerId,
@@ -112,8 +115,8 @@ export class PrismaSessionPlugin implements Plugin {
    * Link an existing account with a user.
    * The user can now sign in with this account, i.e. via that provider.
    */
-  linkAccount(...args: any): void {
-    this.prisma.account.update({
+  linkAccount(...args: any): any {
+    return this.prisma.account.update({
       where: {
         provider_providerAccountId: {
           provider: args.providerId,
@@ -130,8 +133,8 @@ export class PrismaSessionPlugin implements Plugin {
    * Unlink an existing account from a user.
    * The user can no longer sign in with this account, i.e. via that provider.
    */
-  unlinkAccount(...args: any): void {
-    this.prisma.account.update({
+  unlinkAccount(...args: any): any {
+    return this.prisma.account.update({
       where: {
         provider_providerAccountId: {
           provider: args.providerId,
@@ -147,8 +150,8 @@ export class PrismaSessionPlugin implements Plugin {
   /**
    * Create a new session.
    */
-  createSession(...args: any): void {
-    this.prisma.session.create({
+  createSessionFromResponse(...args: any): any {
+    return this.prisma.session.create({
       data: {
         user: args.user,
         expires: args.expires,
@@ -159,8 +162,8 @@ export class PrismaSessionPlugin implements Plugin {
   /**
    * Update an existing session.
    */
-  renewSession(...args: any): void {
-    this.prisma.session.update({
+  renewSession(...args: any): any {
+    return this.prisma.session.update({
       where: {
         id: args.sessionId,
       },
@@ -173,8 +176,8 @@ export class PrismaSessionPlugin implements Plugin {
   /**
    * Invalidate an existing session.
    */
-  invalidateSession(...args: any): void {
-    this.prisma.session.delete({
+  invalidateSession(...args: any): any {
+    return this.prisma.session.delete({
       where: {
         id: args.sessionId,
       },
@@ -184,8 +187,8 @@ export class PrismaSessionPlugin implements Plugin {
   /**
    * Get session information.
    */
-  getSessionInformation(...args: any): void {
-    this.prisma.session.findUnique({
+  getSessionInformation(...args: any): any {
+    return this.prisma.session.findUnique({
       where: {
         id: args.sessionId,
         expires: {
