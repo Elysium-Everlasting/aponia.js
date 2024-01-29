@@ -49,3 +49,29 @@ export interface DatabasePlugin {
    */
   handleDuplicateAccount: (account: Aponia.Account[], response: Aponia.Response) => Awaitable<any>
 }
+
+export interface DatabaseRefreshPlugin {
+  /**
+   */
+  getSessionFromRequest: (request: Aponia.Request) => Awaitable<Aponia.Session | Nullish>
+
+  /**
+   */
+  refreshSession: (session: Aponia.Session, response: Aponia.Response) => Awaitable<any>
+
+  /**
+   */
+  getRefreshFromRequest: (request: Aponia.Request) => Awaitable<string | Nullish>
+
+  /**
+   */
+  encodeRefresh: (session: Aponia.Session) => Awaitable<string>
+
+  /**
+   */
+  decodeRefresh: (refresh: string) => Awaitable<Aponia.Session | Nullish>
+
+  /**
+   */
+  renewSession: (session: Aponia.Session, response: Aponia.Response) => Awaitable<any>
+}
