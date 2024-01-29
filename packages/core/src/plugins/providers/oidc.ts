@@ -322,7 +322,7 @@ export class OIDCProvider<T = any> implements Plugin {
 
     try {
       const response: Aponia.Response = {
-        user: (await this.config.profile?.(profile, tokens)) ?? profile,
+        account: (await this.config.profile?.(profile, tokens)) ?? profile,
         status: 302,
         cookies,
         redirect: this.pages.redirect,

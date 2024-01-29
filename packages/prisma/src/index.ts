@@ -11,9 +11,6 @@ export class PrismaSessionPlugin implements Plugin {
   constructor(prisma: PrismaClient, session: SessionPlugin) {
     this.prisma = prisma
     this.session = session
-    if (this.session.getter == null) {
-      this.session.getter = this.createSessionFromResponse.bind(this)
-    }
   }
 
   initialize(context: PluginContext, _options: PluginOptions): void {
@@ -22,26 +19,29 @@ export class PrismaSessionPlugin implements Plugin {
 
   async handle(_request: Aponia.Request, response?: Aponia.Response): Promise<void> {
     if (
-      response?.user == null ||
+      response?.account == null ||
       response.providerId == null ||
       response.providerAccountId == null
     ) {
       return
     }
 
-    const account = this.findAccount(response)
+    const matchingAccount = await this.findAccount(response)
 
-    if (account != null) {
-      response.user = this.getUserFromAccount(account)
-      return this.createSessionFromResponse(response)
+    if (matchingAccount != null) {
+      const user = this.getUserFromAccount(matchingAccount, response)
+      if (user == null) {
+        throw new Error('This account is not linked to a user.')
+      }
+      return this.createSession(user, matchingAccount, response)
     }
 
-    const user = this.findUser(response)
+    const existingUser = this.findUser(response)
 
-    if (user == null) {
-      response.user = this.createUser(response)
-      this.createAccount(response)
-      return this.createSessionFromResponse(response)
+    if (existingUser == null) {
+      const newUser = this.createUser(response)
+      const newAccount = this.createAccount(newUser, response)
+      return this.createSession(newUser, newAccount, response)
     }
 
     const existingAccounts = this.findUserAccounts(response)
@@ -50,17 +50,16 @@ export class PrismaSessionPlugin implements Plugin {
       throw new Error('Please sign in with an existing account.')
     }
 
-    response.user = user
-    this.createAccount(response)
-    return this.createSessionFromResponse(response)
+    const newAccount = this.createAccount(existingUser, response)
+    return this.createSession(existingUser, newAccount, response)
   }
 
-  findAccount(...args: any): any {
-    return this.prisma.account.findUnique({
+  async findAccount(response: Aponia.Response): Promise<Aponia.Account | undefined> {
+    return await this.prisma.account.findUnique({
       where: {
         provider_providerAccountId: {
-          provider: args.providerId,
-          providerAccountId: args.providerAccountId,
+          provider: response.providerId,
+          providerAccountId: response.providerAccountId,
         },
       },
     })
@@ -150,13 +149,29 @@ export class PrismaSessionPlugin implements Plugin {
   /**
    * Create a new session.
    */
-  createSessionFromResponse(...args: any): any {
-    return this.prisma.session.create({
+  async createSession(
+    user: Aponia.User,
+    _account: Aponia.Account,
+    response: Aponia.Response,
+  ): Promise<any> {
+    const session = this.prisma.session.create({
       data: {
-        user: args.user,
-        expires: args.expires,
+        ...user,
       },
     })
+
+    // Check if session is expired.
+    // 1. parse a session string from headers or cookies.
+    // 2. Run decode function
+    // It should either parse the string into some JSON value,
+    // or search for a session in the database, or some combination of both.
+    //
+    // if session is expired, try renewing it or making a new one.
+    // if session is not expired, then decode it.
+    const sessionCookie = await this.session.createCookiesFromSession(session)
+
+    response.cookies ??= []
+    response.cookies.push(...sessionCookie)
   }
 
   /**
@@ -201,7 +216,10 @@ export class PrismaSessionPlugin implements Plugin {
     })
   }
 
-  getUserFromAccount(...args: any): any {
-    return args
+  async getUserFromAccount(
+    account: Aponia.Account,
+    _response: Aponia.Response,
+  ): Promise<Aponia.User | undefined> {
+    return account
   }
 }

@@ -64,7 +64,7 @@ export class SessionPlugin implements Plugin {
   }
 
   async handle(_request: Aponia.Request, response?: Aponia.Response | Nullish): Promise<void> {
-    if (response?.user == null) {
+    if (response?.account == null) {
       return
     }
 
@@ -82,7 +82,7 @@ export class SessionPlugin implements Plugin {
   }
 
   async getSessionFromResponse(response: Aponia.Response): Promise<Aponia.Session | undefined> {
-    return this.getter?.(response) ?? response.user
+    return this.getter?.(response) ?? response.account
   }
 
   async createCookiesFromSession(session: Aponia.Session): Promise<Cookie[]> {

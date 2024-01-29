@@ -64,7 +64,7 @@ export interface AponiaResponse {
    * A provider may generate a {@link User} after the client authenticates.
    * It should be converted to a {@link Session}, saved by the client, and used on subsequent requests.
    */
-  user?: AponiaUser
+  account?: AponiaAccount
 
   /**
    * The type of provider that generated this response (if any).
@@ -88,6 +88,11 @@ export interface AponiaResponse {
 export interface AponiaUser {}
 
 /**
+ * TODO
+ */
+export interface AponiaAccount {}
+
+/**
  * A user's session, e.g. only relevant information needed to identify the user.
  */
 export interface AponiaSession {}
@@ -106,6 +111,8 @@ declare global {
     interface Response extends AponiaResponse {}
 
     interface User extends AponiaUser {}
+
+    interface Account extends AponiaAccount {}
 
     interface Session extends AponiaSession {}
   }
