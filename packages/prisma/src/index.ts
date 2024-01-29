@@ -1,10 +1,9 @@
 import '@aponia.js/core/types'
-import type { Plugin, PluginContext, PluginOptions } from '@aponia.js/core/plugins/plugin'
+import type { Plugin, PluginContext } from '@aponia.js/core/plugins/plugin'
 import type { Nullish } from 'packages/core/src/utils/types'
 
 export class DatabasePlugin implements Plugin {
-  initialize(context: PluginContext, _options: PluginOptions): void {
-    context.router.preHandle(this.handleSession.bind(this))
+  initialize(context: PluginContext): void {
     context.router.postHandle(this.handle.bind(this))
   }
 
@@ -22,7 +21,7 @@ export class DatabasePlugin implements Plugin {
     if (matchingAccount != null) {
       const user = this.getUserFromAccount(matchingAccount, response)
       if (user == null) {
-        throw new Error('This account is not linked to a user.')
+        return this.handleUnlinkedAccount()
       }
       return this.createSession(user, matchingAccount, response)
     }
@@ -38,7 +37,7 @@ export class DatabasePlugin implements Plugin {
     const existingAccounts = await this.findUserAccounts(response)
 
     if (existingAccounts.length > 0) {
-      throw new Error('Please sign in with an existing account.')
+      return this.handleDuplicateAccount()
     }
 
     const newAccount = this.createAccount(existingUser, response)
@@ -88,77 +87,22 @@ export class DatabasePlugin implements Plugin {
     return args as any
   }
 
-  /**
-   * Unlink an existing account from a user.
-   * The user can no longer sign in with this account, i.e. via that provider.
-   */
-  unlinkAccount(...args: any): any {
-    return args as any
-  }
-
-  /**
-   * Handles refreshing a session if needed.
-   *
-   * 1. Try to locate the session string. This is a trivial operation.
-   * 2. If the session string is not found, then try to locate the refresh string. This is a trivial operation.
-   * 3. If the refresh string is found, then refresh the session. This is a non-trivial operation.
-   *
-   * This does **NOT** decode the session string since that's a non-trivial operation that should be done as-needed.
-   */
-  async handleSession(request: Aponia.Request): Promise<void> {
-    const sessionString = await this.getSessionFromRequest(request)
-
-    if (sessionString == null) {
-      const refresh = await this.getRefreshFromRequest(request)
-      this.refreshSession(refresh, request)
-    }
-  }
-
-  /**
-   * This isn't used during the handling lifecycle since database querying is non-trivial.
-   * This is invoked on-demand whenever the session is needed.
-   */
-  async decodeSession(sessionString: string | undefined, request: Aponia.Request): Promise<any> {
-    sessionString
-    request
-    return
-  }
-
-  async refreshSession(refresh: string | undefined, request: Aponia.Request): Promise<void> {
-    refresh
-    request
-    return
+  async encodeSession(session: Aponia.Session, _request: Aponia.Request): Promise<string> {
+    return session as any
   }
 
   /**
    * Create a new session.
    */
   async createSession(
-    _user: Aponia.User,
+    user: Aponia.User,
     _account: Aponia.Account,
     _response: Aponia.Response,
-  ): Promise<any> {}
-
-  async getSessionFromRequest(request: Aponia.Request): Promise<string | undefined> {
-    return request.cookies['session']
-  }
-
-  async getRefreshFromRequest(request: Aponia.Request): Promise<string | undefined> {
-    return request.cookies['refresh']
-  }
-
-  /**
-   * Update an existing session.
-   */
-  renewSession(...args: any): any {
-    return args as any
-  }
-
-  /**
-   * Invalidate an existing session.
-   */
-  invalidateSession(...args: any): any {
-    return args as any
+  ): Promise<any> {
+    return {
+      session: user,
+      refresh: {},
+    }
   }
 
   async getUserFromAccount(
@@ -166,5 +110,13 @@ export class DatabasePlugin implements Plugin {
     _response: Aponia.Response,
   ): Promise<Aponia.User | undefined> {
     return account as any
+  }
+
+  async handleDuplicateAccount() {
+    throw new Error('An account with the same email address already exists.')
+  }
+
+  async handleUnlinkedAccount() {
+    throw new Error('An account with the same email address already exists.')
   }
 }
