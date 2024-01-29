@@ -2,6 +2,7 @@ import '@aponia.js/core/types'
 import type { Plugin, PluginContext, PluginOptions } from '@aponia.js/core/plugins/plugin'
 import type { SessionPlugin } from '@aponia.js/core/plugins/session/index'
 import { PrismaClient } from '@prisma/client'
+import type { Nullish } from 'packages/core/src/utils/types'
 
 export class PrismaSessionPlugin implements Plugin {
   prisma: PrismaClient
@@ -44,7 +45,7 @@ export class PrismaSessionPlugin implements Plugin {
       return this.createSession(newUser, newAccount, response)
     }
 
-    const existingAccounts = this.findUserAccounts(response)
+    const existingAccounts = await this.findUserAccounts(response)
 
     if (existingAccounts.length > 0) {
       throw new Error('Please sign in with an existing account.')
@@ -54,12 +55,12 @@ export class PrismaSessionPlugin implements Plugin {
     return this.createSession(existingUser, newAccount, response)
   }
 
-  async findAccount(response: Aponia.Response): Promise<Aponia.Account | undefined> {
+  async findAccount(response: Aponia.Response): Promise<Aponia.Account | Nullish> {
     return await this.prisma.account.findUnique({
       where: {
         provider_providerAccountId: {
-          provider: response.providerId,
-          providerAccountId: response.providerAccountId,
+          provider: response.providerId ?? '',
+          providerAccountId: response.providerAccountId ?? '',
         },
       },
     })
@@ -89,7 +90,7 @@ export class PrismaSessionPlugin implements Plugin {
    * If no accounts exist, then a new account can be created and linked to the user.
    * If an account exists, then the user must sign in with the existing account before linking a new account with their user.
    */
-  findUserAccounts(...args: any): any[] {
+  async findUserAccounts(...args: any): Promise<any[]> {
     return this.prisma.account.findMany({
       where: {
         user: args.user,
@@ -140,9 +141,7 @@ export class PrismaSessionPlugin implements Plugin {
           providerAccountId: args.providerAccountId,
         },
       },
-      data: {
-        user: null,
-      },
+      data: {},
     })
   }
 
@@ -156,6 +155,8 @@ export class PrismaSessionPlugin implements Plugin {
   ): Promise<any> {
     const session = this.prisma.session.create({
       data: {
+        userId: '',
+        expires: new Date(),
         ...user,
       },
     })
