@@ -1,16 +1,12 @@
 import '@aponia.js/core/types'
 import type { Plugin, PluginContext, PluginOptions } from '@aponia.js/core/plugins/plugin'
 import type { SessionPlugin } from '@aponia.js/core/plugins/session/index'
-import { PrismaClient } from '@prisma/client'
 import type { Nullish } from 'packages/core/src/utils/types'
 
 export class PrismaSessionPlugin implements Plugin {
-  prisma: PrismaClient
-
   session: SessionPlugin
 
-  constructor(prisma: PrismaClient, session: SessionPlugin) {
-    this.prisma = prisma
+  constructor(session: SessionPlugin) {
     this.session = session
   }
 
@@ -57,14 +53,7 @@ export class PrismaSessionPlugin implements Plugin {
   }
 
   async findAccount(response: Aponia.Response): Promise<Aponia.Account | Nullish> {
-    return await this.prisma.account.findUnique({
-      where: {
-        provider_providerAccountId: {
-          provider: response.providerId ?? '',
-          providerAccountId: response.providerAccountId ?? '',
-        },
-      },
-    })
+    return response as any
   }
 
   /**
@@ -72,18 +61,14 @@ export class PrismaSessionPlugin implements Plugin {
    * If a user exists, then it can be used to create a new session.
    */
   findUser(...args: any): any {
-    return this.prisma.user.findUnique({
-      where: args.user,
-    })
+    return args
   }
 
   /**
    * Create a new user.
    */
   createUser(...args: any): any {
-    return this.prisma.user.create({
-      data: args.user,
-    })
+    return args
   }
 
   /**
@@ -92,24 +77,14 @@ export class PrismaSessionPlugin implements Plugin {
    * If an account exists, then the user must sign in with the existing account before linking a new account with their user.
    */
   async findUserAccounts(...args: any): Promise<any[]> {
-    return this.prisma.account.findMany({
-      where: {
-        user: args.user,
-      },
-    })
+    return args as any
   }
 
   /**
    * Create a new account and link it with a user.
    */
   createAccount(...args: any): any {
-    return this.prisma.account.create({
-      data: {
-        user: args.user,
-        provider: args.providerId,
-        providerAccountId: args.providerAccountId,
-      },
-    })
+    return args as any
   }
 
   /**
@@ -117,17 +92,7 @@ export class PrismaSessionPlugin implements Plugin {
    * The user can now sign in with this account, i.e. via that provider.
    */
   linkAccount(...args: any): any {
-    return this.prisma.account.update({
-      where: {
-        provider_providerAccountId: {
-          provider: args.providerId,
-          providerAccountId: args.providerAccountId,
-        },
-      },
-      data: {
-        user: args.user,
-      },
-    })
+    return args as any
   }
 
   /**
@@ -135,15 +100,7 @@ export class PrismaSessionPlugin implements Plugin {
    * The user can no longer sign in with this account, i.e. via that provider.
    */
   unlinkAccount(...args: any): any {
-    return this.prisma.account.update({
-      where: {
-        provider_providerAccountId: {
-          provider: args.providerId,
-          providerAccountId: args.providerAccountId,
-        },
-      },
-      data: {},
-    })
+    return args as any
   }
 
   /**
@@ -188,13 +145,7 @@ export class PrismaSessionPlugin implements Plugin {
     _account: Aponia.Account,
     response: Aponia.Response,
   ): Promise<any> {
-    const session = this.prisma.session.create({
-      data: {
-        userId: '',
-        expires: new Date(),
-        ...user,
-      },
-    })
+    const session = user
 
     const sessionCookie = await this.session.createCookiesFromSession(session)
 
@@ -214,48 +165,27 @@ export class PrismaSessionPlugin implements Plugin {
    * Update an existing session.
    */
   renewSession(...args: any): any {
-    return this.prisma.session.update({
-      where: {
-        id: args.sessionId,
-      },
-      data: {
-        expires: args.expires,
-      },
-    })
+    return args as any
   }
 
   /**
    * Invalidate an existing session.
    */
   invalidateSession(...args: any): any {
-    return this.prisma.session.delete({
-      where: {
-        id: args.sessionId,
-      },
-    })
+    return args as any
   }
 
   /**
    * Get session information.
    */
   getSessionInformation(...args: any): any {
-    return this.prisma.session.findUnique({
-      where: {
-        id: args.sessionId,
-        expires: {
-          gt: args.expires,
-        },
-      },
-      include: {
-        user: true,
-      },
-    })
+    return args as any
   }
 
   async getUserFromAccount(
     account: Aponia.Account,
     _response: Aponia.Response,
   ): Promise<Aponia.User | undefined> {
-    return account
+    return account as any
   }
 }
