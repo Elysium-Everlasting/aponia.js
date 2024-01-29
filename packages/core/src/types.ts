@@ -97,6 +97,8 @@ export interface AponiaAccount {}
  */
 export interface AponiaSession {}
 
+export interface AponiaRefresh {}
+
 /**
  * A namespace in the global scope is also available for module augmentation
  *
@@ -115,5 +117,7 @@ declare global {
     interface Account extends AponiaAccount {}
 
     interface Session extends AponiaSession {}
+
+    interface Refresh extends AponiaRefresh {}
   }
 }
