@@ -1,6 +1,8 @@
 import '@aponia.js/core/types'
 import type { Awaitable, Nullish } from '@aponia.js/core/utils/types'
 
+/**
+ */
 export interface DatabasePlugin {
   /**
    */
@@ -50,6 +52,8 @@ export interface DatabasePlugin {
   handleDuplicateAccount: (account: Aponia.Account[], response: Aponia.Response) => Awaitable<any>
 }
 
+/**
+ */
 export interface DatabaseRefreshPlugin {
   /**
    */
