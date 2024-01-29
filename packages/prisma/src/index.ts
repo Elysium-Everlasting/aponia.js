@@ -14,7 +14,6 @@ export class PrismaSessionPlugin implements Plugin {
   }
 
   async handle(_request: Aponia.Request, response?: Aponia.Response): Promise<void> {
-    // Only perform account and session management if all of these properties are defined.
     if (
       response?.user == null ||
       response.providerId == null ||
@@ -23,34 +22,38 @@ export class PrismaSessionPlugin implements Plugin {
       return
     }
 
-    // Find an account.
-    this.findAccount(response)
+    const account = this.findAccount(response)
 
-    // If account doesn't exist, find user.
-    this.findUser(response)
+    if (account != null) {
+      response.user = this.getUserFromAccount(account)
+      return this.createSession(response)
+    }
 
-    // If user doesn't exist, create user.
-    this.createUser(response)
+    const user = this.findUser(response)
 
-    // If user exists, check existing accounts.
-    this.findUserAccounts(response)
+    if (user == null) {
+      response.user = this.createUser(response)
+      this.createAccount(response)
+      return this.createSession(response)
+    }
 
-    // If no existing accounts, create a new account and link it with the user.
+    const existingAccounts = this.findUserAccounts(response)
+
+    if (existingAccounts.length > 0) {
+      throw new Error('Please sign in with an existing account.')
+    }
+
+    response.user = user
     this.createAccount(response)
-
-    // If existing account, require user to sign in with existing account.
-    // throw new Error('An account already exists with the same email address.')
-
-    // After valid account is found, create a session.
-    this.createSession(response)
+    return this.createSession(response)
   }
 
   /**
    * Find an existing account.
    * If an account exists, then it can be used to find an existing user.
    */
-  findAccount(...args: any): void {
-    this.prisma.account.findUnique({
+  findAccount(...args: any): any {
+    return this.prisma.account.findUnique({
       where: {
         provider_providerAccountId: {
           provider: args.providerId,
@@ -73,7 +76,7 @@ export class PrismaSessionPlugin implements Plugin {
   /**
    * Create a new user.
    */
-  createUser(...args: any): void {
+  createUser(...args: any): any {
     this.prisma.user.create({
       data: args.user,
     })
@@ -84,8 +87,8 @@ export class PrismaSessionPlugin implements Plugin {
    * If no accounts exist, then a new account can be created and linked to the user.
    * If an account exists, then the user must sign in with the existing account before linking a new account with their user.
    */
-  findUserAccounts(...args: any): void {
-    this.prisma.account.findMany({
+  findUserAccounts(...args: any): any[] {
+    return this.prisma.account.findMany({
       where: {
         user: args.user,
       },
@@ -193,5 +196,9 @@ export class PrismaSessionPlugin implements Plugin {
         user: true,
       },
     })
+  }
+
+  getUserFromAccount(...args: any): any {
+    return args
   }
 }
