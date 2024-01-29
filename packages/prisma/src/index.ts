@@ -19,29 +19,29 @@ export class DatabasePlugin implements Plugin {
     const matchingAccount = await this.findAccount(response)
 
     if (matchingAccount != null) {
-      const user = this.getUserFromAccount(matchingAccount, response)
+      const user = await this.getUserFromAccount(matchingAccount, response)
       if (user == null) {
-        return this.handleUnlinkedAccount()
+        return await this.handleUnlinkedAccount()
       }
-      return this.createSession(user, matchingAccount, response)
+      return await this.createSession(user, matchingAccount, response)
     }
 
-    const existingUser = this.findUser(response)
+    const existingUser = await this.findUser(response)
 
     if (existingUser == null) {
-      const newUser = this.createUser(response)
-      const newAccount = this.createAccount(newUser, response)
-      return this.createSession(newUser, newAccount, response)
+      const newUser = await this.createUser(response)
+      const newAccount = await this.createAccount(newUser, response)
+      return await this.createSession(newUser, newAccount, response)
     }
 
     const existingAccounts = await this.findUserAccounts(response)
 
     if (existingAccounts.length > 0) {
-      return this.handleDuplicateAccount()
+      return await this.handleDuplicateAccount()
     }
 
     const newAccount = this.createAccount(existingUser, response)
-    return this.createSession(existingUser, newAccount, response)
+    return await this.createSession(existingUser, newAccount, response)
   }
 
   async findAccount(response: Aponia.Response): Promise<Aponia.Account | Nullish> {
@@ -52,14 +52,14 @@ export class DatabasePlugin implements Plugin {
    * Given an existing account, find the user that owns the account.
    * If a user exists, then it can be used to create a new session.
    */
-  findUser(...args: any): any {
+  async findUser(...args: any): Promise<any> {
     return args
   }
 
   /**
    * Create a new user.
    */
-  createUser(...args: any): any {
+  async createUser(...args: any): Promise<any> {
     return args
   }
 
@@ -75,7 +75,7 @@ export class DatabasePlugin implements Plugin {
   /**
    * Create a new account and link it with a user.
    */
-  createAccount(...args: any): any {
+  async createAccount(...args: any): Promise<any> {
     return args as any
   }
 
@@ -83,7 +83,7 @@ export class DatabasePlugin implements Plugin {
    * Link an existing account with a user.
    * The user can now sign in with this account, i.e. via that provider.
    */
-  linkAccount(...args: any): any {
+  async linkAccount(...args: any): Promise<any> {
     return args as any
   }
 
