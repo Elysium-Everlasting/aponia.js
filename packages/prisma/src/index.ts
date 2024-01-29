@@ -1,6 +1,6 @@
 import '@aponia.js/core/types'
 import type { Plugin, PluginContext } from '@aponia.js/core/plugins/plugin'
-import type { Nullish } from 'packages/core/src/utils/types'
+import type { Nullish } from '@aponia.js/core/utils/types'
 
 export class DatabasePlugin implements Plugin {
   initialize(context: PluginContext): void {
@@ -21,7 +21,7 @@ export class DatabasePlugin implements Plugin {
     if (matchingAccount != null) {
       const user = await this.getUserFromAccount(matchingAccount, response)
       if (user == null) {
-        return await this.handleUnlinkedAccount()
+        return await this.handleUnlinkedAccount(matchingAccount, response)
       }
       return await this.createSession(user, matchingAccount, response)
     }
@@ -34,10 +34,10 @@ export class DatabasePlugin implements Plugin {
       return await this.createSession(newUser, newAccount, response)
     }
 
-    const existingAccounts = await this.findUserAccounts(response)
+    const existingAccounts = await this.findUserAccounts(existingUser, response)
 
     if (existingAccounts.length > 0) {
-      return await this.handleDuplicateAccount()
+      return await this.handleDuplicateAccount(existingAccounts, response)
     }
 
     const newAccount = this.createAccount(existingUser, response)
@@ -68,22 +68,14 @@ export class DatabasePlugin implements Plugin {
    * If no accounts exist, then a new account can be created and linked to the user.
    * If an account exists, then the user must sign in with the existing account before linking a new account with their user.
    */
-  async findUserAccounts(...args: any): Promise<any[]> {
-    return args as any
+  async findUserAccounts(user: Aponia.User, _response: Aponia.Response): Promise<any[]> {
+    return user as any
   }
 
   /**
    * Create a new account and link it with a user.
    */
   async createAccount(...args: any): Promise<any> {
-    return args as any
-  }
-
-  /**
-   * Link an existing account with a user.
-   * The user can now sign in with this account, i.e. via that provider.
-   */
-  async linkAccount(...args: any): Promise<any> {
     return args as any
   }
 
@@ -112,11 +104,11 @@ export class DatabasePlugin implements Plugin {
     return account as any
   }
 
-  async handleDuplicateAccount() {
+  async handleDuplicateAccount(_accounts: Aponia.Account[], _response: Aponia.Response) {
     throw new Error('An account with the same email address already exists.')
   }
 
-  async handleUnlinkedAccount() {
+  async handleUnlinkedAccount(_account: Aponia.Account, _response: Aponia.Response) {
     throw new Error('An account with the same email address already exists.')
   }
 }
