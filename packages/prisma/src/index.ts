@@ -15,6 +15,7 @@ export class PrismaSessionPlugin implements Plugin {
   }
 
   initialize(context: PluginContext, _options: PluginOptions): void {
+    context.router.preHandle(this.handleSession.bind(this))
     context.router.postHandle(this.handle.bind(this))
   }
 
@@ -145,24 +146,28 @@ export class PrismaSessionPlugin implements Plugin {
     })
   }
 
+  /**
+   * Handles refreshing a session if needed.
+   *
+   * 1. Try to locate the session string. This is a trivial operation.
+   * 2. If the session string is not found, then try to locate the refresh string. This is a trivial operation.
+   * 3. If the refresh string is found, then refresh the session. This is a non-trivial operation.
+   *
+   * This does **NOT** decode the session string since that's a non-trivial operation that should be done as-needed.
+   */
   async handleSession(request: Aponia.Request): Promise<void> {
-    // Check if session is expired.
-    // 1. parse a session string from headers or cookies.
-    // 2. Run decode function
-    // It should either parse the string into some JSON value,
-    // or search for a session in the database, or some combination of both.
-    //
-    // if session is expired, try renewing it or making a new one.
-    // if session is not expired, then decode it.
     const sessionString = await this.getSessionFromRequest(request)
-    const s = this.decodeSession(sessionString, request)
 
-    if (s == null) {
+    if (sessionString == null) {
       const refresh = await this.getRefreshFromRequest(request)
       this.refreshSession(refresh, request)
     }
   }
 
+  /**
+   * This isn't used during the handling lifecycle since database querying is non-trivial.
+   * This is invoked on-demand whenever the session is needed.
+   */
   async decodeSession(sessionString: string | undefined, request: Aponia.Request): Promise<any> {
     sessionString
     request
