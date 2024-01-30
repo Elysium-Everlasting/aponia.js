@@ -3,15 +3,19 @@ import type { Awaitable, Nullish } from '@aponia.js/core/utils/types'
 
 /**
  */
-export interface DatabasePlugin {
+export interface DatabaseAdapter {
   /**
    */
-  findAccount: (response: Aponia.Response) => Awaitable<Aponia.Account | Nullish>
+  findAccount: (
+    request: Aponia.Request,
+    response: Aponia.Response,
+  ) => Awaitable<Aponia.Account | Nullish>
 
   /**
    */
   getUserFromAccount: (
     account: Aponia.Account,
+    request: Aponia.Request,
     response: Aponia.Response,
   ) => Awaitable<Aponia.User | Nullish>
 
@@ -20,48 +24,73 @@ export interface DatabasePlugin {
   createSession: (
     user: Aponia.User,
     account: Aponia.Account,
+    request: Aponia.Request,
     response: Aponia.Response,
   ) => Awaitable<any>
 
   /**
    */
-  encodeSession: (session: Aponia.Session) => Awaitable<string>
+  encodeSession: (
+    session: Aponia.Session,
+    request: Aponia.Request,
+    response: Aponia.Response,
+  ) => Awaitable<string>
 
   /**
    */
-  findUser: (response: Aponia.Response) => Awaitable<Aponia.User | Nullish>
+  findUser: (request: Aponia.Request, response: Aponia.Response) => Awaitable<Aponia.User | Nullish>
 
   /**
    */
-  findUserAccounts: (user: Aponia.User, response: Aponia.Response) => Awaitable<Aponia.Account[]>
+  findUserAccounts: (
+    user: Aponia.User,
+    request: Aponia.Request,
+    response: Aponia.Response,
+  ) => Awaitable<Aponia.Account[]>
 
   /**
    */
-  createUser: (response: Aponia.Response) => Awaitable<Aponia.User>
+  createUser: (request: Aponia.Request, response: Aponia.Response) => Awaitable<Aponia.User>
 
   /**
    */
-  createAccount: (user: Aponia.User, response: Aponia.Response) => Awaitable<Aponia.Account>
+  createAccount: (
+    user: Aponia.User,
+    request: Aponia.Request,
+    response: Aponia.Response,
+  ) => Awaitable<Aponia.Account>
 
   /**
    */
-  handleUnlinkedAccount: (account: Aponia.Account, response: Aponia.Response) => Awaitable<any>
+  handleUnlinkedAccount: (
+    account: Aponia.Account,
+    request: Aponia.Request,
+    response: Aponia.Response,
+  ) => Awaitable<any>
 
   /**
    */
-  handleDuplicateAccount: (account: Aponia.Account[], response: Aponia.Response) => Awaitable<any>
+  handleMultipleAccount: (
+    account: Aponia.Account[],
+    request: Aponia.Request,
+    response: Aponia.Response,
+  ) => Awaitable<any>
 }
 
 /**
  */
-export interface DatabaseRefreshPlugin {
+export interface DatabaseRefreshAdapter {
   /**
    */
   getSessionFromRequest: (request: Aponia.Request) => Awaitable<Aponia.Session | Nullish>
 
   /**
    */
-  refreshSession: (session: Aponia.Session, response: Aponia.Response) => Awaitable<any>
+  refreshSession: (
+    session: Aponia.Session,
+    request: Aponia.Request,
+    response: Aponia.Response,
+  ) => Awaitable<any>
 
   /**
    */
@@ -69,13 +98,25 @@ export interface DatabaseRefreshPlugin {
 
   /**
    */
-  encodeRefresh: (session: Aponia.Session) => Awaitable<string>
+  encodeRefresh: (
+    session: Aponia.Session,
+    request: Aponia.Request,
+    response: Aponia.Response,
+  ) => Awaitable<string>
 
   /**
    */
-  decodeRefresh: (refresh: string) => Awaitable<Aponia.Session | Nullish>
+  decodeRefresh: (
+    refresh: string,
+    request: Aponia.Request,
+    response: Aponia.Response,
+  ) => Awaitable<Aponia.Session | Nullish>
 
   /**
    */
-  renewSession: (session: Aponia.Session, response: Aponia.Response) => Awaitable<any>
+  renewSession: (
+    session: Aponia.Session,
+    request: Aponia.Request,
+    response: Aponia.Response,
+  ) => Awaitable<any>
 }
