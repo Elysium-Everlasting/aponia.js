@@ -1,3 +1,4 @@
+import '@aponia.js/core/types'
 import { Auth } from '@aponia.js/core/auth'
 import { OAuthProvider } from '@aponia.js/core/plugins/providers/oauth'
 import { OIDCProvider } from '@aponia.js/core/plugins/providers/oidc'

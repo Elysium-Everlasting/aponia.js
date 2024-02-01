@@ -3,8 +3,8 @@ layout: home
 
 hero:
   name: Aponia.js
-  text: Blessed Authentication
-  tagline: Simple and versatile authentication done right
+  text: Blessed Authentication 🙏
+  tagline: Simple and flexible authentication
   actions:
     - theme: brand
       text: Get Started
