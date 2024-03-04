@@ -8,6 +8,8 @@ import { serialize } from 'cookie'
 import cookieParser from 'cookie-parser'
 import { config } from 'dotenv'
 import express from 'express'
+import { users } from './db/schema'
+import { db } from './db/connection'
 
 config({ path: '../../../.env' })
 
@@ -96,7 +98,7 @@ const google = new OIDCProvider({
   },
 })
 
-const adapterPlugin = new AdapterPlugin({
+const adapter: Adapter = {
   findAccount: (request, response) => {
     console.log('FINDING ACCOUNT')
   },
@@ -123,8 +125,10 @@ const adapterPlugin = new AdapterPlugin({
   },
   decodeSession: (token) => {
     console.log('DECODING SESSION')
-  }
-})
+  },
+}
+
+const adapterPlugin = new AdapterPlugin(adapter)
 
 const session = new JwtSessionPlugin()
 
@@ -132,7 +136,11 @@ const auth = new Auth({
   plugins: [github, google /*, session */, adapterPlugin],
 })
 
-function main() {
+async function main() {
+  const result = await db.select().from(users);
+
+  console.log({ result })
+
   const app = express()
 
   app.use(cookieParser())
