@@ -39,11 +39,14 @@ export interface Adapter {
     user: Aponia.User,
     request: Aponia.Request,
     response: Aponia.Response,
-  ) => Awaitable<Aponia.Account[]>
+  ) => Awaitable<Aponia.Account[] | Nullish>
 
   /**
    */
-  createUser: (request: Aponia.Request, response: Aponia.Response) => Awaitable<Aponia.User>
+  createUser: (
+    request: Aponia.Request,
+    response: Aponia.Response,
+  ) => Awaitable<Aponia.User | Nullish>
 
   /**
    */
@@ -51,7 +54,7 @@ export interface Adapter {
     user: Aponia.User,
     request: Aponia.Request,
     response: Aponia.Response,
-  ) => Awaitable<Aponia.Account>
+  ) => Awaitable<Aponia.Account | Nullish>
 
   /**
    */
