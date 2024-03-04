@@ -1,5 +1,6 @@
 import '@aponia.js/core/types'
 import { Auth } from '@aponia.js/core/auth'
+import { type Adapter, AdapterPlugin } from '@aponia.js/core/adapter'
 import { OAuthProvider } from '@aponia.js/core/plugins/providers/oauth'
 import { OIDCProvider } from '@aponia.js/core/plugins/providers/oidc'
 import { JwtSessionPlugin } from '@aponia.js/core/plugins/session/jwt'
@@ -95,10 +96,40 @@ const google = new OIDCProvider({
   },
 })
 
+const adapterPlugin = new AdapterPlugin({
+  findAccount: (request, response) => {
+    console.log('FINDING ACCOUNT')
+  },
+  getUserFromAccount: (account, request, response) => {
+    console.log('GETTING USER FROM ACCOUNT')
+  },
+  createSession: (user, account, request, response) => {
+    console.log('CREATING SESSION')
+  },
+  findUser: (request, response) => {
+    console.log('FINDING USER')
+  },
+  createUser: (request, response) => {
+    console.log('CREATING USER')
+  },
+  findUserAccounts: (user, request, response) => {
+    console.log('FINDING USER ACCOUNTS')
+  },
+  createAccount: (user, request, response) => {
+    console.log('CREATING ACCOUNT')
+  },
+  encodeSession: (session) => {
+    console.log('ENCODING SESSION')
+  },
+  decodeSession: (token) => {
+    console.log('DECODING SESSION')
+  }
+})
+
 const session = new JwtSessionPlugin()
 
 const auth = new Auth({
-  plugins: [github, google, session],
+  plugins: [github, google /*, session */, adapterPlugin],
 })
 
 function main() {

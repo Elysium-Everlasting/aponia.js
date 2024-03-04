@@ -83,8 +83,10 @@ export interface Adapter {
    * 2. No account was found.
    * 3. A user with the credentials is found, or newly created with the credentials.
    * 4. Find all accounts that the user has.
+   *
+   * @default Throw error if multiple accounts are found.
    */
-  handleMultipleAccount: (
+  handleMultipleAccounts?: (
     user: Aponia.User,
     account: Aponia.Account[],
     request: Aponia.Request,
@@ -109,7 +111,7 @@ export interface Adapter {
    * 2. An account was found.
    * 3. No user is found that owns the account.
    */
-  handleUnboundAccount: (
+  handleUnboundAccount?: (
     account: Aponia.Account,
     request: Aponia.Request,
     response: Aponia.Response,
@@ -117,7 +119,11 @@ export interface Adapter {
 
   /**
    */
-  encodeSession: (session: Aponia.Session) => Awaitable<string>
+  encodeSession: (session: Aponia.Session) => Awaitable<string | Nullish>
+
+  /**
+   */
+  decodeSession: (session: string) => Awaitable<Aponia.Session | Nullish>
 }
 
 /**
@@ -254,6 +260,7 @@ export class AdapterPlugin implements Plugin {
     this.cookieNamePrefix = options.cookieOptions?.name ?? this.cookieNamePrefix
     this.sessionCookieName = options.sessionName ?? this.sessionCookieName
     this.refreshCookieName = options.refreshName ?? this.refreshCookieName
+
     context.router.postHandle(this.handle.bind(this))
   }
 
@@ -261,7 +268,7 @@ export class AdapterPlugin implements Plugin {
     if (
       response?.providerId == null ||
       response.providerType == null ||
-      response.providerAccountId == null
+      response.account == null
     ) {
       return
     }
@@ -272,7 +279,7 @@ export class AdapterPlugin implements Plugin {
       const user = await this.adapter.getUserFromAccount(account, request, response)
 
       if (user == null) {
-        return await this.adapter.handleUnboundAccount(account, request, response)
+        return await this.adapter.handleUnboundAccount?.(account, request, response)
       }
 
       const session = await this.adapter.createSession(user, account, request, response)
@@ -295,7 +302,7 @@ export class AdapterPlugin implements Plugin {
     const accounts = await this.adapter.findUserAccounts(user, request, response)
 
     if (accounts?.length) {
-      account = await this.adapter.handleMultipleAccount(user, accounts, request, response)
+      account = await this.handleMultipleAccounts(user, accounts, request, response)
 
       if (account == null) {
         return
@@ -320,10 +327,14 @@ export class AdapterPlugin implements Plugin {
     request: Aponia.Request,
     response: Aponia.Response,
   ): Promise<Aponia.Response> {
+    const sessionResponse: Aponia.Response = {}
+
     const sessionValue = await this.adapter.encodeSession(session)
+
+    if (sessionValue == null) return sessionResponse
+
     const sessionName = `${this.sessionSecurePrefix}${this.cookieNamePrefix}.${this.sessionCookieName}`
 
-    const sessionResponse: Aponia.Response = {}
     sessionResponse.cookies ??= []
 
     sessionResponse.cookies.push({
@@ -355,6 +366,27 @@ export class AdapterPlugin implements Plugin {
     })
 
     return sessionResponse
+  }
+
+  handleMultipleAccounts(
+    user: Aponia.User,
+    accounts: Aponia.Account[],
+    request: Aponia.Request,
+    response: Aponia.Response,
+  ): Awaitable<Aponia.Account | Nullish> {
+    if (this.adapter.handleMultipleAccounts == null) {
+      throw new Error('Multiple accounts found')
+    }
+    return this.adapter.handleMultipleAccounts(user, accounts, request, response)
+  }
+
+  getSessionFromRequest(request: Aponia.Request): Awaitable<Aponia.Session | Nullish> {
+    const sessionCookieName = `${this.sessionSecurePrefix}${this.cookieNamePrefix}.${this.sessionCookieName}`
+    const sessionCookie = request.cookies[sessionCookieName]
+
+    if (sessionCookie == null) return
+
+    return this.adapter.decodeSession(sessionCookie)
   }
 }
 
