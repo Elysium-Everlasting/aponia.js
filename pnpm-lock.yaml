@@ -210,6 +210,16 @@ importers:
         specifier: ^5.3.3
         version: 5.3.3
 
+  examples/core/module-augmentation:
+    dependencies:
+      '@aponia.js/core':
+        specifier: workspace:^
+        version: link:../../../packages/core
+    devDependencies:
+      typescript:
+        specifier: ^5.3.3
+        version: 5.3.3
+
   packages/auth.js:
     dependencies:
       '@aponia.js/core':

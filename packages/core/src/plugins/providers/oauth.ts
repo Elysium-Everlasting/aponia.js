@@ -426,6 +426,7 @@ export class OAuthProvider<T = any> implements Plugin {
         redirect: this.pages.redirect,
         providerType: this.type,
         providerId: this.id,
+        providerAccountId: profile.id,
       }
 
       return response

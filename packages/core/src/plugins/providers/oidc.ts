@@ -328,6 +328,7 @@ export class OIDCProvider<T = any> implements Plugin {
         redirect: this.pages.redirect,
         providerType: this.type,
         providerId: this.id,
+        providerAccountId: profile.sub,
       }
       return response
     } catch (error: any) {

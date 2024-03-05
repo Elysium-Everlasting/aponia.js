@@ -7,6 +7,11 @@ import type { Awaitable, Nullish } from './utils/types'
 export const DEFAULT_SESSION_COOKIE_NAME = 'session'
 export const DEFAULT_REFRESH_COOKIE_NAME = 'refresh'
 
+export type AuthenticatedResponse = Required<
+  Pick<Aponia.Response, 'providerId' | 'providerType' | 'account'>
+> &
+  Omit<Aponia.Response, 'providerId' | 'providerType' | 'account'>
+
 /**
  * Basic adapter for handling a standard authentication flow.
  */
@@ -17,7 +22,7 @@ export interface Adapter {
    */
   findAccount: (
     request: Aponia.Request,
-    response: Aponia.Response,
+    response: Aponia.AuthenticatedResponse,
   ) => Awaitable<Aponia.Account | Nullish>
 
   /**
@@ -28,7 +33,7 @@ export interface Adapter {
   getUserFromAccount: (
     account: Aponia.Account,
     request: Aponia.Request,
-    response: Aponia.Response,
+    response: Aponia.AuthenticatedResponse,
   ) => Awaitable<Aponia.User | Nullish>
 
   /**
@@ -43,7 +48,7 @@ export interface Adapter {
     user: Aponia.User,
     account: Aponia.Account,
     request: Aponia.Request,
-    response: Aponia.Response,
+    response: Aponia.AuthenticatedResponse,
   ) => Awaitable<Aponia.Session | Nullish>
 
   /**
@@ -51,7 +56,10 @@ export interface Adapter {
    * 2. No account was found.
    * 3. Find a user that is associated with the credentials.
    */
-  findUser: (request: Aponia.Request, response: Aponia.Response) => Awaitable<Aponia.User | Nullish>
+  findUser: (
+    request: Aponia.Request,
+    response: Aponia.AuthenticatedResponse,
+  ) => Awaitable<Aponia.User | Nullish>
 
   /**
    * 1. A provider responds with a user's credentials.
@@ -63,7 +71,7 @@ export interface Adapter {
    */
   createUser: (
     request: Aponia.Request,
-    response: Aponia.Response,
+    response: Aponia.AuthenticatedResponse,
   ) => Awaitable<Aponia.User | Nullish>
 
   /**
@@ -75,7 +83,7 @@ export interface Adapter {
   findUserAccounts: (
     user: Aponia.User,
     request: Aponia.Request,
-    response: Aponia.Response,
+    response: Aponia.AuthenticatedResponse,
   ) => Awaitable<Aponia.Account[] | Nullish>
 
   /**
@@ -90,7 +98,7 @@ export interface Adapter {
     user: Aponia.User,
     account: Aponia.Account[],
     request: Aponia.Request,
-    response: Aponia.Response,
+    response: Aponia.AuthenticatedResponse,
   ) => Awaitable<Aponia.Account | Nullish>
 
   /**
@@ -103,7 +111,7 @@ export interface Adapter {
   createAccount: (
     user: Aponia.User,
     request: Aponia.Request,
-    response: Aponia.Response,
+    response: Aponia.AuthenticatedResponse,
   ) => Awaitable<Aponia.Account | Nullish>
 
   /**
@@ -114,7 +122,7 @@ export interface Adapter {
   handleUnboundAccount?: (
     account: Aponia.Account,
     request: Aponia.Request,
-    response: Aponia.Response,
+    response: Aponia.AuthenticatedResponse,
   ) => Awaitable<any>
 
   /**
@@ -171,7 +179,7 @@ export interface RefreshAdapter {
   createRefresh: (
     session: Aponia.Session,
     request: Aponia.Request,
-    response: Aponia.Response,
+    response: Aponia.AuthenticatedResponse,
   ) => Awaitable<Aponia.Refresh | Nullish>
 
   /**
@@ -179,7 +187,7 @@ export interface RefreshAdapter {
   encodeRefresh: (
     refresh: Aponia.Refresh,
     request: Aponia.Request,
-    response: Aponia.Response,
+    response: Aponia.AuthenticatedResponse,
   ) => Awaitable<string>
 }
 
@@ -239,6 +247,17 @@ export class AdapterPlugin implements Plugin {
     this.refreshCookieName = options.refreshName ?? DEFAULT_REFRESH_COOKIE_NAME
   }
 
+  static isAuthenticatedResponse(
+    response?: Aponia.Response,
+  ): response is Aponia.AuthenticatedResponse {
+    return (
+      response?.providerId != null &&
+      response.providerType != null &&
+      response.account != null &&
+      response.providerAccountId != null
+    )
+  }
+
   initialize(context: PluginContext, options: AdapterPluginOptions) {
     this.options = { ...this.options, ...options }
 
@@ -265,11 +284,7 @@ export class AdapterPlugin implements Plugin {
   }
 
   async handle(request: Aponia.Request, response?: Aponia.Response) {
-    if (
-      response?.providerId == null ||
-      response.providerType == null ||
-      response.account == null
-    ) {
+    if (!AdapterPlugin.isAuthenticatedResponse(response)) {
       return
     }
 
@@ -325,7 +340,7 @@ export class AdapterPlugin implements Plugin {
   async createSessionResponse(
     session: Aponia.Session,
     request: Aponia.Request,
-    response: Aponia.Response,
+    response: Aponia.AuthenticatedResponse,
   ): Promise<Aponia.Response> {
     const sessionResponse: Aponia.Response = {}
 
@@ -372,7 +387,7 @@ export class AdapterPlugin implements Plugin {
     user: Aponia.User,
     accounts: Aponia.Account[],
     request: Aponia.Request,
-    response: Aponia.Response,
+    response: Aponia.AuthenticatedResponse,
   ): Awaitable<Aponia.Account | Nullish> {
     if (this.adapter.handleMultipleAccounts == null) {
       throw new Error('Multiple accounts found')

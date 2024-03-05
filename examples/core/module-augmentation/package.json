@@ -1,0 +1,13 @@
+{
+  "name": "@examples/core-module-augmentation",
+  "version": "0.1.0",
+  "description": "example of augmenting the core module's interfaces",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@aponia.js/core": "workspace:^"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}

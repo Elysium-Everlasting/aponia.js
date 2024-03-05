@@ -4,13 +4,10 @@
  * @type { import("drizzle-kit").Config }
  */
 const config = {
-  schema: './src/db/schema.ts',
+  schema: './src/db/schema/',
   driver: 'mysql2',
   dbCredentials: {
-    host: 'localhost',
-    user: 'root',
-    database: 'test',
-    password: 'root',
+    uri: 'mysql://root:root@localhost:3306/drizzle',
   },
 }
 

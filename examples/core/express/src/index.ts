@@ -8,7 +8,7 @@ import { serialize } from 'cookie'
 import cookieParser from 'cookie-parser'
 import { config } from 'dotenv'
 import express from 'express'
-import { users } from './db/schema'
+import { user } from './db/schema/user'
 import { db } from './db/connection'
 
 config({ path: '../../../.env' })
@@ -100,31 +100,31 @@ const google = new OIDCProvider({
 
 const adapter: Adapter = {
   findAccount: (request, response) => {
-    console.log('FINDING ACCOUNT')
+    console.log('FINDING ACCOUNT: ', request, response)
   },
   getUserFromAccount: (account, request, response) => {
-    console.log('GETTING USER FROM ACCOUNT')
+    console.log('GETTING USER FROM ACCOUNT: ', account, request, response)
   },
   createSession: (user, account, request, response) => {
-    console.log('CREATING SESSION')
+    console.log('CREATING SESSION: ', user, account, request, response)
   },
   findUser: (request, response) => {
-    console.log('FINDING USER')
+    console.log('FINDING USER: ', request, response)
   },
   createUser: (request, response) => {
-    console.log('CREATING USER')
+    console.log('CREATING USER: ', request, response)
   },
   findUserAccounts: (user, request, response) => {
-    console.log('FINDING USER ACCOUNTS')
+    console.log('FINDING USER ACCOUNTS: ', user, request, response)
   },
   createAccount: (user, request, response) => {
-    console.log('CREATING ACCOUNT')
+    console.log('CREATING ACCOUNT: ', user, request, response)
   },
   encodeSession: (session) => {
-    console.log('ENCODING SESSION')
+    console.log('ENCODING SESSION :' ,session)
   },
   decodeSession: (token) => {
-    console.log('DECODING SESSION')
+    console.log('DECODING SESSION: ', token)
   },
 }
 
@@ -137,7 +137,7 @@ const auth = new Auth({
 })
 
 async function main() {
-  const result = await db.select().from(users);
+  const result = await db.select().from(user);
 
   console.log({ result })
 
