@@ -1,5 +1,3 @@
-import './ambient-declare-module'
-import '@aponia.js/core/types'
 import { type Adapter } from '@aponia.js/core/adapter'
 
 export const adapter: Adapter = {
