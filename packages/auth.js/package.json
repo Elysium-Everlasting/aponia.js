@@ -45,7 +45,7 @@
   },
   "dependencies": {
     "@aponia.js/core": "workspace:^",
-    "@auth/core": "^0.18.4"
+    "@auth/core": "^0.28.1"
   },
   "devDependencies": {
     "typescript": "^5.1.6"
