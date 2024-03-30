@@ -418,9 +418,14 @@ export class OAuthProvider<T = any> implements Plugin {
       return { error }
     }
 
+    const account = (await this.config.profile?.(profile, tokens)) as Aponia.ProviderAccount
+
     try {
       const response: Aponia.Response = {
-        account: (await this.config.profile?.(profile, tokens)) ?? profile,
+        account,
+        providerAccountMapping: {
+          [this.id]: account,
+        },
         status: 302,
         cookies,
         redirect: this.pages.redirect,

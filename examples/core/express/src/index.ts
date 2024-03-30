@@ -1,4 +1,3 @@
-import '@aponia.js/core/types'
 import { type Adapter, AdapterPlugin } from '@aponia.js/core/adapter'
 import { Auth } from '@aponia.js/core/auth'
 import { OAuthProvider } from '@aponia.js/core/plugins/providers/oauth'
@@ -7,9 +6,11 @@ import { JwtSessionPlugin } from '@aponia.js/core/plugins/session/jwt'
 import { serialize } from 'cookie'
 import cookieParser from 'cookie-parser'
 import { config } from 'dotenv'
+import { and, eq } from 'drizzle-orm'
 import express from 'express'
 
 import { db } from './db/connection'
+import { account } from './db/schema'
 import { user } from './db/schema/user'
 
 config({ path: '../../../.env' })
@@ -100,20 +101,74 @@ const google = new OIDCProvider({
 })
 
 const adapter: Adapter = {
-  findAccount: (request, response) => {
-    console.log('FINDING ACCOUNT: ', request, response)
+  findAccount: async (request, response) => {
+    const existingAccounts = await db
+      .select()
+      .from(account)
+      .where(
+        and(
+          eq(account.providerId, response.providerId),
+          eq(account.providerAccountId, response.providerAccountId),
+        ),
+      )
+
+    const existingAccount = existingAccounts[0]
+
+    if (existingAccount === undefined) {
+      console.error('Account not found')
+      return
+    }
+
+    console.log('Account: ', response.account)
   },
-  getUserFromAccount: (account, request, response) => {
-    console.log('GETTING USER FROM ACCOUNT: ', account, request, response)
+  getUserFromAccount: (_account, _request, _response) => {
+    return
   },
   createSession: (user, account, request, response) => {
     console.log('CREATING SESSION: ', user, account, request, response)
   },
-  findUser: (request, response) => {
-    console.log('FINDING USER: ', request, response)
+  /**
+   * Some accounts have an associated email,
+   * and sometimes users can be uniquely identified by their email.
+   *
+   * Therefore, if both conditions are met,
+   * an existing user might be identified even if the account doesn't exist yet.
+   *
+   * This database doesn't track user email, so noop.
+   */
+  findUser: (_request, _response) => {
+    console.log('Database does not track user email, cannot find user if account does not exist')
+    return
   },
-  createUser: (request, response) => {
-    console.log('CREATING USER: ', request, response)
+  createUser: async (_request, response) => {
+    const githubAccount = response.providerAccountMapping.github
+
+    if (githubAccount !== undefined) {
+      console.log('Creating user for github account: ', githubAccount)
+
+      const newUsers = await db.insert(user).values([{}])
+
+      const newUser = newUsers[0]
+
+      if (newUser === undefined) {
+        console.error('Failed to create user for account: ', response.providerAccountMapping)
+        return
+      }
+
+      const newAccount = await db.insert(account).values([
+        {
+          providerId: response.providerId,
+          providerAccountId: githubAccount.id,
+          userId: `${newUser.insertId}`,
+        },
+      ])
+
+      console.log('Account created: ', newAccount)
+
+      return
+    }
+
+    console.error('Failed to create user for account: ', response.providerAccountMapping)
   },
   findUserAccounts: (user, request, response) => {
     console.log('FINDING USER ACCOUNTS: ', user, request, response)

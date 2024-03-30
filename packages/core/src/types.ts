@@ -2,7 +2,12 @@
 
 import type { Cookie } from './security/cookie'
 
-export type AuthenticatedKeys = 'account' | 'providerType' | 'providerId' | 'providerAccountId'
+export type AuthenticatedKeys =
+  | 'account'
+  | 'providerAccountMapping'
+  | 'providerType'
+  | 'providerId'
+  | 'providerAccountId'
 
 /**
  * The request object that the framework handles.
@@ -73,6 +78,10 @@ export interface AponiaResponse {
   account?: AponiaAccount
 
   /**
+   */
+  providerAccountMapping?: AponiaProviderAccountMapping
+
+  /**
    * The type of provider that generated this response (if any).
    */
   providerType?: string
@@ -102,6 +111,10 @@ export interface AponiaAccount {}
 export interface AponiaProviderAccount {}
 
 /**
+ */
+export interface AponiaProviderAccountMapping {}
+
+/**
  * A user's session, e.g. only relevant information needed to identify the user.
  */
 export interface AponiaSession {}
@@ -121,8 +134,9 @@ declare global {
   namespace Aponia {
     interface Request extends AponiaRequest {}
 
-    interface Response extends Omit<AponiaResponse, 'account'> {
+    interface Response extends Omit<AponiaResponse, 'account' | 'providerAccountMapping'> {
       account?: Aponia.ProviderAccount
+      providerAccountMapping?: Aponia.ProviderAccountMapping
     }
 
     interface AuthenticatedResponse
@@ -130,6 +144,8 @@ declare global {
         Required<Pick<Aponia.Response, AuthenticatedKeys>> {}
 
     interface ProviderAccount extends AponiaProviderAccount {}
+
+    interface ProviderAccountMapping extends AponiaProviderAccountMapping {}
 
     interface User extends AponiaUser {}
 

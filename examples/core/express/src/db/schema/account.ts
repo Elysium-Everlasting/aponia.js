@@ -9,7 +9,7 @@ export const account = mysqlTable('account', {
 
   providerId: varchar('provider_id', { length: 128 }).primaryKey(),
 
-  providerType: varchar('provider_type', { length: 128 }),
+  providerAccountId: varchar('provider_account_id', { length: 128 }).primaryKey(),
 
-  providerAccountId: varchar('provider_account_id', { length: 128 }),
+  providerType: varchar('provider_type', { length: 128 }),
 })
