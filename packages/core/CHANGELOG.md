@@ -1,5 +1,11 @@
 # @aponia.js/core
 
+## 0.3.2
+
+### Patch Changes
+
+- 2c8867e: chore: update auth.js/core version
+
 ## 0.3.1
 
 ### Patch Changes
