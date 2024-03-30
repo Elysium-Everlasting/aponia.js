@@ -179,6 +179,21 @@ const adapter: Adapter = {
       return newUser
     }
 
+    const googleAccount = response.providerAccountMapping.google
+
+    if (googleAccount != null) {
+      console.log('Creating user for google account: ', googleAccount)
+
+      const [newUser] = await db.insert(user).values([{}]).returning()
+
+      if (newUser === undefined) {
+        console.error('Failed to create user for account: ', response.providerAccountMapping)
+        return
+      }
+
+      return newUser
+    }
+
     console.error('Failed to create user for account: ', response.providerAccountMapping)
     return
   },

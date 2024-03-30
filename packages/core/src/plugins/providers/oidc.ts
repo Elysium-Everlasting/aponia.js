@@ -320,7 +320,8 @@ export class OIDCProvider<T = any> implements Plugin {
 
     const profile: any = oauth.getValidatedIdTokenClaims(tokens)
 
-    const account = (await this.config.profile?.(profile, tokens)) as Aponia.ProviderAccount
+    const account = ((await this.config.profile?.(profile, tokens)) ??
+      profile) as Aponia.ProviderAccount
 
     try {
       const response: Aponia.Response = {

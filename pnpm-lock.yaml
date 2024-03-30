@@ -97,6 +97,12 @@ importers:
       '@auth/core':
         specifier: ^0.18.4
         version: 0.18.4
+      '@paralleldrive/cuid2':
+        specifier: ^2.2.2
+        version: 2.2.2
+      better-sqlite3:
+        specifier: ^9.4.3
+        version: 9.4.3
       cookie:
         specifier: ^0.6.0
         version: 0.6.0
@@ -106,10 +112,19 @@ importers:
       dotenv:
         specifier: ^16.3.1
         version: 16.3.1
+      drizzle-orm:
+        specifier: ^0.29.4
+        version: 0.29.4(@types/better-sqlite3@7.6.9)(better-sqlite3@9.4.3)(mysql2@3.9.2)
       express:
         specifier: ^4.18.2
         version: 4.18.2
+      mysql2:
+        specifier: ^3.9.2
+        version: 3.9.2
     devDependencies:
+      '@types/better-sqlite3':
+        specifier: ^7.6.9
+        version: 7.6.9
       '@types/cookie':
         specifier: ^0.5.4
         version: 0.5.4
@@ -119,46 +134,12 @@ importers:
       '@types/express':
         specifier: ^4.17.21
         version: 4.17.21
-      tsx:
-        specifier: ^4.6.2
-        version: 4.6.2
-      typescript:
-        specifier: ^5.3.3
-        version: 5.3.3
-
-  examples/core/adapter_express:
-    dependencies:
-      '@aponia.js/core':
-        specifier: workspace:^
-        version: link:../../../packages/core
-      '@prisma/client':
-        specifier: ^5.9.0
-        version: 5.9.0(prisma@5.9.0)
-      cookie:
-        specifier: ^0.6.0
-        version: 0.6.0
-      cookie-parser:
-        specifier: ^1.4.6
-        version: 1.4.6
-      dotenv:
-        specifier: ^16.3.1
-        version: 16.3.1
-      express:
-        specifier: ^4.18.2
-        version: 4.18.2
-    devDependencies:
-      '@types/cookie':
-        specifier: ^0.5.4
-        version: 0.5.4
-      '@types/cookie-parser':
-        specifier: ^1.4.6
-        version: 1.4.6
-      '@types/express':
-        specifier: ^4.17.21
-        version: 4.17.21
-      prisma:
-        specifier: ^5.9.0
-        version: 5.9.0
+      drizzle-kit:
+        specifier: ^0.20.14
+        version: 0.20.14
+      rimraf:
+        specifier: ^5.0.5
+        version: 5.0.5
       tsx:
         specifier: ^4.6.2
         version: 4.6.2
@@ -2180,64 +2161,6 @@ packages:
     requiresBuild: true
     dev: true
     optional: true
-
-  /@prisma/client@5.9.0(prisma@5.9.0):
-    resolution:
-      {
-        integrity: sha512-dHvFZgCT0BpRS+gRhk3S+50DstXMmVowxbrPeUJaK7sjNq5OhzfpT/OGE1kq9z5Q8WmOwIXJXyxP8O2CmP+nSg==,
-      }
-    engines: { node: '>=16.13' }
-    requiresBuild: true
-    peerDependencies:
-      prisma: '*'
-    peerDependenciesMeta:
-      prisma:
-        optional: true
-    dependencies:
-      prisma: 5.9.0
-    dev: false
-
-  /@prisma/debug@5.9.0:
-    resolution:
-      {
-        integrity: sha512-3Uhj5YSPqaIfzJQ6JQzCNBXeBTy0x803fGIoo2tvP/KIEd+o4o49JxCQtKtP8aeef5iNh5Nn9Z25wDrdLjS80A==,
-      }
-
-  /@prisma/engines-version@5.9.0-32.23fdc5965b1e05fc54e5f26ed3de66776b93de64:
-    resolution:
-      {
-        integrity: sha512-HFl7275yF0FWbdcNvcSRbbu9JCBSLMcurYwvWc8WGDnpu7APxQo2ONtZrUggU3WxLxUJ2uBX+0GOFIcJeVeOOQ==,
-      }
-
-  /@prisma/engines@5.9.0:
-    resolution:
-      {
-        integrity: sha512-BH1fpXbMH09TwfZH5FVMJwRp6afEhKzqwebbCLdaEkJDuhxA//iwbILLqGFtGTgZbdBNUOThIK+UC3++5kWMTg==,
-      }
-    requiresBuild: true
-    dependencies:
-      '@prisma/debug': 5.9.0
-      '@prisma/engines-version': 5.9.0-32.23fdc5965b1e05fc54e5f26ed3de66776b93de64
-      '@prisma/fetch-engine': 5.9.0
-      '@prisma/get-platform': 5.9.0
-
-  /@prisma/fetch-engine@5.9.0:
-    resolution:
-      {
-        integrity: sha512-NL8Vm8Vl2d6NOSkkPGN5TTTz4s6cyCleXOzqtOFWzfKFJ4wtN2Shu7llOT+ykf6nDzh1lCN2JHUt1S6FGFZGig==,
-      }
-    dependencies:
-      '@prisma/debug': 5.9.0
-      '@prisma/engines-version': 5.9.0-32.23fdc5965b1e05fc54e5f26ed3de66776b93de64
-      '@prisma/get-platform': 5.9.0
-
-  /@prisma/get-platform@5.9.0:
-    resolution:
-      {
-        integrity: sha512-8CatX+E6eZxcOjJZe5hF8EXxdb5GsQTA/u7pdmUJSxGLacW9K3r5vDdgV8s22PubObQQ6979/rkCMItbCrG4Yg==,
-      }
-    dependencies:
-      '@prisma/debug': 5.9.0
 
   /@sinclair/typebox@0.27.8:
     resolution:
@@ -7907,17 +7830,6 @@ packages:
         integrity: sha512-WuxUnVtlWL1OfZFQFuqvnvs6MiAGk9UNsBostyBOB0Is9wb5uRESevA6rnl/rkksXaGX3GzZhPup5d6Vp1nFew==,
       }
     dev: false
-
-  /prisma@5.9.0:
-    resolution:
-      {
-        integrity: sha512-0UcOofjNuAnd227JMaPqZvP01dsUXw9EXB9iC8fyoZtfv7zkQ0ozxyjY1g+vcjFPOnNLICMnLHx+lM5BJZYqOQ==,
-      }
-    engines: { node: '>=16.13' }
-    hasBin: true
-    requiresBuild: true
-    dependencies:
-      '@prisma/engines': 5.9.0
 
   /proxy-addr@2.0.7:
     resolution:

@@ -1,32 +1,11 @@
 import '@aponia.js/core/types'
 
+import type { GitHubProfile } from '@auth/core/providers/github'
+import type { GoogleProfile } from '@auth/core/providers/google'
+
 import type { Account as DbAccount } from './db/schema/account'
 import type { Session as DbSession } from './db/schema/session'
 import type { User as DbUser } from './db/schema/user'
-
-export interface GitHubAccount {
-  id: string
-  name: string
-  email: string
-  image: string
-}
-
-export interface GoogleAccount {
-  iss: string
-  azp: string
-  aud: string
-  sub: string
-  hd: string
-  email: string
-  email_verified: boolean
-  at_hash: string
-  name: string
-  picture: string
-  given_name: string
-  family_name: string
-  iat: number
-  exp: number
-}
 
 declare global {
   namespace Aponia {
@@ -39,8 +18,8 @@ declare global {
     interface ProviderAccount extends GitHubAccount {}
 
     interface ProviderAccountMapping {
-      github?: GitHubAccount
-      google?: GoogleAccount
+      github?: GitHubProfile
+      google?: GoogleProfile
     }
   }
 }
