@@ -98,10 +98,16 @@ export interface AponiaUser {}
 export interface AponiaAccount {}
 
 /**
+ */
+export interface AponiaProviderAccount {}
+
+/**
  * A user's session, e.g. only relevant information needed to identify the user.
  */
 export interface AponiaSession {}
 
+/**
+ */
 export interface AponiaRefresh {}
 
 /**
@@ -115,13 +121,15 @@ declare global {
   namespace Aponia {
     interface Request extends AponiaRequest {}
 
+    interface Response extends Omit<AponiaResponse, 'account'> {
+      account?: Aponia.ProviderAccount
+    }
+
     interface AuthenticatedResponse
       extends Omit<Aponia.Response, AuthenticatedKeys>,
         Required<Pick<Aponia.Response, AuthenticatedKeys>> {}
 
-    interface Response extends Omit<AponiaResponse, 'account'> {
-      account?: Aponia.Account
-    }
+    interface ProviderAccount extends AponiaProviderAccount {}
 
     interface User extends AponiaUser {}
 
