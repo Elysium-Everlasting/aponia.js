@@ -4,10 +4,10 @@
  * @type { import("drizzle-kit").Config }
  */
 const config = {
-  driver: 'mysql2',
+  driver: 'better-sqlite',
   schema: './src/db/schema/',
   dbCredentials: {
-    uri: 'mysql://root:root@localhost:3306/drizzle',
+    url: 'sqlite.db',
   },
 }
 

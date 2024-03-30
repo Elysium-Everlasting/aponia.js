@@ -134,7 +134,14 @@ const adapter: Adapter = {
     return existingUser
   },
   createSession: async (user, account, _request, _response) => {
-    const [newSession] = await db.insert(session).values([]).returning()
+    const [newSession] = await db
+      .insert(session)
+      .values([
+        {
+          userId: user.id,
+        },
+      ])
+      .returning()
 
     if (newSession == null) {
       console.error(`Failed to create new session for user: ${user} and account: ${account}`)
@@ -222,10 +229,6 @@ const auth = new Auth({
 })
 
 async function main() {
-  const result = await db.select().from(user)
-
-  console.log({ result })
-
   const app = express()
 
   app.use(cookieParser())

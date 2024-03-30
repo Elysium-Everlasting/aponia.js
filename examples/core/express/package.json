@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "db:push": "drizzle-kit push:mysql"
+    "db:push": "rimraf sqlite.db && drizzle-kit push:sqlite"
   },
   "dependencies": {
     "@aponia.js/core": "workspace:^",

@@ -6,11 +6,13 @@ import { user } from './user'
 export const account = sqliteTable(
   'account',
   {
-    userId: text('user_id').references(() => user.id),
+    userId: text('user_id')
+      .references(() => user.id)
+      .notNull(),
 
-    providerId: text('provider_id'),
+    providerId: text('provider_id').notNull(),
 
-    providerAccountId: text('provider_account_id'),
+    providerAccountId: text('provider_account_id').notNull(),
 
     providerType: text('provider_type'),
   },
