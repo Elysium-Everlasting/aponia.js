@@ -6,7 +6,6 @@
 
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "baseUrl": ".",
     "resolvePackageJsonExports": true,
     "resolvePackageJsonImports": true,
     "resolveJsonModule": true,

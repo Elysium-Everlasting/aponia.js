@@ -6,7 +6,7 @@ import {
   REFRESH_TOKEN_NAME,
 } from './constants'
 import type { Plugin, PluginContext, PluginOptions } from './plugins/plugin'
-import type { CookieSerializeOptions } from './security/cookie'
+import { getCookieValue, type CookieSerializeOptions } from './security/cookie'
 import type { Awaitable, Nullish } from './utils/types'
 
 export type AuthenticatedResponse = Required<
@@ -407,7 +407,7 @@ export class AdapterPlugin implements Plugin {
 
   getSessionFromRequest(request: Aponia.Request): Awaitable<Aponia.Session | Nullish> {
     const sessionCookieName = `${this.sessionSecurePrefix}${this.cookieNamePrefix}.${this.accessCookieName}`
-    const sessionCookie = request.cookies[sessionCookieName]
+    const sessionCookie = getCookieValue(request.cookies, sessionCookieName)
 
     if (sessionCookie == null) return
 

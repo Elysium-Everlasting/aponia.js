@@ -18,6 +18,7 @@ import {
   type CookieOption,
   type CreateCookiesOptions,
   DEFAULT_CREATE_COOKIES_OPTIONS,
+  getCookieValue,
 } from '../../security/cookie'
 import type { Awaitable, Nullish } from '../../utils/types'
 import type { Plugin, PluginContext, PluginOptions } from '../plugin'
@@ -330,7 +331,9 @@ export class OAuthProvider<T = any> implements Plugin {
   public async callback(request: Aponia.Request): Promise<Aponia.Response> {
     const cookies: Cookie[] = []
 
-    const state = await this.checker.useState(request.cookies[this.cookies.state.name])
+    const stateCookie = getCookieValue(request.cookies, this.cookies.state.name)
+
+    const state = await this.checker.useState(stateCookie)
 
     cookies.push({
       name: this.cookies.state.name,
@@ -353,7 +356,9 @@ export class OAuthProvider<T = any> implements Plugin {
       return { error }
     }
 
-    const pkce = await this.checker.usePkce(request.cookies[this.cookies.pkce.name])
+    const pkceCookie = getCookieValue(request.cookies, this.cookies.pkce.name)
+
+    const pkce = await this.checker.usePkce(pkceCookie)
 
     if (pkce) {
       cookies.push({

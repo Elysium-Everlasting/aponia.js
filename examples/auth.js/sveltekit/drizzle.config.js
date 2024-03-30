@@ -5,7 +5,7 @@
  */
 const config = {
   driver: 'better-sqlite',
-  schema: './src/db/schema/',
+  schema: './src/lib/server/db/schema/',
   dbCredentials: {
     url: 'sqlite.db',
   },

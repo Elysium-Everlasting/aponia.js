@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-namespace */
 
-import type { Cookie } from './security/cookie'
+import type { Cookie, CookiesProxy } from './security/cookie'
 
 export type AuthenticatedKeys =
   | 'account'
@@ -26,7 +26,7 @@ export interface AponiaRequest {
   /**
    * Cookies sent with the request.
    */
-  cookies: Record<string, string>
+  cookies: Record<string, string> | CookiesProxy
 
   /**
    * Relevant headers sent with the request.

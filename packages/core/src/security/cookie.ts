@@ -197,3 +197,49 @@ export const DEFAULT_CREATE_COOKIES_OPTIONS: CreateCookiesOptions = {
     sameSite: 'lax',
   },
 }
+
+export function getCookieValue(
+  cookies: Record<string, string> | CookiesProxy,
+  name: string,
+  options?: CookiesProxyParseOptions,
+): string | undefined {
+  const decoder = options?.decode ?? ((value: string) => value)
+
+  if (isCookiesProxy(cookies)) {
+    return cookies.get(name, options)
+  }
+
+  const value = cookies[name]
+  return value ? decoder(value) : value
+}
+
+export function isCookiesProxy(
+  value: Record<string, string> | CookiesProxy,
+): value is CookiesProxy {
+  return typeof value.get === 'function'
+}
+
+export interface CookiesProxyParseOptions {
+  /**
+   * Specifies a function that will be used to decode a cookie's value. Since
+   * the value of a cookie has a limited character set (and must be a simple
+   * string), this function can be used to decode a previously-encoded cookie
+   * value into a JavaScript string or other object.
+   *
+   * The default function is the global `decodeURIComponent`, which will decode
+   * any URL-encoded sequences into their byte representations.
+   *
+   * *Note* if an error is thrown from this function, the original, non-decoded
+   * cookie value will be returned as the cookie's value.
+   */
+  decode?(value: string): string
+}
+
+export interface CookiesProxy {
+  /**
+   * Gets a cookie that was previously set with `cookies.set`, or from the request headers.
+   * @param name the name of the cookie
+   * @param opts the options, passed directly to `cookie.parse`. See documentation [here](https://github.com/jshttp/cookie#cookieparsestr-options)
+   */
+  get(name: string, opts?: CookiesProxyParseOptions): string | undefined
+}

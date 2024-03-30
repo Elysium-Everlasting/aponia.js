@@ -16,6 +16,7 @@ import {
   type CookieOption,
   type CreateCookiesOptions,
   DEFAULT_CREATE_COOKIES_OPTIONS,
+  getCookieValue,
 } from '../../security/cookie'
 import type { Awaitable, DeepPartial } from '../../utils/types'
 import type { Plugin, PluginContext, PluginOptions } from '../plugin'
@@ -248,7 +249,9 @@ export class OIDCProvider<T = any> implements Plugin {
 
     const cookies: Cookie[] = []
 
-    const state = await this.checker.useState(request.cookies[this.cookies.state.name])
+    const stateCookie = getCookieValue(request.cookies, this.cookies.state.name)
+
+    const state = await this.checker.useState(stateCookie)
 
     if (state != oauth.skipStateCheck) {
       cookies.push({
@@ -269,7 +272,10 @@ export class OIDCProvider<T = any> implements Plugin {
       throw new Error(codeGrantParams.error_description)
     }
 
-    const pkce = await this.checker.usePkce(request.cookies[this.cookies.pkce.name])
+    const pkceCookie = getCookieValue(request.cookies, this.cookies.pkce.name)
+
+    const pkce = await this.checker.usePkce(pkceCookie)
+
     if (pkce) {
       cookies.push({
         name: this.cookies.pkce.name,
@@ -297,7 +303,9 @@ export class OIDCProvider<T = any> implements Plugin {
       throw new Error('TODO: Handle www-authenticate challenges as needed')
     }
 
-    const nonce = await this.checker.useNonce(request.cookies[this.cookies.nonce.name])
+    const nonceCookie = getCookieValue(request.cookies, this.cookies.nonce.name)
+
+    const nonce = await this.checker.useNonce(nonceCookie)
 
     if (nonce) {
       cookies.push({
