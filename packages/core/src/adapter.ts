@@ -1,11 +1,13 @@
 import './types'
-import { DEFAULT_COOKIE_NAME, DEFAULT_SECURE_PREFIX } from './constants'
+import {
+  DEFAULT_COOKIE_NAME,
+  DEFAULT_SECURE_PREFIX,
+  ACCESS_TOKEN_NAME,
+  REFRESH_TOKEN_NAME,
+} from './constants'
 import type { Plugin, PluginContext, PluginOptions } from './plugins/plugin'
 import type { CookieSerializeOptions } from './security/cookie'
 import type { Awaitable, Nullish } from './utils/types'
-
-export const DEFAULT_SESSION_COOKIE_NAME = 'session'
-export const DEFAULT_REFRESH_COOKIE_NAME = 'refresh'
 
 export type AuthenticatedResponse = Required<
   Pick<Aponia.Response, 'providerId' | 'providerType' | 'account'>
@@ -230,7 +232,7 @@ export class AdapterPlugin implements Plugin {
 
   cookieNamePrefix: string
 
-  sessionCookieName: string
+  accessCookieName: string
 
   refreshCookieName: string
 
@@ -243,8 +245,8 @@ export class AdapterPlugin implements Plugin {
     this.sessionSecurePrefix = this.sessionIsSecure ? DEFAULT_SECURE_PREFIX : ''
     this.refreshSecurePrefix = this.refreshIsSecure ? DEFAULT_SECURE_PREFIX : ''
     this.cookieNamePrefix = options.cookieOptions?.name ?? DEFAULT_COOKIE_NAME
-    this.sessionCookieName = options.sessionName ?? DEFAULT_SESSION_COOKIE_NAME
-    this.refreshCookieName = options.refreshName ?? DEFAULT_REFRESH_COOKIE_NAME
+    this.accessCookieName = options.sessionName ?? ACCESS_TOKEN_NAME
+    this.refreshCookieName = options.refreshName ?? REFRESH_TOKEN_NAME
   }
 
   static isAuthenticatedResponse(
@@ -277,7 +279,7 @@ export class AdapterPlugin implements Plugin {
     this.sessionSecurePrefix = this.sessionIsSecure ? DEFAULT_SECURE_PREFIX : ''
     this.refreshSecurePrefix = this.refreshIsSecure ? DEFAULT_SECURE_PREFIX : ''
     this.cookieNamePrefix = options.cookieOptions?.name ?? this.cookieNamePrefix
-    this.sessionCookieName = options.sessionName ?? this.sessionCookieName
+    this.accessCookieName = options.sessionName ?? this.accessCookieName
     this.refreshCookieName = options.refreshName ?? this.refreshCookieName
 
     context.router.postHandle(this.handle.bind(this))
@@ -341,14 +343,17 @@ export class AdapterPlugin implements Plugin {
     session: Aponia.Session,
     request: Aponia.Request,
     response: Aponia.AuthenticatedResponse,
-  ): Promise<Aponia.Response> {
-    const sessionResponse: Aponia.Response = {}
-
+  ): Promise<Aponia.Response | Nullish> {
     const sessionValue = await this.adapter.encodeSession(session)
 
-    if (sessionValue == null) return sessionResponse
+    if (sessionValue == null) return undefined
 
-    const sessionName = `${this.sessionSecurePrefix}${this.cookieNamePrefix}.${this.sessionCookieName}`
+    const sessionResponse: Aponia.Response = {
+      status: 302,
+      redirect: '/',
+    }
+
+    const sessionName = `${this.sessionSecurePrefix}${this.cookieNamePrefix}.${this.accessCookieName}`
 
     sessionResponse.cookies ??= []
 
@@ -356,6 +361,7 @@ export class AdapterPlugin implements Plugin {
       name: sessionName,
       value: sessionValue,
       options: {
+        path: '/',
         ...this.options.cookieOptions?.serialize,
         ...this.options.sessionSerializeOptions,
       },
@@ -396,7 +402,7 @@ export class AdapterPlugin implements Plugin {
   }
 
   getSessionFromRequest(request: Aponia.Request): Awaitable<Aponia.Session | Nullish> {
-    const sessionCookieName = `${this.sessionSecurePrefix}${this.cookieNamePrefix}.${this.sessionCookieName}`
+    const sessionCookieName = `${this.sessionSecurePrefix}${this.cookieNamePrefix}.${this.accessCookieName}`
     const sessionCookie = request.cookies[sessionCookieName]
 
     if (sessionCookie == null) return

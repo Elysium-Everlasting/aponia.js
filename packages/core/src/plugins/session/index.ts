@@ -104,6 +104,7 @@ export class SessionPlugin implements Plugin {
 
   async parseSessionFromCookies(cookies: Record<string, string>): Promise<Aponia.Session | void> {
     const rawAccessToken = cookies[this.cookies.accessToken.name]
+    console.log({ rawAccessToken }, this.cookies.accessToken)
 
     if (rawAccessToken == null) {
       return
