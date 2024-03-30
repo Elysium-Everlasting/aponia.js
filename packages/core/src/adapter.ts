@@ -357,6 +357,10 @@ export class AdapterPlugin implements Plugin {
 
     sessionResponse.cookies ??= []
 
+    if (response.cookies != null) {
+      sessionResponse.cookies.push(...response.cookies)
+    }
+
     sessionResponse.cookies.push({
       name: sessionName,
       value: sessionValue,

@@ -354,6 +354,7 @@ export class OAuthProvider<T = any> implements Plugin {
     }
 
     const pkce = await this.checker.usePkce(request.cookies[this.cookies.pkce.name])
+
     if (pkce) {
       cookies.push({
         name: this.cookies.pkce.name,

@@ -196,7 +196,7 @@ const adapter: Adapter = {
       .values([
         {
           providerId: response.providerId,
-          providerAccountId: response.providerId,
+          providerAccountId: response.providerAccountId,
           userId: user.id,
         },
       ])
