@@ -3,10 +3,13 @@ import { mysqlTable, varchar } from 'drizzle-orm/mysql-core'
 import { user } from './user'
 
 export const account = mysqlTable('account', {
-  id: varchar('id', { length: 255 }).primaryKey(),
-  userId: varchar('user_id', { length: 255 })
-    .notNull()
+  userId: varchar('user_id', { length: 128 })
+    .primaryKey()
     .references(() => user.id),
-  providerId: varchar('provider_id', { length: 255 }),
-  providerAccountId: varchar('provider_account_id', { length: 255 }),
+
+  providerId: varchar('provider_id', { length: 128 }).primaryKey(),
+
+  providerType: varchar('provider_type', { length: 128 }),
+
+  providerAccountId: varchar('provider_account_id', { length: 128 }),
 })
