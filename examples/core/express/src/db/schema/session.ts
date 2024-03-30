@@ -1,17 +1,21 @@
 import { createId } from '@paralleldrive/cuid2'
-import { sql } from 'drizzle-orm'
-import { datetime, mysqlTable, varchar } from 'drizzle-orm/mysql-core'
+import { sql, type InferSelectModel } from 'drizzle-orm'
+import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 
 import { user } from './user'
 
-export const session = mysqlTable('session', {
-  id: varchar('id', { length: 128 }).primaryKey().$defaultFn(createId),
+export const session = sqliteTable('session', {
+  id: text('id').primaryKey().$defaultFn(createId),
 
-  userId: varchar('user_id', { length: 128 }).references(() => user.id),
+  userId: text('user_id')
+    .references(() => user.id)
+    .notNull(),
 
-  expires: datetime('expires').default(sql`CURRENT_TIMESTAMP`),
+  expires: integer('expires').default(sql`CURRENT_TIMESTAMP`),
 
-  status: varchar('status', { length: 128 }).default('active'),
+  status: text('status').default('active'),
 
-  refreshToken: varchar('id', { length: 128 }).primaryKey().$defaultFn(createId),
+  refreshToken: text('id').primaryKey().$defaultFn(createId),
 })
+
+export type Session = InferSelectModel<typeof session>

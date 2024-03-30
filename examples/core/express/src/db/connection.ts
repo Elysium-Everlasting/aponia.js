@@ -1,13 +1,6 @@
-import { drizzle } from 'drizzle-orm/mysql2'
-import mysql from 'mysql2/promise'
+import Database from 'better-sqlite3'
+import { drizzle } from 'drizzle-orm/better-sqlite3'
 
-import * as schema from './schema'
+const sqlite = new Database('sqlite.db')
 
-const connection = mysql.createPool({
-  host: 'localhost',
-  user: 'root',
-  database: 'drizzle',
-  password: 'root',
-})
-
-export const db = drizzle(connection, { mode: 'default', schema })
+export const db = drizzle(sqlite)

@@ -11,6 +11,7 @@ import express from 'express'
 
 import { db } from './db/connection'
 import { account } from './db/schema'
+import { session } from './db/schema/session'
 import { user } from './db/schema/user'
 
 config({ path: '../../../.env' })
@@ -101,7 +102,7 @@ const google = new OIDCProvider({
 })
 
 const adapter: Adapter = {
-  findAccount: async (request, response) => {
+  findAccount: async (_request, response) => {
     const existingAccounts = await db
       .select()
       .from(account)
@@ -115,17 +116,32 @@ const adapter: Adapter = {
     const existingAccount = existingAccounts[0]
 
     if (existingAccount === undefined) {
-      console.error('Account not found')
+      console.error('Existing account not found')
       return
     }
 
-    console.log('Account: ', response.account)
+    console.log('Found existing account: ', existingAccount)
+    return existingAccount
   },
-  getUserFromAccount: (_account, _request, _response) => {
-    return
+  getUserFromAccount: async (account, _request, _response) => {
+    const [existingUser] = await db.select().from(user).where(eq(user.id, account.userId))
+
+    if (existingUser == null) {
+      console.error('Failed to find existing user for account: ', account)
+      return
+    }
+
+    return existingUser
   },
-  createSession: (user, account, request, response) => {
-    console.log('CREATING SESSION: ', user, account, request, response)
+  createSession: async (user, account, _request, _response) => {
+    const [newSession] = await db.insert(session).values([]).returning()
+
+    if (newSession == null) {
+      console.error(`Failed to create new session for user: ${user} and account: ${account}`)
+      return
+    }
+
+    return newSession
   },
   /**
    * Some accounts have an associated email,
@@ -146,47 +162,60 @@ const adapter: Adapter = {
     if (githubAccount !== undefined) {
       console.log('Creating user for github account: ', githubAccount)
 
-      const newUsers = await db.insert(user).values([{}])
-
-      const newUser = newUsers[0]
+      const [newUser] = await db.insert(user).values([{}]).returning()
 
       if (newUser === undefined) {
         console.error('Failed to create user for account: ', response.providerAccountMapping)
         return
       }
 
-      const newAccount = await db.insert(account).values([
-        {
-          providerId: response.providerId,
-          providerAccountId: githubAccount.id,
-          userId: `${newUser.insertId}`,
-        },
-      ])
-
-      console.log('Account created: ', newAccount)
-
-      return
+      return newUser
     }
 
     console.error('Failed to create user for account: ', response.providerAccountMapping)
+    return
   },
-  findUserAccounts: (user, request, response) => {
-    console.log('FINDING USER ACCOUNTS: ', user, request, response)
+  findUserAccounts: async (user, _request, _response) => {
+    const userAccounts = await db
+      .select()
+      .from(account)
+      .where(and(eq(account.userId, user.id)))
+
+    return userAccounts
   },
-  createAccount: (user, request, response) => {
-    console.log('CREATING ACCOUNT: ', user, request, response)
+  createAccount: async (user, _request, response) => {
+    const [newAccount] = await db
+      .insert(account)
+      .values([
+        {
+          providerId: response.providerId,
+          providerAccountId: response.providerId,
+          userId: user.id,
+        },
+      ])
+      .returning()
+
+    if (newAccount == null) {
+      console.error('Failed to create new account for ', user)
+      return
+    }
+
+    console.log('Account created: ', newAccount)
+    return newAccount
   },
-  encodeSession: (session) => {
-    console.log('ENCODING SESSION :', session)
+  encodeSession: async (session) => {
+    const encodedSession = await jwtSession.encode(session)
+    return encodedSession
   },
-  decodeSession: (token) => {
-    console.log('DECODING SESSION: ', token)
+  decodeSession: async (token) => {
+    const decodedSession = await jwtSession.decode(token)
+    return decodedSession
   },
 }
 
 const adapterPlugin = new AdapterPlugin(adapter)
 
-const session = new JwtSessionPlugin()
+const jwtSession = new JwtSessionPlugin()
 
 const auth = new Auth({
   plugins: [github, google /*, session */, adapterPlugin],
@@ -202,7 +231,7 @@ async function main() {
   app.use(cookieParser())
 
   app.use(async (req, _res, next) => {
-    const parsedSession = await session.parseSessionFromCookies(req.cookies)
+    const parsedSession = await jwtSession.parseSessionFromCookies(req.cookies)
 
     console.log({ parsedSession })
 

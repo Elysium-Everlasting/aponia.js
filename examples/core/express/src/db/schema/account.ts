@@ -1,15 +1,26 @@
-import { mysqlTable, varchar } from 'drizzle-orm/mysql-core'
+import type { InferSelectModel } from 'drizzle-orm'
+import { primaryKey, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 
 import { user } from './user'
 
-export const account = mysqlTable('account', {
-  userId: varchar('user_id', { length: 128 })
-    .primaryKey()
-    .references(() => user.id),
+export const account = sqliteTable(
+  'account',
+  {
+    userId: text('user_id').references(() => user.id),
 
-  providerId: varchar('provider_id', { length: 128 }).primaryKey(),
+    providerId: text('provider_id'),
 
-  providerAccountId: varchar('provider_account_id', { length: 128 }).primaryKey(),
+    providerAccountId: text('provider_account_id'),
 
-  providerType: varchar('provider_type', { length: 128 }),
-})
+    providerType: text('provider_type'),
+  },
+  (table) => {
+    return {
+      primaryKey: primaryKey({
+        columns: [table.userId, table.providerId, table.providerAccountId],
+      }),
+    }
+  },
+)
+
+export type Account = InferSelectModel<typeof account>
