@@ -40,11 +40,13 @@ export const options = {
       message +
       '</h1>\n\t\t\t</div>\n\t\t</div>\n\t</body>\n</html>\n',
   },
-  version_hash: 'z1z258',
+  version_hash: '1g4md3q',
 }
 
 export async function get_hooks() {
-  return {}
+  return {
+    ...(await import('../../../src/hooks.server.ts')),
+  }
 }
 
 export {

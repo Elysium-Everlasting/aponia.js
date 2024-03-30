@@ -6,6 +6,9 @@ import {
   type CookieOption,
   type CreateCookiesOptions,
   DEFAULT_CREATE_COOKIES_OPTIONS,
+  type CookiesProxy,
+  type CookiesProxyParseOptions,
+  getCookieValue,
 } from '../../security/cookie'
 import type { Awaitable, Nullish } from '../../utils/types'
 import type { Plugin, PluginContext, PluginOptions } from '../plugin'
@@ -102,8 +105,11 @@ export class SessionPlugin implements Plugin {
     }
   }
 
-  async parseSessionFromCookies(cookies: Record<string, string>): Promise<Aponia.Session | void> {
-    const rawAccessToken = cookies[this.cookies.accessToken.name]
+  async parseSessionFromCookies(
+    cookies: Record<string, string> | CookiesProxy,
+    options?: CookiesProxyParseOptions,
+  ): Promise<Aponia.Session | void> {
+    const rawAccessToken = getCookieValue(cookies, this.cookies.accessToken.name, options)
 
     if (rawAccessToken == null) {
       return

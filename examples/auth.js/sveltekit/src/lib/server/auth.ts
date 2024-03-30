@@ -12,10 +12,7 @@ import { account } from './db/schema'
 import { session } from './db/schema/session'
 import { user } from './db/schema/user'
 
-const GITHUB_ID = process.env['GITHUB_ID'] ?? ''
-const GITHUB_SECRET = process.env['GITHUB_SECRET'] ?? ''
-const GOOGLE_ID = process.env['GOOGLE_ID'] ?? ''
-const GOOGLE_SECRET = process.env['GOOGLE_SECRET'] ?? ''
+import { GITHUB_ID, GITHUB_SECRET, GOOGLE_ID, GOOGLE_SECRET } from '$env/static/private'
 
 /**
  * GitHub provider based on [Auth.js's implementation](https://github.com/nextauthjs/next-auth/blob/main/packages/core/src/providers/github.ts)
@@ -163,7 +160,7 @@ const adapter: Adapter = {
 
 const adapterPlugin = new AdapterPlugin(adapter)
 
-const jwtSession = new JwtSessionPlugin()
+export const jwtSession = new JwtSessionPlugin()
 
 export const auth = new Auth({
   plugins: [github, google, adapterPlugin],

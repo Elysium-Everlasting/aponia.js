@@ -24,13 +24,19 @@
  * ```
  */
 declare module '$env/static/private' {
+  export const GOOGLE_ID: string
+  export const GOOGLE_SECRET: string
+  export const GITHUB_ID: string
+  export const GITHUB_SECRET: string
   export const SHELL: string
   export const npm_command: string
   export const LESS: string
   export const WSL2_GUI_APPS_ENABLED: string
+  export const TERM_PROGRAM_VERSION: string
   export const FNM_ARCH: string
   export const CONFIG_PROTECT_MASK: string
   export const WSL_DISTRO_NAME: string
+  export const TMUX: string
   export const NODE: string
   export const npm_package_devDependencies__sveltejs_adapter_node: string
   export const SSH_AUTH_SOCK: string
@@ -73,6 +79,7 @@ declare module '$env/static/private' {
   export const npm_package_type: string
   export const USER: string
   export const npm_config_frozen_lockfile: string
+  export const TMUX_PANE: string
   export const MANPAGER: string
   export const DISPLAY: string
   export const npm_lifecycle_event: string
@@ -87,8 +94,8 @@ declare module '$env/static/private' {
   export const npm_package_devDependencies_svelte: string
   export const LC_CTYPE: string
   export const XDG_RUNTIME_DIR: string
-  export const GCC_SPECS: string
   export const FNM_RESOLVE_ENGINES: string
+  export const GCC_SPECS: string
   export const NODE_PATH: string
   export const WSLENV: string
   export const BUN_INSTALL: string
@@ -111,6 +118,7 @@ declare module '$env/static/private' {
   export const npm_config_engine_strict: string
   export const FNM_LOGLEVEL: string
   export const OLDPWD: string
+  export const TERM_PROGRAM: string
   export const NODE_ENV: string
 }
 
@@ -141,13 +149,19 @@ declare module '$env/static/public' {}
  */
 declare module '$env/dynamic/private' {
   export const env: {
+    GOOGLE_ID: string
+    GOOGLE_SECRET: string
+    GITHUB_ID: string
+    GITHUB_SECRET: string
     SHELL: string
     npm_command: string
     LESS: string
     WSL2_GUI_APPS_ENABLED: string
+    TERM_PROGRAM_VERSION: string
     FNM_ARCH: string
     CONFIG_PROTECT_MASK: string
     WSL_DISTRO_NAME: string
+    TMUX: string
     NODE: string
     npm_package_devDependencies__sveltejs_adapter_node: string
     SSH_AUTH_SOCK: string
@@ -190,6 +204,7 @@ declare module '$env/dynamic/private' {
     npm_package_type: string
     USER: string
     npm_config_frozen_lockfile: string
+    TMUX_PANE: string
     MANPAGER: string
     DISPLAY: string
     npm_lifecycle_event: string
@@ -204,8 +219,8 @@ declare module '$env/dynamic/private' {
     npm_package_devDependencies_svelte: string
     LC_CTYPE: string
     XDG_RUNTIME_DIR: string
-    GCC_SPECS: string
     FNM_RESOLVE_ENGINES: string
+    GCC_SPECS: string
     NODE_PATH: string
     WSLENV: string
     BUN_INSTALL: string
@@ -228,6 +243,7 @@ declare module '$env/dynamic/private' {
     npm_config_engine_strict: string
     FNM_LOGLEVEL: string
     OLDPWD: string
+    TERM_PROGRAM: string
     NODE_ENV: string
     [key: `PUBLIC_${string}`]: undefined
     [key: `${string}`]: string | undefined
