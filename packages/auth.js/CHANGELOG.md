@@ -1,5 +1,16 @@
 # @aponia.js/auth.js
 
+## 0.4.1
+
+### Patch Changes
+
+- b354159: feat: add transformer to regular request
+
+  TODO: add general purpose transformer API
+
+- Updated dependencies [b354159]
+  - @aponia.js/core@0.4.1
+
 ## 0.4.0
 
 ### Minor Changes

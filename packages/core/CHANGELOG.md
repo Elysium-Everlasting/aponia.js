@@ -1,5 +1,13 @@
 # @aponia.js/core
 
+## 0.4.1
+
+### Patch Changes
+
+- b354159: feat: add transformer to regular request
+
+  TODO: add general purpose transformer API
+
 ## 0.4.0
 
 ### Minor Changes
