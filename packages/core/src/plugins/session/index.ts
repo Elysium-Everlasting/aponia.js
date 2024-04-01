@@ -6,14 +6,13 @@ import {
 } from '../../constants'
 import { Logger } from '../../logger'
 import {
-  getCookiePrefix,
   type Cookie,
   type CookieOption,
   type CreateCookiesOptions,
-  DEFAULT_CREATE_COOKIES_OPTIONS,
-  type CookiesProxy,
   type CookiesProxyParseOptions,
+  getCookiePrefix,
   getCookieValue,
+  DEFAULT_CREATE_COOKIES_OPTIONS,
 } from '../../security/cookie'
 import type { Awaitable, Nullish } from '../../utils/types'
 import type { Plugin, PluginContext, PluginOptions } from '../plugin'
@@ -62,7 +61,13 @@ export class SessionPlugin implements Plugin {
       },
     })
 
+    context.router.preHandle(this.preHandle.bind(this))
     context.router.postHandle(this.handle.bind(this))
+  }
+
+  async preHandle(request: Aponia.Request) {
+    request.getSession = async () => await this.getSession(request)
+    request.getRefresh = async () => await this.getRefresh(request)
   }
 
   async handle(_request: Aponia.Request, response?: Aponia.Response | Nullish): Promise<void> {
@@ -121,11 +126,11 @@ export class SessionPlugin implements Plugin {
     }
   }
 
-  async parseSessionFromCookies(
-    cookies: Record<string, string> | CookiesProxy,
+  async getSession(
+    request: Aponia.Request,
     options?: CookiesProxyParseOptions,
   ): Promise<Aponia.Session | Nullish> {
-    const rawAccessToken = getCookieValue(cookies, this.cookies.accessToken.name, options)
+    const rawAccessToken = getCookieValue(request.cookies, this.cookies.accessToken.name, options)
 
     if (rawAccessToken == null) {
       return
@@ -139,11 +144,11 @@ export class SessionPlugin implements Plugin {
     }
   }
 
-  async parseRefreshFromCookies(
-    cookies: Record<string, string> | CookiesProxy,
+  async getRefresh(
+    request: Aponia.Request,
     options?: CookiesProxyParseOptions,
   ): Promise<Aponia.Refresh | Nullish> {
-    const rawAccessToken = getCookieValue(cookies, this.cookies.refreshToken.name, options)
+    const rawAccessToken = getCookieValue(request.cookies, this.cookies.refreshToken.name, options)
 
     if (rawAccessToken == null) {
       return
