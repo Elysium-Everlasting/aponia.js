@@ -1,5 +1,14 @@
 # @examples/auth.js-express
 
+## 0.1.4
+
+### Patch Changes
+
+- Updated dependencies [8481d76]
+- Updated dependencies [40f7854]
+  - @aponia.js/auth.js@0.4.0
+  - @aponia.js/core@0.4.0
+
 ## 0.1.3
 
 ### Patch Changes

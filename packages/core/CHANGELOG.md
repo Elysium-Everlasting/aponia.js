@@ -1,5 +1,12 @@
 # @aponia.js/core
 
+## 0.4.0
+
+### Minor Changes
+
+- 8481d76: feat: credentials plugin, logout plugin, session
+- 40f7854: feat: logout plugin
+
 ## 0.3.2
 
 ### Patch Changes
