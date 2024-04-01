@@ -123,62 +123,7 @@ export interface Adapter {
 }
 
 /**
- * Supplemental adapter for refreshing sessions.
- * (PRE) indicates that the method is called before any provider handling.
- * (POST) indicates that the method is called after any provider handling.
  */
-export interface RefreshAdapter {
-  /**
-   * (PRE)
-   * Get the session from the request.
-   */
-  getSessionFromRequest: (request: Aponia.Request) => Awaitable<Aponia.Session | Nullish>
-
-  /**
-   * (PRE)
-   * 1. No session is found in the request.
-   * 2. Get the refresh token from the request.
-   */
-  getRefreshFromRequest: (request: Aponia.Request) => Awaitable<string | Nullish>
-
-  /**
-   * (PRE)
-   * 1. No session is found in the request.
-   * 2. Get the refresh token from the request.
-   * 3. Decode the refresh token.
-   */
-  decodeRefresh: (refresh: string, request: Aponia.Request) => Awaitable<Aponia.Refresh | Nullish>
-
-  /**
-   * (PRE)
-   * 1. No session is found in the request.
-   * 2. Get the refresh token from the request.
-   * 3. Decode the refresh token.
-   * 4. Refresh the session.
-   */
-  renewSession: (
-    refresh: Aponia.Refresh,
-    request: Aponia.Request,
-  ) => Awaitable<Aponia.Session | Nullish>
-
-  /**
-   * (POST)
-   */
-  createRefresh: (
-    session: Aponia.Session,
-    request: Aponia.Request,
-    response: Aponia.AuthenticatedResponse,
-  ) => Awaitable<Aponia.Refresh | Nullish>
-
-  /**
-   */
-  encodeRefresh: (
-    refresh: Aponia.Refresh,
-    request: Aponia.Request,
-    response: Aponia.AuthenticatedResponse,
-  ) => Awaitable<string>
-}
-
 export interface AdapterPluginOptions extends PluginOptions {}
 
 /**
@@ -188,7 +133,7 @@ export class AdapterPlugin implements Plugin {
 
   options: AdapterPluginOptions
 
-  constructor(adapter: Adapter, refresh?: RefreshAdapter, options: AdapterPluginOptions = {}) {
+  constructor(adapter: Adapter, options: AdapterPluginOptions = {}) {
     this.adapter = adapter
     this.options = options
   }

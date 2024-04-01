@@ -1,4 +1,4 @@
-import { ACCESS_TOKEN_NAME, DEFAULT_ACCESS_TOKEN_AGE } from '../../constants'
+import { DEFAULT_REFRESH_TOKEN_AGE, REFRESH_TOKEN_NAME } from '../../constants'
 import { Logger } from '../../logger'
 import {
   getCookiePrefix,
@@ -13,29 +13,29 @@ import {
 import type { Awaitable, Nullish } from '../../utils/types'
 import type { Plugin, PluginContext, PluginOptions } from '../plugin'
 
-export type SessionEncoder = (session: Aponia.Session) => Awaitable<string>
+export type RefreshEncoder = (refresh: Aponia.Refresh) => Awaitable<string>
 
-export type SessionDecoder = (token: string) => Awaitable<Aponia.Session | Nullish>
+export type RefreshDecoder = (token: string) => Awaitable<Aponia.Refresh | Nullish>
 
-export interface SessionPluginConfig {
+export interface RefreshPluginConfig {
   logger?: Logger
-  encode?: SessionEncoder
-  decode?: SessionDecoder
+  encode?: RefreshEncoder
+  decode?: RefreshDecoder
   cookie?: CreateCookiesOptions
 }
 
-export class SessionPlugin implements Plugin {
-  config: SessionPluginConfig
+export class RefreshPlugin implements Plugin {
+  config: RefreshPluginConfig
 
   logger: Logger
 
-  encode: SessionEncoder
+  encode: RefreshEncoder
 
-  decode: SessionDecoder
+  decode: RefreshDecoder
 
-  cookies: SessionCookiesOptions
+  cookies: RefreshCookiesOptions
 
-  constructor(config: SessionPluginConfig = {}) {
+  constructor(config: RefreshPluginConfig = {}) {
     this.config = config
     this.logger = config.logger ?? new Logger()
     this.encode = config.encode ?? JSON.stringify
@@ -48,7 +48,7 @@ export class SessionPlugin implements Plugin {
       this.logger = options.logger
     }
 
-    this.cookies = createSessionCookiesOptions({
+    this.cookies = createRefreshCookiesOptions({
       ...DEFAULT_CREATE_COOKIES_OPTIONS,
       ...options,
       serialize: {
@@ -62,8 +62,8 @@ export class SessionPlugin implements Plugin {
 
   async handle(_request: Aponia.Request, response?: Aponia.Response | Nullish): Promise<void> {
     try {
-      if (response?.session != null) {
-        const cookies = await this.createCookiesFromSession(response.session)
+      if (response?.refresh != null) {
+        const cookies = await this.createCookiesFromRefresh(response.refresh)
         response.cookies ??= []
         response.cookies.push(...cookies)
       }
@@ -72,14 +72,14 @@ export class SessionPlugin implements Plugin {
     }
   }
 
-  async createCookiesFromSession(session: Aponia.Session): Promise<Cookie[]> {
+  async createCookiesFromRefresh(session: Aponia.Session): Promise<Cookie[]> {
     try {
       const accessToken = await this.encode(session)
 
       const sessionCookie: Cookie = {
-        name: this.cookies.accessToken.name,
+        name: this.cookies.refreshToken.name,
         value: accessToken,
-        options: this.cookies.accessToken.options,
+        options: this.cookies.refreshToken.options,
       }
 
       return [sessionCookie]
@@ -89,11 +89,11 @@ export class SessionPlugin implements Plugin {
     }
   }
 
-  async parseSessionFromCookies(
+  async parseRefreshFromCookies(
     cookies: Record<string, string> | CookiesProxy,
     options?: CookiesProxyParseOptions,
-  ): Promise<Aponia.Session | Nullish> {
-    const rawAccessToken = getCookieValue(cookies, this.cookies.accessToken.name, options)
+  ): Promise<Aponia.Refresh | Nullish> {
+    const rawAccessToken = getCookieValue(cookies, this.cookies.refreshToken.name, options)
 
     if (rawAccessToken == null) {
       return
@@ -108,25 +108,25 @@ export class SessionPlugin implements Plugin {
   }
 }
 
-export interface SessionCookiesOptions {
-  accessToken: CookieOption
+export interface RefreshCookiesOptions {
+  refreshToken: CookieOption
 }
 
-export function createSessionCookiesOptions(options?: CreateCookiesOptions): SessionCookiesOptions {
+export function createRefreshCookiesOptions(options?: CreateCookiesOptions): RefreshCookiesOptions {
   const cookiePrefix = getCookiePrefix(options)
   const serializeOptions = { ...options?.serialize }
 
   return {
-    accessToken: {
-      name: `${cookiePrefix}.${ACCESS_TOKEN_NAME}`,
+    refreshToken: {
+      name: `${cookiePrefix}.${REFRESH_TOKEN_NAME}`,
       options: {
-        maxAge: DEFAULT_ACCESS_TOKEN_AGE,
+        maxAge: DEFAULT_REFRESH_TOKEN_AGE,
         ...serializeOptions,
       },
     },
   }
 }
 
-export const DEFAULT_SESSION_COOKIES_OPTIONS = createSessionCookiesOptions(
+export const DEFAULT_SESSION_COOKIES_OPTIONS = createRefreshCookiesOptions(
   DEFAULT_CREATE_COOKIES_OPTIONS,
 )
