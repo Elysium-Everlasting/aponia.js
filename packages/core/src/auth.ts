@@ -1,7 +1,8 @@
 import { Logger } from './logger'
 import type { Plugin, PluginContext, PluginOptions } from './plugins/plugin'
 import { Router, type Method } from './router'
-import type { CreateCookiesOptions } from './security/cookie'
+import { serializeCookie, type CreateCookiesOptions } from './security/cookie'
+import type { Nullish } from './utils/types'
 
 export interface AuthConfig {
   logger?: Logger
@@ -19,7 +20,7 @@ export class Auth {
   ]
 
   public static responseIsDefined(
-    response: Aponia.Response | undefined,
+    response?: Aponia.Response | Nullish,
   ): response is Aponia.Response {
     return response != null && Auth.definedResponseKeys.some((k) => response[k] != null)
   }
@@ -95,7 +96,31 @@ export class Auth {
     return response
   }
 
-  public responseIsDefined = Auth.responseIsDefined
+  public toResponse(authResponse?: Aponia.Response | Nullish): Response | undefined {
+    if (!Auth.responseIsDefined(authResponse)) {
+      return undefined
+    }
+
+    const body = authResponse.body
+      ? JSON.stringify(authResponse.body)
+      : authResponse.error
+      ? authResponse.error.message
+      : undefined
+
+    const headers = new Headers()
+
+    if (authResponse.redirect) {
+      headers.set('Location', authResponse.redirect)
+    }
+
+    authResponse.cookies?.forEach((cookie) => {
+      const cookieString = serializeCookie(cookie.name, cookie.value, cookie.options)
+      headers.append('Set-Cookie', cookieString)
+    })
+
+    const response = new Response(body, { status: authResponse.status, headers })
+    return response
+  }
 }
 
 export function createAuth(config: AuthConfig): Auth {
