@@ -1,13 +1,14 @@
-import { DEFAULT_REFRESH_TOKEN_AGE, REFRESH_TOKEN_NAME } from '../../constants'
-import { Logger } from '../../logger'
+import { DEFAULT_REFRESH_TOKEN_AGE, REFRESH_TOKEN_NAME } from '../constants'
+import { Logger } from '../logger'
 import {
   getCookiePrefix,
   type CookieOption,
   type CreateCookiesOptions,
   DEFAULT_CREATE_COOKIES_OPTIONS,
-} from '../../security/cookie'
-import type { Plugin, PluginContext, PluginOptions } from '../plugin'
-import { createSessionCookiesOptions } from '../session'
+} from '../security/cookie'
+
+import type { Plugin, PluginContext, PluginOptions } from './plugin'
+import { createSessionCookiesOptions } from './session'
 
 export interface LogoutPluginConfig {
   logger?: Logger
@@ -29,11 +30,11 @@ export class LogoutPlugin implements Plugin {
 
   logoutRoute: string
 
-  constructor(config: LogoutPluginConfig) {
+  constructor(config?: LogoutPluginConfig) {
     this.cookies = DEFAULT_LOGOUT_COOKIES_OPTIONS
-    this.logger = config.logger ?? new Logger()
-    this.logoutRoute = config.logoutRoute ?? '/auth/logout'
-    this.redirectRoute = config.redirectRoute ?? '/'
+    this.logger = config?.logger ?? new Logger()
+    this.logoutRoute = config?.logoutRoute ?? '/auth/logout'
+    this.redirectRoute = config?.redirectRoute ?? '/'
   }
 
   async initialize(context: PluginContext, options: PluginOptions): Promise<void> {
@@ -65,8 +66,8 @@ export class LogoutPlugin implements Plugin {
       name: this.cookies.accessToken.name,
       value: '',
       options: {
-        maxAge: 0,
         ...this.cookies.accessToken.options,
+        maxAge: 0,
       },
     })
 
@@ -74,8 +75,8 @@ export class LogoutPlugin implements Plugin {
       name: this.cookies.refreshToken.name,
       value: '',
       options: {
-        maxAge: 0,
         ...this.cookies.refreshToken.options,
+        maxAge: 0,
       },
     })
 

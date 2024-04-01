@@ -2,6 +2,7 @@ import { OAuthProvider } from '@aponia.js/auth.js/providers/oauth'
 import { OIDCProvider } from '@aponia.js/auth.js/providers/oidc'
 import { type Adapter, AdapterPlugin } from '@aponia.js/core/adapter'
 import { Auth } from '@aponia.js/core/auth'
+import { LogoutPlugin } from '@aponia.js/core/plugins/logout'
 import { JwtSessionPlugin } from '@aponia.js/core/plugins/session/jwt'
 import GitHub from '@auth/core/providers/github'
 import Google from '@auth/core/providers/google'
@@ -148,20 +149,14 @@ const adapter: Adapter = {
     console.log('Account created: ', newAccount)
     return newAccount
   },
-  encodeSession: async (session) => {
-    const encodedSession = await jwtSession.encode(session)
-    return encodedSession
-  },
-  decodeSession: async (token) => {
-    const decodedSession = await jwtSession.decode(token)
-    return decodedSession
-  },
 }
 
 const adapterPlugin = new AdapterPlugin(adapter)
 
 export const jwtSession = new JwtSessionPlugin()
 
+export const logoutPlugin = new LogoutPlugin()
+
 export const auth = new Auth({
-  plugins: [github, google, adapterPlugin],
+  plugins: [github, google, adapterPlugin, jwtSession, logoutPlugin],
 })

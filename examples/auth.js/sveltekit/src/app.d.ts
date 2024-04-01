@@ -24,6 +24,11 @@ declare global {
   }
 
   namespace App {
+    interface Locals {
+      getSession: () => Promise<Aponia.Session | undefined>
+      getRefresh: () => Promise<Aponia.Refresh | undefined>
+    }
+
     interface PageData {
       session?: Aponia.Session
     }

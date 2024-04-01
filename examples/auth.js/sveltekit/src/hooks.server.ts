@@ -1,15 +1,20 @@
 import type { Handle } from '@sveltejs/kit'
 import { sequence } from '@sveltejs/kit/hooks'
 
-import { auth } from '$lib/server/auth'
+import { auth, jwtSession } from '$lib/server/auth'
 
 const authHandle: Handle = async ({ event, resolve }) => {
-  const authResponse = await auth.handle({
+  const request: Aponia.RequestInput = {
     url: event.url,
     method: event.request.method,
     headers: event.request.headers,
     cookies: event.cookies,
-  })
+  }
+
+  const authResponse = await auth.handle(request)
+
+  event.locals.getSession = async () => (await jwtSession.getSession(request)) ?? undefined
+  event.locals.getRefresh = async () => (await jwtSession.getRefresh(request)) ?? undefined
 
   if (authResponse == null) {
     return await resolve(event)
