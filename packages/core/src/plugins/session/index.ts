@@ -17,13 +17,10 @@ export type SessionEncoder = (session: Aponia.Session) => Awaitable<string>
 
 export type SessionDecoder = (token: string) => Awaitable<Aponia.Session | undefined>
 
-export type SessionGetter = (response: Aponia.Response) => Awaitable<Aponia.Session | undefined>
-
 export interface SessionPluginConfig {
   logger?: Logger
   encode?: SessionEncoder
   decode?: SessionDecoder
-  getter?: SessionGetter
   cookie?: CreateCookiesOptions
 }
 
@@ -36,8 +33,6 @@ export class SessionPlugin implements Plugin {
 
   decode: SessionDecoder
 
-  getter?: SessionGetter
-
   cookies: SessionCookiesOptions
 
   constructor(config: SessionPluginConfig = {}) {
@@ -45,7 +40,6 @@ export class SessionPlugin implements Plugin {
     this.logger = config.logger ?? new Logger()
     this.encode = config.encode ?? JSON.stringify
     this.decode = config.decode ?? JSON.parse
-    this.getter = config.getter
     this.cookies = DEFAULT_SESSION_COOKIES_OPTIONS
   }
 
@@ -72,20 +66,14 @@ export class SessionPlugin implements Plugin {
     }
 
     try {
-      const session = await this.getSessionFromResponse(response)
-
-      if (session != null) {
-        const cookies = await this.createCookiesFromSession(session)
+      if (response.session != null) {
+        const cookies = await this.createCookiesFromSession(response.session)
         response.cookies ??= []
         response.cookies.push(...cookies)
       }
     } catch (error) {
       this.logger.error(error)
     }
-  }
-
-  async getSessionFromResponse(response: Aponia.Response): Promise<Aponia.Session | undefined> {
-    return this.getter?.(response) ?? response.account
   }
 
   async createCookiesFromSession(session: Aponia.Session): Promise<Cookie[]> {

@@ -95,6 +95,16 @@ export interface AponiaResponse {
    * The ID of the account from the provider's platform.
    */
   providerAccountId?: string
+
+  /**
+   * A session might be set in the response by a plugin.
+   */
+  session?: Aponia.Session
+
+  /**
+   * The refresh information might be set in the response by a plugin.
+   */
+  refresh?: Aponia.Refresh
 }
 
 /**

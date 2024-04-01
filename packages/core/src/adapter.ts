@@ -1,12 +1,6 @@
 import './types'
-import {
-  DEFAULT_COOKIE_NAME,
-  DEFAULT_SECURE_PREFIX,
-  ACCESS_TOKEN_NAME,
-  REFRESH_TOKEN_NAME,
-} from './constants'
+
 import type { Plugin, PluginContext, PluginOptions } from './plugins/plugin'
-import { getCookieValue, type CookieSerializeOptions } from './security/cookie'
 import type { Awaitable, Nullish } from './utils/types'
 
 export type AuthenticatedResponse = Required<
@@ -126,14 +120,6 @@ export interface Adapter {
     request: Aponia.Request,
     response: Aponia.AuthenticatedResponse,
   ) => Awaitable<any>
-
-  /**
-   */
-  encodeSession: (session: Aponia.Session) => Awaitable<string | Nullish>
-
-  /**
-   */
-  decodeSession: (session: string) => Awaitable<Aponia.Session | Nullish>
 }
 
 /**
@@ -193,60 +179,18 @@ export interface RefreshAdapter {
   ) => Awaitable<string>
 }
 
-export interface AdapterPluginOptions extends PluginOptions {
-  /**
-   */
-  sessionSerializeOptions?: CookieSerializeOptions
-
-  /**
-   * @default {@link DEFAULT_SESSION_COOKIE_NAME}
-   */
-  sessionName?: string
-
-  /**
-   */
-  refreshSerializeOptions?: CookieSerializeOptions
-
-  /**
-   * @default {@link DEFAULT_REFRESH_COOKIE_NAME}
-   */
-  refreshName?: string
-}
+export interface AdapterPluginOptions extends PluginOptions {}
 
 /**
  */
 export class AdapterPlugin implements Plugin {
   adapter: Adapter
 
-  refresh?: RefreshAdapter
-
   options: AdapterPluginOptions
-
-  sessionIsSecure: boolean
-
-  refreshIsSecure: boolean
-
-  sessionSecurePrefix: string
-
-  refreshSecurePrefix: string
-
-  cookieNamePrefix: string
-
-  accessCookieName: string
-
-  refreshCookieName: string
 
   constructor(adapter: Adapter, refresh?: RefreshAdapter, options: AdapterPluginOptions = {}) {
     this.adapter = adapter
-    this.refresh = refresh
     this.options = options
-    this.sessionIsSecure = options.sessionSerializeOptions?.secure ?? false
-    this.refreshIsSecure = options.refreshSerializeOptions?.secure ?? false
-    this.sessionSecurePrefix = this.sessionIsSecure ? DEFAULT_SECURE_PREFIX : ''
-    this.refreshSecurePrefix = this.refreshIsSecure ? DEFAULT_SECURE_PREFIX : ''
-    this.cookieNamePrefix = options.cookieOptions?.name ?? DEFAULT_COOKIE_NAME
-    this.accessCookieName = options.sessionName ?? ACCESS_TOKEN_NAME
-    this.refreshCookieName = options.refreshName ?? REFRESH_TOKEN_NAME
   }
 
   static isAuthenticatedResponse(
@@ -262,26 +206,6 @@ export class AdapterPlugin implements Plugin {
 
   initialize(context: PluginContext, options: AdapterPluginOptions) {
     this.options = { ...this.options, ...options }
-
-    if (options.cookieOptions?.serialize?.secure != null) {
-      this.sessionIsSecure = options.cookieOptions.serialize.secure
-      this.refreshIsSecure = options.cookieOptions.serialize.secure
-    }
-
-    if (options.sessionSerializeOptions?.secure != null) {
-      this.sessionIsSecure = options.sessionSerializeOptions.secure
-    }
-
-    if (options.refreshSerializeOptions?.secure != null) {
-      this.refreshIsSecure = options.refreshSerializeOptions.secure
-    }
-
-    this.sessionSecurePrefix = this.sessionIsSecure ? DEFAULT_SECURE_PREFIX : ''
-    this.refreshSecurePrefix = this.refreshIsSecure ? DEFAULT_SECURE_PREFIX : ''
-    this.cookieNamePrefix = options.cookieOptions?.name ?? this.cookieNamePrefix
-    this.accessCookieName = options.sessionName ?? this.accessCookieName
-    this.refreshCookieName = options.refreshName ?? this.refreshCookieName
-
     context.router.postHandle(this.handle.bind(this))
   }
 
@@ -301,9 +225,11 @@ export class AdapterPlugin implements Plugin {
 
       const session = await this.adapter.createSession(user, account, request, response)
 
-      return session != null
-        ? await this.createSessionResponse(session, request, response)
-        : undefined
+      if (session != null) {
+        response.session = session
+      }
+
+      return response
     }
 
     let user = await this.adapter.findUser(request, response)
@@ -334,63 +260,11 @@ export class AdapterPlugin implements Plugin {
 
     const session = await this.adapter.createSession(user, account, request, response)
 
-    return session != null
-      ? await this.createSessionResponse(session, request, response)
-      : undefined
-  }
-
-  async createSessionResponse(
-    session: Aponia.Session,
-    request: Aponia.Request,
-    response: Aponia.AuthenticatedResponse,
-  ): Promise<Aponia.Response | Nullish> {
-    const sessionValue = await this.adapter.encodeSession(session)
-
-    if (sessionValue == null) return undefined
-
-    const sessionResponse: Aponia.Response = {
-      status: 302,
-      redirect: '/',
+    if (session) {
+      response.session = session
     }
 
-    const sessionName = `${this.sessionSecurePrefix}${this.cookieNamePrefix}.${this.accessCookieName}`
-
-    sessionResponse.cookies ??= []
-
-    if (response.cookies != null) {
-      sessionResponse.cookies.push(...response.cookies)
-    }
-
-    sessionResponse.cookies.push({
-      name: sessionName,
-      value: sessionValue,
-      options: {
-        path: '/',
-        ...this.options.cookieOptions?.serialize,
-        ...this.options.sessionSerializeOptions,
-      },
-    })
-
-    if (this.refresh == null) return sessionResponse
-
-    const refresh = await this.refresh.createRefresh(session, request, response)
-
-    if (refresh == null) {
-      return sessionResponse
-    }
-
-    const refreshValue = await this.refresh.encodeRefresh(refresh, request, response)
-
-    if (refreshValue == null) return sessionResponse
-
-    const refreshName = `${this.refreshSecurePrefix}${this.cookieNamePrefix}.${this.refreshCookieName}`
-
-    sessionResponse.cookies.push({
-      name: refreshName,
-      value: refreshValue,
-    })
-
-    return sessionResponse
+    return response
   }
 
   handleMultipleAccounts(
@@ -403,15 +277,6 @@ export class AdapterPlugin implements Plugin {
       throw new Error('Multiple accounts found')
     }
     return this.adapter.handleMultipleAccounts(user, accounts, request, response)
-  }
-
-  getSessionFromRequest(request: Aponia.Request): Awaitable<Aponia.Session | Nullish> {
-    const sessionCookieName = `${this.sessionSecurePrefix}${this.cookieNamePrefix}.${this.accessCookieName}`
-    const sessionCookie = getCookieValue(request.cookies, sessionCookieName)
-
-    if (sessionCookie == null) return
-
-    return this.adapter.decodeSession(sessionCookie)
   }
 }
 
