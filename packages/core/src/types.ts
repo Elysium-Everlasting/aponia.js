@@ -161,6 +161,8 @@ declare global {
     interface Response extends Omit<AponiaResponse, 'account' | 'providerAccountMapping'> {
       account?: Aponia.ProviderAccount
       providerAccountMapping?: Aponia.ProviderAccountMapping
+      getSession?: () => Promise<Aponia.Session | Nullish>
+      getRefresh?: () => Promise<Aponia.Refresh | Nullish>
     }
 
     interface AuthenticatedResponse

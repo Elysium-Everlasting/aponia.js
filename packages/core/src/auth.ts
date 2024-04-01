@@ -18,7 +18,10 @@ export class Auth {
 
   router: Router
 
+  config: AuthConfig
+
   constructor(config: AuthConfig = {}) {
+    this.config = config
     this.logger = config.logger ?? new Logger()
     this.cookies = config.cookies
     this.plugins = config.plugins ?? []
@@ -57,11 +60,21 @@ export class Auth {
 
     let response = (await mainHandler?.(request)) ?? undefined
 
+    if (response != null) {
+      response.getSession ??= request.getSession
+      response.getRefresh ??= request.getRefresh
+    }
+
     for (const postHandler of postHandlers) {
       const modifiedResponse = await postHandler(request, response)
       if (modifiedResponse) {
         response = modifiedResponse
       }
+    }
+
+    if (response != null) {
+      response.getSession ??= request.getSession
+      response.getRefresh ??= request.getRefresh
     }
 
     return response ?? undefined
