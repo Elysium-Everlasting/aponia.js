@@ -129,7 +129,7 @@ export class SessionPlugin implements Plugin {
   async getSession(
     request: Aponia.Request,
     options?: CookiesProxyParseOptions,
-  ): Promise<Aponia.Session | Nullish> {
+  ): Promise<Aponia.Session | undefined> {
     const rawAccessToken = getCookieValue(request.cookies, this.cookies.accessToken.name, options)
 
     if (rawAccessToken == null) {
@@ -138,16 +138,17 @@ export class SessionPlugin implements Plugin {
 
     try {
       const accessToken = await this.decode(rawAccessToken)
-      return accessToken
+      return accessToken ?? undefined
     } catch (error) {
       this.logger.error(error)
+      return
     }
   }
 
   async getRefresh(
     request: Aponia.Request,
     options?: CookiesProxyParseOptions,
-  ): Promise<Aponia.Refresh | Nullish> {
+  ): Promise<Aponia.Refresh | undefined> {
     const rawAccessToken = getCookieValue(request.cookies, this.cookies.refreshToken.name, options)
 
     if (rawAccessToken == null) {
@@ -156,9 +157,10 @@ export class SessionPlugin implements Plugin {
 
     try {
       const accessToken = await this.decode(rawAccessToken)
-      return accessToken
+      return accessToken ?? undefined
     } catch (error) {
       this.logger.error(error)
+      return
     }
   }
 }

@@ -1,9 +1,24 @@
 <script lang="ts">
-  import  { page } from '$app/stores'
+  import { invalidateAll } from '$app/navigation'
+  import { page } from '$app/stores'
 
   export let data
 
   $: session = $page.data.session ?? data.session
+
+  async function send() {
+    const response = await fetch('/auth/login/credentials', {
+      method: 'POST',
+      body: JSON.stringify({
+        username: 'user',
+        password: 'pass',
+      }),
+    })
+
+    console.log('response: ', response)
+
+    invalidateAll()
+  }
 </script>
 
 <div>
@@ -15,4 +30,6 @@
   <form action="/auth/logout" method="post">
     <button type="submit">Logout</button>
   </form>
+
+  <button on:click={send}>Send credentials</button>
 </div>

@@ -3,6 +3,7 @@ import { OIDCProvider } from '@aponia.js/auth.js/providers/oidc'
 import { type Adapter, AdapterPlugin } from '@aponia.js/core/adapter'
 import { Auth } from '@aponia.js/core/auth'
 import { LogoutPlugin } from '@aponia.js/core/plugins/logout'
+import { CredentialsProvider } from '@aponia.js/core/plugins/providers/credentials'
 import { JwtSessionPlugin } from '@aponia.js/core/plugins/session/jwt'
 import GitHub from '@auth/core/providers/github'
 import Google from '@auth/core/providers/google'
@@ -33,6 +34,29 @@ const google = new OIDCProvider(
     clientSecret: GOOGLE_SECRET,
   }),
 )
+
+const credentials = new CredentialsProvider({
+  login: async (request) => {
+    const body = await request.event.request.json()
+
+    return {
+      status: 302,
+      redirect: '/',
+      body,
+      session: {
+        id: 'ID',
+        userId: 'USER ID',
+        status: '',
+        expires: Date.now(),
+        refreshToken: '',
+      },
+    }
+  },
+  signup: async (request) => {
+    const body = await request.event.request.json()
+    return { status: 200, body }
+  },
+})
 
 const adapter: Adapter = {
   findAccount: async (_request, response) => {
@@ -153,10 +177,10 @@ const adapter: Adapter = {
 
 const adapterPlugin = new AdapterPlugin(adapter)
 
-export const jwtSession = new JwtSessionPlugin()
+const jwt = new JwtSessionPlugin()
 
-export const logoutPlugin = new LogoutPlugin()
+const logout = new LogoutPlugin()
 
 export const auth = new Auth({
-  plugins: [github, google, adapterPlugin, jwtSession, logoutPlugin],
+  plugins: [github, google, credentials, adapterPlugin, jwt, logout],
 })

@@ -154,15 +154,15 @@ declare global {
     interface RequestInput extends AponiaRequestInput {}
 
     interface Request extends Aponia.RequestInput {
-      getSession?: () => Promise<Aponia.Session | Nullish>
-      getRefresh?: () => Promise<Aponia.Refresh | Nullish>
+      getSession?: () => Promise<Aponia.Session | undefined>
+      getRefresh?: () => Promise<Aponia.Refresh | undefined>
     }
 
     interface Response extends Omit<AponiaResponse, 'account' | 'providerAccountMapping'> {
       account?: Aponia.ProviderAccount
       providerAccountMapping?: Aponia.ProviderAccountMapping
-      getSession?: () => Promise<Aponia.Session | Nullish>
-      getRefresh?: () => Promise<Aponia.Refresh | Nullish>
+      getSession?: () => Promise<Aponia.Session | undefined>
+      getRefresh?: () => Promise<Aponia.Refresh | undefined>
     }
 
     interface AuthenticatedResponse

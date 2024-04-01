@@ -10,6 +10,20 @@ export interface AuthConfig {
 }
 
 export class Auth {
+  public static definedResponseKeys: Array<keyof Aponia.Response> = [
+    'body',
+    'error',
+    'status',
+    'cookies',
+    'redirect',
+  ]
+
+  public static responseIsDefined(
+    response: Aponia.Response | undefined,
+  ): response is Aponia.Response {
+    return response != null && Auth.definedResponseKeys.some((k) => response[k] != null)
+  }
+
   logger: Logger
 
   cookies?: CreateCookiesOptions
@@ -72,13 +86,16 @@ export class Auth {
       }
     }
 
-    if (response != null) {
+    if (response != null || request.getSession || request.getRefresh) {
+      response ??= {}
       response.getSession ??= request.getSession
       response.getRefresh ??= request.getRefresh
     }
 
-    return response ?? undefined
+    return response
   }
+
+  public responseIsDefined = Auth.responseIsDefined
 }
 
 export function createAuth(config: AuthConfig): Auth {
