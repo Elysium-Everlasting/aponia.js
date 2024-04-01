@@ -27,12 +27,44 @@
       "require": "./src/*.ts",
       "import": "./src/*.ts",
       "types": "./src/*.ts"
+    },
+    "./logout": {
+      "require": "./src/plugins/logout.ts",
+      "import": "./src/plugins/logout.ts",
+      "types": "./src/plugins/logout.ts"
+    },
+    "./session": {
+      "require": "./src/plugins/session",
+      "import": "./src/plugins/session",
+      "types": "./src/plugins/session"
+    },
+    "./session/*": {
+      "require": "./src/plugins/session/*.ts",
+      "import": "./src/plugins/session/*.ts",
+      "types": "./src/plugins/session/*.ts"
+    },
+    "./providers/*": {
+      "require": "./src/plugins/providers/*.ts",
+      "import": "./src/plugins/providers/*.ts",
+      "types": "./src/plugins/providers/*.ts"
     }
   },
   "typesVersions": {
     "*": {
       "*": [
         "./src/*.ts"
+      ],
+      "./logout": [
+        "./src/plugins/logout.ts"
+      ],
+      "./session": [
+        "./src/plugins/session/index.ts"
+      ],
+      "./session/*": [
+        "./src/plugins/session/*.ts"
+      ],
+      "./providers": [
+        "./src/plugins/providers/*.ts"
       ]
     }
   },
