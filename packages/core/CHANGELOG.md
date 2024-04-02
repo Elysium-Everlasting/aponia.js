@@ -1,5 +1,11 @@
 # @aponia.js/core
 
+## 0.4.4
+
+### Patch Changes
+
+- 8c2b6c2: fix types
+
 ## 0.4.3
 
 ### Patch Changes
