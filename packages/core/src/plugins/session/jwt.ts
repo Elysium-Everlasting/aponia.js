@@ -19,8 +19,10 @@ export class JwtSessionPlugin extends SessionPlugin {
     config.cookie.serialize.maxAge = maxAge
 
     config.secret = secret
-    config.encode ??= (session) => encode({ token: session, secret, maxAge })
-    config.decode ??= (token) => decode({ token, secret })
+    config.encodeSession ??= (session) => encode({ token: session, secret, maxAge })
+    config.decodeSession ??= (token) => decode({ token, secret })
+    config.encodeRefresh ??= (session) => encode({ token: session, secret, maxAge })
+    config.decodeRefresh ??= (token) => decode({ token, secret })
 
     super(config)
 

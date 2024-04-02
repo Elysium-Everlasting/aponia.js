@@ -23,7 +23,7 @@ export class OIDCProvider<T> extends CoreOIDCProvider<T> {
     const userinfo =
       coreConfig?.endpoints?.userinfo ?? config.userinfo ?? config.options?.userinfo ?? {}
 
-    const resolvedConfig: OIDCProviderConfig<T> = {
+    const resolvedConfig = {
       ...config,
       ...config.options,
       id,
@@ -58,7 +58,7 @@ export class OIDCProvider<T> extends CoreOIDCProvider<T> {
         token: typeof token === 'string' ? { url: token } : token,
         userinfo: typeof userinfo === 'string' ? { url: userinfo } : userinfo,
       },
-    }
+    } as OIDCProviderConfig<T>
 
     super(resolvedConfig)
 

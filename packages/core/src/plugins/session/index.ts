@@ -22,10 +22,16 @@ export type SessionEncoder = (session: Aponia.Session) => Awaitable<string>
 
 export type SessionDecoder = (token: string) => Awaitable<Aponia.Session | Nullish>
 
+export type RefreshEncoder = (session: Aponia.Refresh) => Awaitable<string>
+
+export type RefreshDecoder = (token: string) => Awaitable<Aponia.Refresh | Nullish>
+
 export interface SessionPluginConfig {
   logger?: Logger
-  encode?: SessionEncoder
-  decode?: SessionDecoder
+  encodeSession?: SessionEncoder
+  decodeSession?: SessionDecoder
+  encodeRefresh?: RefreshEncoder
+  decodeRefresh?: RefreshDecoder
   cookie?: CreateCookiesOptions
 }
 
@@ -34,17 +40,23 @@ export class SessionPlugin implements Plugin {
 
   logger: Logger
 
-  encode: SessionEncoder
+  encodeSession: SessionEncoder
 
-  decode: SessionDecoder
+  decodeSession: SessionDecoder
+
+  encodeRefresh: RefreshEncoder
+
+  decodeRefresh: RefreshDecoder
 
   cookies: SessionCookiesOptions
 
   constructor(config: SessionPluginConfig = {}) {
     this.config = config
     this.logger = config.logger ?? new Logger()
-    this.encode = config.encode ?? JSON.stringify
-    this.decode = config.decode ?? JSON.parse
+    this.encodeSession = config.encodeSession ?? JSON.stringify
+    this.decodeSession = config.decodeSession ?? JSON.parse
+    this.encodeSession = config.encodeRefresh ?? JSON.stringify
+    this.decodeSession = config.decodeRefresh ?? JSON.parse
     this.cookies = DEFAULT_SESSION_COOKIES_OPTIONS
   }
 
@@ -95,7 +107,7 @@ export class SessionPlugin implements Plugin {
 
   async createCookiesFromSession(session: Aponia.Session): Promise<Cookie[]> {
     try {
-      const accessToken = await this.encode(session)
+      const accessToken = await this.encodeSession(session)
 
       const sessionCookie: Cookie = {
         name: this.cookies.accessToken.name,
@@ -112,7 +124,7 @@ export class SessionPlugin implements Plugin {
 
   async createCookiesFromRefresh(session: Aponia.Session): Promise<Cookie[]> {
     try {
-      const refreshToken = await this.encode(session)
+      const refreshToken = await this.encodeRefresh(session)
 
       const refreshCookie: Cookie = {
         name: this.cookies.refreshToken.name,
@@ -138,7 +150,7 @@ export class SessionPlugin implements Plugin {
     }
 
     try {
-      const accessToken = await this.decode(rawAccessToken)
+      const accessToken = await this.decodeSession(rawAccessToken)
       return accessToken ?? undefined
     } catch (error) {
       this.logger.error(error)
@@ -157,7 +169,7 @@ export class SessionPlugin implements Plugin {
     }
 
     try {
-      const accessToken = await this.decode(rawAccessToken)
+      const accessToken = await this.decodeRefresh(rawAccessToken)
       return accessToken ?? undefined
     } catch (error) {
       this.logger.error(error)

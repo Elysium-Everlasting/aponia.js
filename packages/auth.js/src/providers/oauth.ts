@@ -23,7 +23,7 @@ export class OAuthProvider<T> extends CoreOAuthProvider<T> {
     const userinfo =
       coreConfig?.endpoints?.userinfo ?? config.userinfo ?? config.options?.userinfo ?? {}
 
-    const resolvedConfig: OAuthProviderConfig<T> = {
+    const resolvedConfig = {
       ...config,
       ...config.options,
       id,
@@ -58,7 +58,7 @@ export class OAuthProvider<T> extends CoreOAuthProvider<T> {
         token: typeof token === 'string' ? { url: token } : token,
         userinfo: typeof userinfo === 'string' ? { url: userinfo } : userinfo,
       },
-    }
+    } as OAuthProviderConfig<T>
 
     super(resolvedConfig)
 
