@@ -15,7 +15,7 @@ import {
   DEFAULT_CREATE_COOKIES_OPTIONS,
   type CookiesObject,
 } from '../../security/cookie'
-import type { Awaitable, Nullish } from '../../utils/types'
+import type { Awaitable, DeepPartial, Nullish } from '../../utils/types'
 import type { Plugin, PluginContext, PluginOptions } from '../plugin'
 
 export type SessionEncoder = (session: Aponia.Session) => Awaitable<string>
@@ -32,7 +32,7 @@ export interface SessionPluginConfig {
   decodeSession?: SessionDecoder
   encodeRefresh?: RefreshEncoder
   decodeRefresh?: RefreshDecoder
-  cookie?: SessionCookiesOptions
+  cookie?: DeepPartial<SessionCookiesOptions>
 }
 
 export class SessionPlugin implements Plugin {
