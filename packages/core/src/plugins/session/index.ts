@@ -32,7 +32,7 @@ export interface SessionPluginConfig {
   decodeSession?: SessionDecoder
   encodeRefresh?: RefreshEncoder
   decodeRefresh?: RefreshDecoder
-  cookie?: CreateCookiesOptions
+  cookie?: SessionCookiesOptions
 }
 
 export class SessionPlugin implements Plugin {
@@ -50,14 +50,26 @@ export class SessionPlugin implements Plugin {
 
   cookies: SessionCookiesOptions
 
-  constructor(config: SessionPluginConfig = {}) {
-    this.config = config
-    this.logger = config.logger ?? new Logger()
-    this.encodeSession = config.encodeSession ?? JSON.stringify
-    this.decodeSession = config.decodeSession ?? JSON.parse
-    this.encodeRefresh = config.encodeRefresh ?? JSON.stringify
-    this.decodeRefresh = config.decodeRefresh ?? JSON.parse
-    this.cookies = DEFAULT_SESSION_COOKIES_OPTIONS
+  constructor(config?: SessionPluginConfig) {
+    this.config = config ?? {}
+
+    this.logger = this.config.logger ?? new Logger()
+
+    this.encodeSession = this.config.encodeSession ?? JSON.stringify
+    this.decodeSession = this.config.decodeSession ?? JSON.parse
+    this.encodeRefresh = this.config.encodeRefresh ?? JSON.stringify
+    this.decodeRefresh = this.config.decodeRefresh ?? JSON.parse
+
+    this.cookies = {
+      accessToken: {
+        ...DEFAULT_SESSION_COOKIES_OPTIONS.accessToken,
+        ...this.config.cookie?.accessToken,
+      },
+      refreshToken: {
+        ...DEFAULT_SESSION_COOKIES_OPTIONS.refreshToken,
+        ...this.config.cookie?.refreshToken,
+      },
+    }
   }
 
   initialize(context: PluginContext, options: PluginOptions): Awaitable<void> {
@@ -65,14 +77,18 @@ export class SessionPlugin implements Plugin {
       this.logger = options.logger
     }
 
-    this.cookies = createSessionCookiesOptions({
-      ...DEFAULT_CREATE_COOKIES_OPTIONS,
-      ...options,
-      serialize: {
-        ...DEFAULT_CREATE_COOKIES_OPTIONS.serialize,
-        ...options?.cookieOptions?.serialize,
+    const newDefaultSessionCookiesOptions = createSessionCookiesOptions(options.cookieOptions)
+
+    this.cookies = {
+      accessToken: {
+        ...newDefaultSessionCookiesOptions.accessToken,
+        ...this.config.cookie?.accessToken,
       },
-    })
+      refreshToken: {
+        ...newDefaultSessionCookiesOptions.refreshToken,
+        ...this.config.cookie?.refreshToken,
+      },
+    }
 
     context.router.preHandle(this.preHandle.bind(this))
     context.router.postHandle(this.handle.bind(this))
