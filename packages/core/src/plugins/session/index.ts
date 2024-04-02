@@ -13,6 +13,7 @@ import {
   getCookiePrefix,
   getCookieValue,
   DEFAULT_CREATE_COOKIES_OPTIONS,
+  type CookiesObject,
 } from '../../security/cookie'
 import type { Awaitable, Nullish } from '../../utils/types'
 import type { Plugin, PluginContext, PluginOptions } from '../plugin'
@@ -66,8 +67,8 @@ export class SessionPlugin implements Plugin {
   }
 
   async preHandle(request: Aponia.Request) {
-    request.getSession = async () => await this.getSession(request)
-    request.getRefresh = async () => await this.getRefresh(request)
+    request.getSession = async () => await this.getSession(request.cookies)
+    request.getRefresh = async () => await this.getRefresh(request.cookies)
   }
 
   async handle(_request: Aponia.Request, response?: Aponia.Response | Nullish): Promise<void> {
@@ -127,10 +128,10 @@ export class SessionPlugin implements Plugin {
   }
 
   async getSession(
-    request: Aponia.Request,
+    cookies: CookiesObject,
     options?: CookiesProxyParseOptions,
   ): Promise<Aponia.Session | undefined> {
-    const rawAccessToken = getCookieValue(request.cookies, this.cookies.accessToken.name, options)
+    const rawAccessToken = getCookieValue(cookies, this.cookies.accessToken.name, options)
 
     if (rawAccessToken == null) {
       return
@@ -146,10 +147,10 @@ export class SessionPlugin implements Plugin {
   }
 
   async getRefresh(
-    request: Aponia.Request,
+    cookies: CookiesObject,
     options?: CookiesProxyParseOptions,
   ): Promise<Aponia.Refresh | undefined> {
-    const rawAccessToken = getCookieValue(request.cookies, this.cookies.refreshToken.name, options)
+    const rawAccessToken = getCookieValue(cookies, this.cookies.refreshToken.name, options)
 
     if (rawAccessToken == null) {
       return
