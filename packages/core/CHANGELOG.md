@@ -1,5 +1,11 @@
 # @aponia.js/core
 
+## 0.5.0
+
+### Minor Changes
+
+- 8520fde: refactor: pass in explicit options for access and refresh tokens
+
 ## 0.4.4
 
 ### Patch Changes

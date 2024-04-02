@@ -1,5 +1,16 @@
 # @aponia.js/auth.js
 
+## 0.5.0
+
+### Minor Changes
+
+- 8520fde: refactor: pass in explicit options for access and refresh tokens
+
+### Patch Changes
+
+- Updated dependencies [8520fde]
+  - @aponia.js/core@0.5.0
+
 ## 0.4.4
 
 ### Patch Changes
