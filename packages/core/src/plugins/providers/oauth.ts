@@ -132,7 +132,10 @@ export interface OAuthProviderConfig<T> {
   /**
    * Transform the profile returned by the user info endpoint.
    */
-  profile?: (profile: T, tokens: TokenEndpointResponse) => Awaitable<Aponia.User | Nullish>
+  profile?: (
+    profile: T,
+    tokens: TokenEndpointResponse,
+  ) => Awaitable<Aponia.ProviderAccount | Nullish>
 
   /**
    * Applies security checks to the OAuth request.

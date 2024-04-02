@@ -55,8 +55,8 @@ export class SessionPlugin implements Plugin {
     this.logger = config.logger ?? new Logger()
     this.encodeSession = config.encodeSession ?? JSON.stringify
     this.decodeSession = config.decodeSession ?? JSON.parse
-    this.encodeSession = config.encodeRefresh ?? JSON.stringify
-    this.decodeSession = config.decodeRefresh ?? JSON.parse
+    this.encodeRefresh = config.encodeRefresh ?? JSON.stringify
+    this.decodeRefresh = config.decodeRefresh ?? JSON.parse
     this.cookies = DEFAULT_SESSION_COOKIES_OPTIONS
   }
 
@@ -122,7 +122,7 @@ export class SessionPlugin implements Plugin {
     }
   }
 
-  async createCookiesFromRefresh(session: Aponia.Session): Promise<Cookie[]> {
+  async createCookiesFromRefresh(session: Aponia.Refresh): Promise<Cookie[]> {
     try {
       const refreshToken = await this.encodeRefresh(session)
 
