@@ -1,5 +1,13 @@
 # @aponia.js/auth.js
 
+## 0.4.3
+
+### Patch Changes
+
+- ef525d0: refactor: update types
+- Updated dependencies [ef525d0]
+  - @aponia.js/core@0.4.3
+
 ## 0.4.2
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @aponia.js/core
 
+## 0.4.3
+
+### Patch Changes
+
+- ef525d0: refactor: update types
+
 ## 0.4.2
 
 ### Patch Changes
