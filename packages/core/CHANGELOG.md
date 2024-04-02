@@ -1,5 +1,12 @@
 # @aponia.js/core
 
+## 0.4.2
+
+### Patch Changes
+
+- 5832787: feat: support cookie object with value
+- 9cc8f58: refactor: get session and get refresh read cookies, not request
+
 ## 0.4.1
 
 ### Patch Changes
