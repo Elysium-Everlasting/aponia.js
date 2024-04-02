@@ -1,5 +1,13 @@
 # @aponia.js/auth.js
 
+## 0.5.1
+
+### Patch Changes
+
+- 3b4aecc: feat: make cookie options deeply partial
+- Updated dependencies [3b4aecc]
+  - @aponia.js/core@0.5.1
+
 ## 0.5.0
 
 ### Minor Changes

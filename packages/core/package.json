@@ -1,6 +1,6 @@
 {
   "name": "@aponia.js/core",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "aponia.js core - a web authentication framework",
   "license": "MIT",
   "homepage": "https://elysium-everlasting.github.io/aponia.js",
