@@ -199,7 +199,7 @@ export const DEFAULT_CREATE_COOKIES_OPTIONS: CreateCookiesOptions = {
 }
 
 export function getCookieValue(
-  cookies: Record<string, string> | CookiesProxy,
+  cookies: CookiesObject,
   name: string,
   options?: CookiesProxyParseOptions,
 ): string | undefined {
@@ -209,14 +209,16 @@ export function getCookieValue(
     return cookies.get(name, options)
   }
 
-  const value = cookies[name]
+  const value = isCookiesValue(cookies) ? cookies[name]?.value : cookies[name]
   return value ? decoder(value) : value
 }
 
-export function isCookiesProxy(
-  value: Record<string, string> | CookiesProxy,
-): value is CookiesProxy {
+export function isCookiesProxy(value: CookiesObject): value is CookiesGetterProxy {
   return typeof value.get === 'function'
+}
+
+export function isCookiesValue(value: CookiesObject): value is Record<string, CookieValue> {
+  return typeof value === 'object'
 }
 
 export interface CookiesProxyParseOptions {
@@ -235,7 +237,7 @@ export interface CookiesProxyParseOptions {
   decode?(value: string): string
 }
 
-export interface CookiesProxy {
+export interface CookiesGetterProxy {
   /**
    * Gets a cookie that was previously set with `cookies.set`, or from the request headers.
    * @param name the name of the cookie
@@ -243,3 +245,12 @@ export interface CookiesProxy {
    */
   get(name: string, opts?: CookiesProxyParseOptions): string | undefined
 }
+
+export interface CookieValue {
+  value: any
+}
+
+export type CookiesObject =
+  | Record<string, string>
+  | Record<string, CookieValue>
+  | CookiesGetterProxy
