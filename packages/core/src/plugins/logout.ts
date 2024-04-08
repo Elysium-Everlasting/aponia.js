@@ -6,6 +6,7 @@ import {
   type CreateCookiesOptions,
   DEFAULT_CREATE_COOKIES_OPTIONS,
 } from '../security/cookie'
+import type { Awaitable, Nullish } from '../utils/types'
 
 import type { Plugin, PluginContext, PluginOptions } from './plugin'
 import { createSessionCookiesOptions } from './session'
@@ -14,6 +15,10 @@ export interface LogoutPluginConfig {
   logger?: Logger
   logoutRoute?: string
   redirectRoute?: string
+  onLogout?: (
+    request: Aponia.Request,
+    response: Aponia.Response,
+  ) => Awaitable<Nullish | Aponia.Response>
 }
 
 export interface LogoutCookiesOptions {
@@ -30,7 +35,10 @@ export class LogoutPlugin implements Plugin {
 
   logoutRoute: string
 
+  config?: LogoutPluginConfig
+
   constructor(config?: LogoutPluginConfig) {
+    this.config = config
     this.cookies = DEFAULT_LOGOUT_COOKIES_OPTIONS
     this.logger = config?.logger ?? new Logger()
     this.logoutRoute = config?.logoutRoute ?? '/auth/logout'
@@ -54,7 +62,7 @@ export class LogoutPlugin implements Plugin {
     context.router.post(this.logoutRoute, this.handle.bind(this))
   }
 
-  async handle() {
+  async handle(request: Aponia.Request) {
     const response: Aponia.Response = {
       status: 302,
       redirect: this.redirectRoute,
@@ -80,7 +88,9 @@ export class LogoutPlugin implements Plugin {
       },
     })
 
-    return response
+    const userResponse = await this.config?.onLogout?.(request, response)
+
+    return userResponse ?? response
   }
 }
 
