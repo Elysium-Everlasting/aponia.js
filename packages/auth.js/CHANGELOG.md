@@ -1,5 +1,13 @@
 # @aponia.js/auth.js
 
+## 0.5.2
+
+### Patch Changes
+
+- f5412fa: feat: on logout callback
+- Updated dependencies [f5412fa]
+  - @aponia.js/core@0.5.2
+
 ## 0.5.1
 
 ### Patch Changes
