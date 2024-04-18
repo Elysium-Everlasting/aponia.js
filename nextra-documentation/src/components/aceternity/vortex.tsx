@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { useTheme } from 'nextra-theme-docs'
 import React, { useEffect, useRef } from 'react'
 import { createNoise3D } from 'simplex-noise'
 
@@ -40,8 +41,16 @@ function lerp(n1: number, n2: number, speed: number): number {
 }
 
 export function Vortex(props: VortexProps) {
+  const theme = useTheme()
+
+  const defaultBackgroundColor = theme.theme === 'dark' ? '#010101' : '#000001'
+
+  const { backgroundColor = defaultBackgroundColor } = props
+
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef(null)
+  const noise3D = createNoise3D()
+
   const particleCount = props.particleCount ?? 700
   const particlePropCount = 9
   const particlePropsLength = particleCount * particlePropCount
@@ -58,8 +67,6 @@ export function Vortex(props: VortexProps) {
   const xOff = 0.00125
   const yOff = 0.00125
   const zOff = 0.0005
-  const backgroundColor = props.backgroundColor ?? '#000000'
-  const noise3D = createNoise3D()
 
   let tick = 0
   let particleProps = new Float32Array(particlePropsLength)
@@ -237,7 +244,7 @@ export function Vortex(props: VortexProps) {
         resize(canvas, ctx)
       }
     })
-  }, [])
+  }, [backgroundColor])
 
   return (
     <div className={cn('relative h-full w-full', props.containerClassName)}>

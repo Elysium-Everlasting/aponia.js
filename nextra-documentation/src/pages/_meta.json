@@ -4,10 +4,9 @@
     "type": "page",
     "display": "hidden",
     "theme": {
-      "breadcrumb": false,
-      "sidebar": false,
-      "footer": false,
       "layout": "raw"
     }
-  }
+  },
+  "introduction": {},
+  "getting-started": {}
 }

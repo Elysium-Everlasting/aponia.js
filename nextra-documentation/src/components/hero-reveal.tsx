@@ -1,4 +1,5 @@
 import { motion, stagger, useAnimate } from 'framer-motion'
+import Link from 'next/link'
 import { useEffect } from 'react'
 
 import { Button } from '@/components/ui/button'
@@ -59,7 +60,11 @@ export function HeroReveal() {
         </div>
 
         <motion.span key={wordsArray.length} className="opacity-0 space-x-4">
-          <Button size="lg">Get Started</Button>
+          <Button size="lg" asChild>
+            <Link href="/introduction" className="">
+              Get Started
+            </Link>
+          </Button>
           <Button variant="secondary" size="lg">
             API Reference
           </Button>

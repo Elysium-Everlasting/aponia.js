@@ -1,9 +1,9 @@
 // @ts-check
 
 const config = {
-  logo: <span>My Nextra Documentation</span>,
+  logo: <span>Aponia.js</span>,
   project: {
-    link: 'https://github.com/shuding/nextra',
+    link: 'https://github.com/elysium-everlasting/aponia.js',
   },
 }
 
