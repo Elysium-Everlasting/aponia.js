@@ -18,6 +18,7 @@ export interface LogoutPluginConfig {
   onLogout?: (
     request: Aponia.Request,
     response: Aponia.Response,
+    instance: LogoutPlugin,
   ) => Awaitable<Nullish | Aponia.Response>
 }
 
@@ -88,7 +89,7 @@ export class LogoutPlugin implements Plugin {
       },
     })
 
-    const userResponse = await this.config?.onLogout?.(request, response)
+    const userResponse = await this.config?.onLogout?.(request, response, this)
 
     return userResponse ?? response
   }
