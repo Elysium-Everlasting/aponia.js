@@ -1,4 +1,5 @@
 packages:
   - documentation
+  - nextra-documentation
   - examples/**/*
   - packages/**/*

@@ -1,0 +1,13 @@
+{
+  "index": {
+    "title": "Homepage",
+    "type": "page",
+    "display": "hidden",
+    "theme": {
+      "breadcrumb": false,
+      "sidebar": false,
+      "footer": false,
+      "layout": "raw"
+    }
+  }
+}

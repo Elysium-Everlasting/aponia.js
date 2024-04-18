@@ -1,0 +1,28 @@
+import { cn } from '@/lib/utils/cn'
+import { Vortex } from '@/components/aceternity/vortex'
+import { HeroReveal } from '@/components/hero-reveal'
+import { FeaturesGrid } from '@/components/features'
+
+<div className="space-y-16">
+  <div className="w-full mx-auto overflow-hidden px-4 py-20 md:py-32 lg:py-56 space-y-16">
+    <Vortex
+      backgroundColor="#010101"
+      rangeY={800}
+      particleCount={500}
+      baseHue={255}
+      className="flex items-center flex-col justify-center px-2 md:px-10 py-4 w-full h-full"
+    >
+     <div className="space-y-4">
+       <h1 className="font-bold text-center text-4xl md:text-5xl lg:text-7xl">
+         Aponia.js
+       </h1>
+
+       <p className="text-center text-xl md:text-2xl lg:text-4xl">Authentication</p>
+
+      <HeroReveal />
+     </div>
+    </Vortex>
+  </div>
+
+  <FeaturesGrid />
+</div>
