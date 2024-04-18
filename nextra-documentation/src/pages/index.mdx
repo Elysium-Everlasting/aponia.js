@@ -3,6 +3,9 @@ import { Vortex } from '@/components/aceternity/vortex'
 import { HeroReveal } from '@/components/hero-reveal'
 import { FeaturesGrid } from '@/components/features'
 import { SparklesCore } from '@/components/aceternity/sparkles'
+import { ProviderInfiniteCards } from '@/components/provider-infinite-cards'
+import { FrameworkInfiniteCards } from '@/components/framework-infinite-cards'
+import { DatabaseInfiniteCards } from '@/components/database-infinite-cards'
 
 <div className="">
   <div className="w-full mx-auto overflow-hidden px-4 py-20 md:py-32 lg:py-56 space-y-16">
@@ -36,5 +39,20 @@ import { SparklesCore } from '@/components/aceternity/sparkles'
       />
       </div>
     <FeaturesGrid />
+  </div>
+
+  <div className="py-8">
+    <h2 className="font-bold text-center text-2xl">Providers</h2>
+    <ProviderInfiniteCards />
+  </div>
+
+  <div className="py-8">
+    <h2 className="font-bold text-center text-2xl">Frameworks</h2>
+    <FrameworkInfiniteCards />
+  </div>
+
+  <div className="py-8">
+    <h2 className="font-bold text-center text-2xl">Databases</h2>
+    <DatabaseInfiniteCards />
   </div>
 </div>
