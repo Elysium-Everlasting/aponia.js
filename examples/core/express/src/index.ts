@@ -3,7 +3,6 @@ import { Auth } from '@aponia.js/core/auth'
 import { OAuthProvider } from '@aponia.js/core/plugins/providers/oauth'
 import { OIDCProvider } from '@aponia.js/core/plugins/providers/oidc'
 import { JwtSessionPlugin } from '@aponia.js/core/plugins/session/jwt'
-import { serialize } from 'cookie'
 import cookieParser from 'cookie-parser'
 import { config } from 'dotenv'
 import { and, eq } from 'drizzle-orm'
@@ -142,6 +141,7 @@ const adapter: Adapter = {
         },
       ])
       .returning()
+    console.log('new session', newSession)
 
     if (newSession == null) {
       console.error(`Failed to create new session for user: ${user} and account: ${account}`)
@@ -225,14 +225,6 @@ const adapter: Adapter = {
     console.log('Account created: ', newAccount)
     return newAccount
   },
-  encodeSession: async (session) => {
-    const encodedSession = await jwtSession.encode(session)
-    return encodedSession
-  },
-  decodeSession: async (token) => {
-    const decodedSession = await jwtSession.decode(token)
-    return decodedSession
-  },
 }
 
 const adapterPlugin = new AdapterPlugin(adapter)
@@ -240,7 +232,7 @@ const adapterPlugin = new AdapterPlugin(adapter)
 const jwtSession = new JwtSessionPlugin()
 
 const auth = new Auth({
-  plugins: [github, google /*, session */, adapterPlugin],
+  plugins: [github, google /*, session */, adapterPlugin, jwtSession],
 })
 
 async function main() {
@@ -249,7 +241,7 @@ async function main() {
   app.use(cookieParser())
 
   app.use(async (req, _res, next) => {
-    const parsedSession = await jwtSession.parseSessionFromCookies(req.cookies)
+    const parsedSession = await jwtSession.getSession(req.cookies)
 
     console.log({ parsedSession })
 
@@ -271,7 +263,10 @@ async function main() {
     }
 
     response?.cookies?.forEach((cookie) => {
-      res.appendHeader('Set-Cookie', serialize(cookie.name, cookie.value, cookie.options))
+      if (cookie.options?.maxAge != null) {
+        cookie.options.maxAge *= 3600
+      }
+      res.cookie(cookie.name, cookie.value, { ...cookie.options })
     })
 
     if (response?.redirect != null) {

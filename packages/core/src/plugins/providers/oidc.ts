@@ -165,7 +165,7 @@ export class OIDCProvider<T = any> implements Plugin {
     context.router.get(this.pages.callback, this.callback.bind(this))
   }
 
-  public async login(request: Aponia.Request): Promise<Aponia.Response> {
+  public async login(request?: Aponia.Request): Promise<Aponia.Response> {
     await this.initializeAuthorizationServer()
 
     if (!this.authorizationServer.authorization_endpoint) {
@@ -190,7 +190,7 @@ export class OIDCProvider<T = any> implements Plugin {
       url.searchParams.set('scope', scope)
     }
 
-    if (!url.searchParams.has('redirect_uri')) {
+    if (!url.searchParams.has('redirect_uri') && request != null) {
       const redirectUri = `${request.url.origin}${this.pages.callback}`
       this.logger.debug(`Automatically adding redirect_uri: ${redirectUri}`)
       url.searchParams.set('redirect_uri', redirectUri)

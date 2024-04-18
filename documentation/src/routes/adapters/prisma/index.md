@@ -1,5 +1,0 @@
----
----
-
-# Prisma Adapter
-# Getting Started

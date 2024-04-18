@@ -274,7 +274,7 @@ export class OAuthProvider<T = any> implements Plugin {
     context.router.get(this.pages.callback, this.callback.bind(this))
   }
 
-  public async login(request: Aponia.Request): Promise<Aponia.Response> {
+  public async login(request?: Aponia.Request): Promise<Aponia.Response> {
     const url = new URL(this.endpoints.authorization.url)
     const cookies: Cookie[] = []
     const params = this.endpoints.authorization.params ?? {}
@@ -285,7 +285,7 @@ export class OAuthProvider<T = any> implements Plugin {
       }
     })
 
-    if (!url.searchParams.has('redirect_uri')) {
+    if (!url.searchParams.has('redirect_uri') && request != null) {
       const redirectUri = `${request.url.origin}${this.pages.callback}`
       this.logger.debug(`Automatically adding redirect_uri: ${redirectUri}`)
       url.searchParams.set('redirect_uri', redirectUri)

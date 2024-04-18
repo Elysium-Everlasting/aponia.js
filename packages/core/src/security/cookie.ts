@@ -218,7 +218,8 @@ export function isCookiesProxy(value: CookiesObject): value is CookiesGetterProx
 }
 
 export function isCookiesValue(value: CookiesObject): value is Record<string, CookieValue> {
-  return typeof value === 'object'
+  if (value == null) return false
+  return Object.values(value).some((v) => v != null && typeof value === 'object' && v.value != null)
 }
 
 export interface CookiesProxyParseOptions {
