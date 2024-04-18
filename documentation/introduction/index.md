@@ -7,11 +7,129 @@ title: Introduction
 Aponia.js provides a flexible solution for handling authentication that
 seamlessly integrates into any full-stack or backend framework.
 
-```ts
-
-```
 
 ## Features
+
+### Declarative Auth
+
+Define all auth providers and flows in declarative manner,
+independent of framework constraints.
+
+:::tip
+For frameworks that include file or directory based routing,
+every OAuth provider requires a `/auth/login/{providerId}` and `/auth/callback/{providerId}` routes,
+which do similar things but still require dedicated files.
+
+**Aponia.js aims to remove this boilerplate**.
+:::
+
+```ts
+// src/auth.ts
+
+import { Auth } from '@aponia.js/core'
+import { OIDCProvider } from '@aponia.js/auth.js/plugins/providers/oidc'
+
+const provider1 = new OAuthProvider(/* ... */)
+
+const provider2 = new OIDCProvider(/* ... */)
+
+const auth = new Auth({
+  plugins: [provider1, provider2],
+})
+```
+
+::: tip
+Providers add information to the response, but don't handle session creation or database interactions.
+Add database interaction via an [adapter plugin](/plugins/adapter) and
+session encoding/decoding via a [session plugin](/plugins/session).
+:::
+
+<hr>
+
+### Seamless, Unopinionated Framework Integrations
+
+Aponia.js handles the `/auth/login/{providerId}` and `/auth/callback/{providerId}` endpoints
+by re-routing at the framework-handling level.
+
+Aponia.js does not provide built-in framework adapters out of the box,
+and the `Aponia.Response` returned by `auth.handle` provides a simple interface
+for setting framework specific response objects.
+
+:::tip
+
+The endpoints that a provider handles is stored under `provider.pages`.
+
+For example, an OAuth provider will handle the following pages if the request URL matches.
+
+- Login `provider.pages.login`: The provider will generate a redirect response.
+- Callback `provider.pages.callback`: The provider will generate authentication information in the internal response,
+  which can be handled by session plugins or manually.
+  [Read more about handling authentication information](/reference/authenticated-response)
+- Redirect `provider.pages.redirect`: After generating the authentication information for a response callback,
+  the provider can also append a redirect to the response.
+
+:::
+
+> Express.js example
+
+```ts
+// src/app.ts
+
+import { Auth } from '@aponia.js/core'
+import { OIDCProvider } from '@aponia.js/auth.js/plugins/providers/oidc'
+import cookieParser from 'cookie-parser'
+import express from 'express'
+
+const provider1 = new OAuthProvider(/* ... */)
+
+const provider2 = new OIDCProvider(/* ... */)
+
+const auth = new Auth({
+  plugins: [provider1, provider2],
+})
+
+const app = express()
+
+app.use(cookieParser())
+
+app.use(async (req, res, next) => {
+  const request: Aponia.Request = {
+    url: new URL(req.protocol + '://' + req.get('host') + req.originalUrl),
+    method: req.method,
+    cookies: req.cookies,
+    headers: new Headers(),
+  }
+
+  const response = await auth.handle(request)
+
+  if (response?.status != null) {
+    res.status(response.status)
+  }
+
+  response?.cookies?.forEach((cookie) => {
+    res.cookie(cookie.name, cookie.value, { ...cookie.options })
+  })
+
+  if (response?.redirect != null) {
+    res.redirect(response.redirect)
+  } else if (response?.body != null) {
+    res.send(response.body)
+  } else if (response?.error != null) {
+    res.send(response.error)
+    return
+  } else {
+    next()
+  }
+})
+```
+
+::: warning
+This example does not handle database interactions or session encoding,
+it only demonstrates how login and callback routes are handled by the `auth.handle`
+function.
+:::
+
+<hr>
 
 ### Headless Usage
 
@@ -33,15 +151,7 @@ export const github = new OAuthProvider(
   }),
 )
 
-// Example request object.
-const request = {
-  url: new URL('http://localhost:5173'),
-  method: 'GET',
-  cookies: {},
-  headers: {},
-}
-
-github.login(request).then((response) => {
+github.login().then((response) => {
   // The authorization URL that will initialize the OAuth process.
   const authorizationUrl = response.redirect
 

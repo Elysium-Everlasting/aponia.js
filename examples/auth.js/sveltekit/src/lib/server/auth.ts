@@ -181,6 +181,8 @@ const jwt = new JwtSessionPlugin()
 
 const logout = new LogoutPlugin()
 
+github.pages.login
+
 export const auth = new Auth({
   plugins: [github, google, credentials, adapterPlugin, jwt, logout],
 })
