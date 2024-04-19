@@ -4,3 +4,6 @@
 
 ## Temporary build outputs from Next.js
 .next/
+
+## Build output.
+out/

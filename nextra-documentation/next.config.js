@@ -9,7 +9,20 @@ const withNextra = nextra({
 
 /**
  * @type{import('next').NextConfig}
+ *
+ * @see https://github.com/gregrickaby/nextjs-github-pages?tab=readme-ov-file#configure-nextjs
  */
-const config = withNextra()
+const nextjsGithubPagesConfig = {
+  output: 'export',
+  assetPrefix: process.env.NODE_ENV === 'production' ? '/aponia.js/' : '',
+  images: {
+    unoptimized: true,
+  },
+}
+
+/**
+ * @type{import('next').NextConfig}
+ */
+const config = withNextra(nextjsGithubPagesConfig)
 
 export default config
