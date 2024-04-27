@@ -14,7 +14,8 @@ const withNextra = nextra({
  */
 const nextjsGithubPagesConfig = {
   output: 'export',
-  assetPrefix: process.env.NODE_ENV === 'production' ? '/aponia.js/' : '',
+  basePath: process.env.NODE_ENV === 'production' ? '/aponia.js' : '',
+  // assetPrefix: process.env.NODE_ENV === 'production' ? '/aponia.js/' : '',
   images: {
     unoptimized: true,
   },
