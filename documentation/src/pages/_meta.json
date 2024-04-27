@@ -4,7 +4,10 @@
     "type": "page",
     "display": "hidden",
     "theme": {
-      "layout": "raw"
+      "layout": "raw",
+      "breadcrumb": false,
+      "sidebar": false,
+      "footer": false
     }
   },
   "introduction": {},
