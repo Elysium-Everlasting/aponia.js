@@ -1,0 +1,132 @@
+import { Callout } from 'nextra/components'
+
+# Core
+
+The core library exposes low-level, customizable interfaces for defining providers.
+
+## Credentials
+
+WIP.
+This provider may be renamed to `generic`, and used to indicate any arbitrary authentication flow.
+
+## OAuth
+
+The OAuth provider accepts a configuration object to customize its behavior.
+
+### GitHub Example
+
+Based on [auth.js](https://github.com/nextauthjs/next-auth/blob/main/packages/core/src/providers/github.ts)'s implementation,
+this example of a GitHub provider defines custom settings for the following:
+
+* Authorization URL: the URL and parameters used in the request are explicitly defined.
+* Token URL: the URL that the framework will exchange its `code` parameter for a token after the callback.
+* userinfo URL: the actual fetch request that will be made to retrieve user information after getting an access token.
+
+```ts
+// src/auth/github.ts
+
+import { OAuthProvider } from '@aponia.js/core/plugins/providers/oauth'
+
+const github = new OAuthProvider({
+  id: 'github',
+  clientId: 'GITHUB_ID',
+  clientSecret: 'GITHUB_SECRET',
+  endpoints: {
+    authorization: {
+      url: 'https://github.com/login/oauth/authorize',
+      params: {
+        client_id: 'GITHUB_ID',
+        scope: 'read:user user:email',
+      },
+    },
+    token: {
+      url: 'https://github.com/login/oauth/access_token',
+    },
+    userinfo: {
+      url: 'https://api.github.com/user',
+      request: async ({ tokens, provider }) => {
+        const profile = await fetch(provider.userinfo?.url, {
+          headers: {
+            Authorization: `Bearer ${tokens.access_token}`,
+            'User-Agent': 'authjs',
+          },
+        }).then((response) => response.json())
+
+        if (!profile.email) {
+          /**
+           * If the user does not have a public email, attempt to retrieve it via the GitHub API.
+           * @see {https://docs.github.com/en/rest/users/emails#list-public-email-addresses-for-the-authenticated-user}
+           */
+          const response = await fetch('https://api.github.com/user/emails', {
+            headers: {
+              Authorization: `Bearer ${tokens.access_token}`,
+              'User-Agent': 'authjs',
+            },
+          })
+
+          if (response.ok) {
+            const emails = await response.json()
+            profile.email = (emails.find((e: any) => e.primary) ?? emails[0]).email
+          }
+        }
+
+        return profile
+      },
+    },
+  },
+  profile: (profile) => {
+    return {
+      id: profile.id.toString(),
+      name: profile.name ?? profile.login,
+      email: profile.email,
+      image: profile.avatar_url,
+    }
+  },
+})
+```
+
+<Callout type="info">
+  **`aponia.js` focuses on providing declarative interface for defining authentication flows,
+  not configuring the authentication providers themselves**
+
+  While the example for GitHub is complex, `aponia.js` provides compatibility with
+  external libraries that expose pre-defined configurations for OAuth and OIDC providers,
+  for example [auth.js](/plugins/providers/auth).
+</Callout>
+
+### Google Example
+
+```ts
+// src/auth/google.ts
+
+import { OIDCProvider } from '@aponia.js/core/plugins/providers/oidc'
+
+const google = new OIDCProvider({
+  id: 'google',
+  clientId: 'GOOGLE_ID',
+  clientSecret: 'GOOGLE_SECRET',
+  issuer: 'https://accounts.google.com',
+  endpoints: {
+    authorization: {
+      params: {
+        client_id: 'GOOGLE_ID',
+        response_type: 'code',
+        scope: 'openid profile email',
+      },
+    },
+  },
+})
+```
+
+<Callout type="info">
+Depending on the desired OAuth provider, additional configuration may need to be defined
+in order to assist in the OAuth process.
+
+- `endpoints.authorization`: endpoint and params to use when generating the initial authorization URL.
+- `endpoints.token`: endpoint and params to use during the callback to exchange the `code` for a `token`.
+- `endpoints.userinfo`: how to get the user's account information with the `token`.
+- `profile`: transform the account information received.
+
+While OIDC providers also have these options, they can also be retrieved automatically
+from the corresponding OIDC server.
+</Callout>

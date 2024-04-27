@@ -1,0 +1,24 @@
+{
+  "index": {
+    "title": "Homepage",
+    "type": "page",
+    "display": "hidden",
+    "theme": {
+      "layout": "raw"
+    }
+  },
+  "introduction": {},
+  "getting-started": {},
+  "plugins": {
+    "title": "Plugins"
+  },
+  "frameworks": {
+    "title": "Frameworks"
+  },
+  "examples": {
+    "title": "Example"
+  },
+  "reference": {
+    "title": "Reference"
+  }
+}

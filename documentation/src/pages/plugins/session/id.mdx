@@ -1,0 +1,87 @@
+# ID (TODO)
+
+The ID plugin handles any stringable value without any encoding/decoding.
+This plugin doesn't require any external dependencies like the [`JSON` plugin](/plugins/session/json),
+and is faster for simple use cases.
+
+## When to Use
+
+The ID plugin is useful when you only need to store the session ID for the current user,
+or have your own encoding/decoding scheme to convert the raw session information to a string.
+
+This plugin can extract a single key from a session object, which is the `id` key by default.
+For example:
+
+```json
+{
+  "id": "session id"
+}
+```
+
+The plugin can also accept a string and will not perform any further processing.
+
+## How to Use
+
+1. Initialize an instance of the plugin.
+
+```ts copy
+// src/session.ts
+
+import { IdSessionPlugin } from '@aponia.js/core/plugins/session/id'
+
+export const session = new IdSessionPlugin()
+```
+
+### With an auth instance.
+
+```ts copy
+// src/auth.ts
+
+import { Auth } from '@aponia.js/core'
+import { session } from './session'
+
+export const auth = new Auth({
+  plugins: [session]
+})
+```
+
+### Headless (express.js)
+
+This example shows how a session can be retrieved, validated, and set on the `Request`
+object on every request in express.js.
+It also demonstrates how a session can be created and set as a cookie.
+
+```ts copy
+// src/routes.ts
+
+import express from 'express'
+import cookieParser from 'cookie-parser'
+import { session } from './session'
+
+const app = express()
+
+// On every request, define `req.session` if there's a valid session found in the cookies.
+app.use(async (req) => {
+  const cookieSession = await session.getSession(req.cookies)
+
+  const isValid = cookieSession.expires > Date.now()
+
+  if (isValid) {
+    req.session = cookieSession
+  }
+})
+
+// After logging in successfully, create a session cookie.
+app.post('/auth/login', async (req, res) => {
+  // Create new session.
+  const newSession = {
+    id: "1"
+  }
+
+  // Create aponia.js cookie object.
+  const sessionCookie = await session.createCookiesFromSession(newSession)
+
+  // Set cookie using express.js API.
+  res.cookie(sessionCookie.name, sessionCookie.value, sessionCookie.options)
+})
+```

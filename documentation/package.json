@@ -1,40 +1,36 @@
 {
   "name": "@aponia.js/documentation",
-  "version": "0.0.1",
-  "description": "aponia.js documentation",
-  "private": true,
-  "license": "MIT",
-  "homepage": "https://elysium-everlasting.github.io/aponia.js",
-  "funding": "https://github.com/Elysium-Everlasting/aponia.js",
-  "contributors": [
-    {
-      "name": "ap0nia",
-      "email": "ap0nia@github.com",
-      "url": "https://github.com/ap0nia"
-    }
-  ],
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/Elysium-Everlasting/aponia.js",
-    "directory": "documentation"
-  },
-  "bugs": {
-    "url": "https://github.com/Elysium-Everlasting/aponia.js/issues"
-  },
   "type": "module",
+  "private": true,
   "scripts": {
-    "dev": "vitepress dev",
-    "build": "vitepress build",
-    "preview": "vitepress preview"
+    "dev": "next",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@radix-ui/react-slot": "^1.0.2",
+    "@tsparticles/engine": "^3.3.0",
+    "@tsparticles/react": "^3.0.0",
+    "@tsparticles/slim": "^3.3.0",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.1.0",
+    "framer-motion": "^11.1.5",
+    "lucide-react": "^0.371.0",
+    "next": "^14.2.2",
+    "nextra": "^2.13.4",
+    "nextra-theme-docs": "^2.13.4",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "simplex-noise": "^4.0.1",
+    "tailwind-merge": "^2.2.2",
+    "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
-    "ci-info": "^3.8.0",
-    "vitepress": "1.1.1",
-    "vitepress-plugin-tabs": "^0.5.0"
-  },
-  "packageManager": "pnpm@8.6.12",
-  "engines": {
-    "pnpm": "^8.0.0",
-    "node": ">=18"
+    "@types/react": "^18.2.79",
+    "autoprefixer": "^10.4.19",
+    "daisyui": "^4.10.2",
+    "postcss": "^8.4.38",
+    "postcss-load-config": "^5.0.3",
+    "tailwindcss": "^3.4.3"
   }
 }

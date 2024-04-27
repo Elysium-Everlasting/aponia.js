@@ -1,0 +1,87 @@
+# JSON
+
+This is the default session handler and encodes/decodes all session information using
+`JSON.stringify` and `JSON.parse` respectively.
+
+## When to Use
+
+This session plugin does not require any external dependencies,
+and can store any arbitrary JSON-serializable information.
+
+This is useful when you want to attach non-sensitive information such as the following:
+
+```json
+{
+  "id": "123",
+  "theme": "dark",
+  "language": "en"
+}
+```
+
+If you only need to store
+
+## How to Use
+
+1. Initialize an instance of the plugin.
+
+```ts copy
+// src/session.ts
+
+import { SessionPlugin } from '@aponia.js/core/plugins/session'
+
+export const session = new SessionPlugin()
+```
+
+### With an auth instance.
+
+```ts copy
+// src/auth.ts
+
+import { Auth } from '@aponia.js/core'
+import { session } from './session'
+
+export const auth = new Auth({
+  plugins: [session]
+})
+```
+
+### Headless (express.js)
+
+This example shows how a session can be retrieved, validated, and set on the `Request`
+object on every request in express.js.
+It also demonstrates how a session can be created and set as a cookie.
+
+```ts copy
+// src/routes.ts
+
+import express from 'express'
+import cookieParser from 'cookie-parser'
+import { session } from './session'
+
+const app = express()
+
+// On every request, define `req.session` if there's a valid session found in the cookies.
+app.use(async (req) => {
+  const cookieSession = await session.getSession(req.cookies)
+
+  const isValid = cookieSession.expires > Date.now()
+
+  if (isValid) {
+    req.session = cookieSession
+  }
+})
+
+// After logging in successfully, create a session cookie.
+app.post('/auth/login', async (req, res) => {
+  // Create new session.
+  const newSession = {
+    id: "1"
+  }
+
+  // Create aponia.js cookie object.
+  const sessionCookie = await session.createCookiesFromSession(newSession)
+
+  // Set cookie using express.js API.
+  res.cookie(sessionCookie.name, sessionCookie.value, sessionCookie.options)
+})
+```

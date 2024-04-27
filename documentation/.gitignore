@@ -1,3 +1,9 @@
-**/.vitepress/cache
-**/.vitepress/.temp
-**/.vitepress/dist
+#####################################################################################
+# Generated
+#####################################################################################
+
+## Temporary build outputs from Next.js
+.next/
+
+## Build output.
+out/

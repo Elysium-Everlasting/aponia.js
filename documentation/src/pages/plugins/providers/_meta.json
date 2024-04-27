@@ -1,0 +1,8 @@
+{
+  "core": {
+    "title": "core"
+  },
+  "auth": {
+    "title": "auth.js"
+  }
+}

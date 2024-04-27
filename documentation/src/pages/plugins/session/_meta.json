@@ -1,0 +1,11 @@
+{
+  "json": {
+    "title": "JSON"
+  },
+  "id": {
+    "title": "ID"
+  },
+  "jwt": {
+    "title": "JWT"
+  }
+}
