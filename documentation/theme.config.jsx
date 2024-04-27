@@ -20,8 +20,8 @@ const config = {
 
     const capitalizedPathTitle = lastPathParam?.replace(/\b\w/g, (l) => l.toUpperCase())
 
-    const title = frontMatter.title
-      ? frontMatter.title
+    const title = frontMatter['title']
+      ? frontMatter['title']
       : capitalizedPathTitle
       ? `aponia.js | ${capitalizedPathTitle}`
       : 'aponia.js | Authentication'
@@ -35,7 +35,7 @@ const config = {
         <title>{title}</title>
         <meta property="og:url" content={url} />
         <meta property="og:title" content={title} />
-        <meta property="og:description" content={frontMatter.description ?? 'Authentication'} />
+        <meta property="og:description" content={frontMatter['description'] ?? 'Authentication'} />
       </>
     )
   },

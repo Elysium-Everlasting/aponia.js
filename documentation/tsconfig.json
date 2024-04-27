@@ -1,6 +1,7 @@
 {
   "extends": ["../tsconfig.json"],
   "compilerOptions": {
+    "resolvePackageJsonExports": false,
     "lib": ["dom", "dom.iterable", "esnext"],
     "noEmit": true,
     "incremental": true,
