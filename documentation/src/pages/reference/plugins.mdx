@@ -1,0 +1,65 @@
+# Plugins
+
+Plugins have the following API:
+
+```ts
+import type { Logger } from '@aponia.js/core/logger'
+import type { Router } from '@aponia.js/core/router'
+import type { CreateCookiesOptions } from '@aponia.js/core/security/cookie'
+import type { Awaitable } from '@aponia.js/core/utils/types'
+
+export interface Plugin {
+  initialize: (context: PluginContext, options: PluginOptions) => Awaitable<void>
+}
+
+export interface PluginContext {
+  router: Router
+}
+
+export interface PluginOptions {
+  cookieOptions?: CreateCookiesOptions
+  logger?: Logger
+}
+```
+
+A plugin can be any object or class that has an `initialize` method.
+An `Auth` instance invokes this method on startup so that way it can synchronize
+all plugins.
+
+The `PluginContext` exposes methods to hook into the framework's lifecycle.
+Namely, the `router` property is similar to a typical express.js app and allows
+you to add methods, or pre/post handlers.
+
+The `PluginOptions` shares global settings for cookies and logging to all plugins.
+
+## Using `PluginContext`
+
+You can register a pre-handler.
+
+```ts
+import type { Plugin } from '@aponia.js/core/plugins'
+
+const plugin: Plugin = {
+  initialize: (context) => {
+    context.router.preHandle(request => {
+      console.log('cookies: ', request.cookies)
+    })
+  }
+}
+```
+
+## Using `PluginOptions`
+
+You can define properties on the object, and reset them to synchronize with the auth instance.
+
+```ts
+import type { Plugin, PluginContext, PluginOptions } from '@aponia.js/core/plugins'
+
+class MyPlugin implements Plugin {
+  cookieName: string
+
+  initialize(context: PluginContext, options: PluginOptions) {
+    this.cookieName = options.cookieOptions.name
+  }
+}
+```
