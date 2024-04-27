@@ -5,7 +5,7 @@ import { Callout } from 'nextra/components'
 Aponia.js is a flexible, unopinionated authentication middleware that
 seamlessly integrates into any full-stack or backend framework.
 It provides a declarative way to handle OAuth/OIDC based authentication flows
-and modular utilities for handler session information.
+and modular utilities for handling related events like session and refresh information.
 
 
 ## Features
@@ -23,10 +23,9 @@ independent of framework constraints.
   which do similar things but still require dedicated files.
 </Callout>
 
-```ts copy
-// src/auth.ts
-
+```ts filename="src/auth.ts"
 import { Auth } from '@aponia.js/core'
+import { OAuthProvider } from '@aponia.js/auth.js/plugins/providers/oauth'
 import { OIDCProvider } from '@aponia.js/auth.js/plugins/providers/oidc'
 
 const provider1 = new OAuthProvider()
@@ -55,25 +54,13 @@ by re-routing at the framework-handling level.
 The `Aponia.Response` returned by `auth.handle` can be easily mapped to a
 framework appropriate response object.
 
-<Callout type="info">
-  The endpoints that a provider handles is stored under `provider.pages`.
-
-  For example, an OAuth provider will handle the following pages if the request URL matches.
-
-  - Login `provider.pages.login`: The provider will generate a redirect response.
-  - Callback `provider.pages.callback`: The provider will generate authentication information in the internal response,
-    which can be handled by session plugins or manually.
-    [Read more about handling authentication information](/reference/authenticated-response)
-  - Redirect `provider.pages.redirect`: After generating the authentication information for a response callback,
-    the provider can also append a redirect to the response.
-</Callout>
+Read more about the provider plugin API [here](/reference/plugin/providers/authjs)
 
 > Express.js example
 
-```ts copy
-// src/app.ts
-
+```ts filename="src/app.ts"
 import { Auth } from '@aponia.js/core'
+import { OAuthProvider } from '@aponia.js/auth.js/plugins/providers/oauth'
 import { OIDCProvider } from '@aponia.js/auth.js/plugins/providers/oidc'
 import cookieParser from 'cookie-parser'
 import express from 'express'

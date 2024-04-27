@@ -1,5 +1,40 @@
+import { Callout } from 'nextra/components'
+
 # Auth.js
 
 Learn about the auth.js provider plugin here.
 This integration allows pre-defined OAuth and OIDC providers from `auth.js` to be
 converted to compatible plugins for `aponia.js`.
+
+## Handled Routes
+
+The endpoints that a provider handles is stored under the `pages` property of a provider.
+
+For example, an OAuth provider will handle the following pages if the request URL matches.
+
+- Login `provider.pages.login`: The provider will generate a redirect response.
+- Callback `provider.pages.callback`: The provider will generate authentication information in the internal response,
+  which can be handled by session plugins or manually.
+  [Read more about handling authentication information](/reference/authenticated-response)
+- Redirect `provider.pages.redirect`: After generating the authentication information for a response callback,
+  the provider can also append a redirect to the response.
+
+> Example
+
+```ts
+import Google from '@auth/core/providers/google'
+import { OAuthProvider } from '@aponia.js/core/plugins/providers/oauth'
+import { OIDCProvider } from '@aponia.js/auth.js/providers/oidc'
+
+const google = new OIDCProvider(
+  Google({
+    clientId: 'GOOGLE_ID',
+    clientSecret: 'GOOGLE_SECRET',
+  }),
+)
+
+const myProvider = new OAuthProvider()
+
+console.log(`Login route for ${google.id}: ${google.pages.login}`)
+console.log(`Callback route for ${google.id}: ${google.pages.callback}`)
+```
