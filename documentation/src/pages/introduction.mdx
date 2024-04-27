@@ -28,9 +28,9 @@ import { Auth } from '@aponia.js/core'
 import { OAuthProvider } from '@aponia.js/auth.js/plugins/providers/oauth'
 import { OIDCProvider } from '@aponia.js/auth.js/plugins/providers/oidc'
 
-const provider1 = new OAuthProvider()
+const provider1 = new OAuthProvider({ id: 'provider1' })
 
-const provider2 = new OIDCProvider()
+const provider2 = new OIDCProvider({ id: 'provider2' })
 
 const providers = [provider1, provider2]
 
@@ -65,9 +65,9 @@ import { OIDCProvider } from '@aponia.js/auth.js/plugins/providers/oidc'
 import cookieParser from 'cookie-parser'
 import express from 'express'
 
-const provider1 = new OAuthProvider()
+const provider1 = new OAuthProvider({ id: 'provider1' })
 
-const provider2 = new OIDCProvider()
+const provider2 = new OIDCProvider({ id: 'provider2' })
 
 const providers = [provider1, provider2]
 
@@ -118,9 +118,7 @@ Aponia.js classes all provide relevant methods for handling the OAuth process ma
 Here's an example of getting the authorization URL from a GitHub provider
 after configuring it via `auth.js`.
 
-```ts copy
-// src/auth/github.ts
-
+```ts filename="src/auth/github.ts"
 import GitHub from '@auth/core/providers/github'
 import { OAuthProvider } from '@aponia.js/auth.js/providers/oauth'
 
@@ -148,7 +146,7 @@ github.login().then((response) => {
   but features a flexible API for defining them,
   and integrations for importing external provider configurations, e.g. from [`auth.js`](https://authjs.dev/).
 
-  [Read more about manually configuring providers](/providers/manual)
+  [Read more about the core provider plugin](/plugins/providers/core)
 
-  [Read more about integrations with external provider configurations](/providers/integrations)
+  [Read more about the auth.js integration](/plugins/providers/auth)
 </Callout>

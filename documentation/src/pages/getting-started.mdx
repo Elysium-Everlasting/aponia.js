@@ -1,4 +1,4 @@
-import { Callout } from 'nextra/components'
+import { Callout, Card, Cards } from 'nextra/components'
 
 # Get Started
 
@@ -23,19 +23,43 @@ export const auth = new Auth()
 
 ## Add plugins
 
-[Add provider plugins to handle callbacks](/plugins/providers/)
+<Cards>
+  <Card title="Providers" href="/plugins/providers" image>
+    <div className="p-4">
+      Add provider plugins to handle callbacks
+    </div>
+  </Card>
 
-[Add session plugins to handle encoding/decoding](/plugins/session/)
+  <Card title="Session" href="/plugins/session" image>
+    <div className="p-4">
+      Add session plugins to handle encoding/decoding
+    </div>
+  </Card>
 
-[Add utility plugins to handle other requests](/plugins/utilities/)
+  <Card title="Utilities" href="/plugins/utilities" image>
+    <div className="p-4">
+      Add utility plugins to handle other requests
+    </div>
+  </Card>
+</Cards>
 
-[Add custom plugins to handle special usecases](/reference/plugins)
+[Plugin API reference](/reference/plugins)
 
 ## Integrate with backend
 
-[SvelteKit](/integrations/sveltekit)
+<Cards>
+  <Card title="SvelteKit" href="/integrations/sveltekit" image>
+    <div className="p-4">
+      SvelteKit image
+    </div>
+  </Card>
 
-[Express.js](/integrations/express)
+  <Card title="Express.js" href="/integrations/express" iamge>
+    <div className="p-4">
+      Express.js image
+    </div>
+  </Card>
+</Cards>
 
 ## Full Example
 
