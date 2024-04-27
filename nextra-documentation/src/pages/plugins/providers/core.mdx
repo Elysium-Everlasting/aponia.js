@@ -1,8 +1,26 @@
 import { Callout } from 'nextra/components'
 
-# Core OAuth/OIDC Provider API
+# Core
 
-## GitHub Example (based on [auth.js](https://github.com/nextauthjs/next-auth/blob/main/packages/core/src/providers/github.ts))
+The core library exposes low-level, customizable interfaces for defining providers.
+
+## Credentials
+
+WIP.
+This provider may be renamed to `generic`, and used to indicate any arbitrary authentication flow.
+
+## OAuth
+
+The OAuth provider accepts a configuration object to customize its behavior.
+
+### GitHub Example
+
+Based on [auth.js](https://github.com/nextauthjs/next-auth/blob/main/packages/core/src/providers/github.ts)'s implementation,
+this example of a GitHub provider defines custom settings for the following:
+
+* Authorization URL: the URL and parameters used in the request are explicitly defined.
+* Token URL: the URL that the framework will exchange its `code` parameter for a token after the callback.
+* userinfo URL: the actual fetch request that will be made to retrieve user information after getting an access token.
 
 ```ts
 // src/auth/github.ts
@@ -36,7 +54,7 @@ const github = new OAuthProvider({
 
         if (!profile.email) {
           /**
-           * If the user does not have a public email, get another via the GitHub API
+           * If the user does not have a public email, attempt to retrieve it via the GitHub API.
            * @see {https://docs.github.com/en/rest/users/emails#list-public-email-addresses-for-the-authenticated-user}
            */
           const response = await fetch('https://api.github.com/user/emails', {
@@ -67,7 +85,16 @@ const github = new OAuthProvider({
 })
 ```
 
-## Google Example
+<Callout type="info">
+  **`aponia.js` focuses on providing declarative interface for defining authentication flows,
+  not configuring the authentication providers themselves**
+
+  While the example for GitHub is complex, `aponia.js` provides compatibility with
+  external libraries that expose pre-defined configurations for OAuth and OIDC providers,
+  for example [auth.js](/plugins/providers/auth).
+</Callout>
+
+### Google Example
 
 ```ts
 // src/auth/google.ts

@@ -2,23 +2,25 @@ import { Callout } from 'nextra/components'
 
 # Introduction
 
-Aponia.js provides a flexible solution for handling authentication that
+Aponia.js is a flexible, unopinionated authentication middleware that
 seamlessly integrates into any full-stack or backend framework.
+It provides a declarative way to handle OAuth/OIDC based authentication flows
+and modular utilities for handler session information.
 
 
 ## Features
 
-### Declarative Auth
+### Declarative Routing
 
-Define all auth providers and flows in declarative manner,
+Define all OAuth/OIDC providers and their corresponding flows in declarative manner,
 independent of framework constraints.
 
 <Callout type="info">
-  For frameworks that include file or directory based routing,
+  **Aponia.js reduces redundancy by defining handlers in a central location**.
+
+  For frameworks that implement file or directory based routing,
   every OAuth provider requires a `/auth/login/{providerId}` and `/auth/callback/{providerId}` routes,
   which do similar things but still require dedicated files.
-
-  **Aponia.js aims to remove this boilerplate**.
 </Callout>
 
 ```ts copy
@@ -27,12 +29,14 @@ independent of framework constraints.
 import { Auth } from '@aponia.js/core'
 import { OIDCProvider } from '@aponia.js/auth.js/plugins/providers/oidc'
 
-const provider1 = new OAuthProvider(/* ... */)
+const provider1 = new OAuthProvider()
 
-const provider2 = new OIDCProvider(/* ... */)
+const provider2 = new OIDCProvider()
+
+const providers = [provider1, provider2]
 
 const auth = new Auth({
-  plugins: [provider1, provider2],
+  plugins: providers
 })
 ```
 
@@ -42,14 +46,14 @@ const auth = new Auth({
   session encoding/decoding via a [session plugin](/plugins/session).
 </Callout>
 
-### Seamless, Unopinionated Framework Integrations
+### Simple Framework Integration
 
 Aponia.js handles the `/auth/login/{providerId}` and `/auth/callback/{providerId}` endpoints
 by re-routing at the framework-handling level.
 
-Aponia.js does not provide built-in framework adapters out of the box,
-and the `Aponia.Response` returned by `auth.handle` provides a simple interface
-for setting framework specific response objects.
+**Aponia.js does not provide built-in framework adapters out of the box**.
+The `Aponia.Response` returned by `auth.handle` can be easily mapped to a
+framework appropriate response object.
 
 <Callout type="info">
   The endpoints that a provider handles is stored under `provider.pages`.
@@ -74,12 +78,14 @@ import { OIDCProvider } from '@aponia.js/auth.js/plugins/providers/oidc'
 import cookieParser from 'cookie-parser'
 import express from 'express'
 
-const provider1 = new OAuthProvider(/* ... */)
+const provider1 = new OAuthProvider()
 
-const provider2 = new OIDCProvider(/* ... */)
+const provider2 = new OIDCProvider()
+
+const providers = [provider1, provider2]
 
 const auth = new Auth({
-  plugins: [provider1, provider2],
+  plugins: providers,
 })
 
 const app = express()
@@ -101,16 +107,11 @@ app.use(async (req, res, next) => {
   }
 
   response?.cookies?.forEach((cookie) => {
-    res.cookie(cookie.name, cookie.value, { ...cookie.options })
+    res.cookie(cookie.name, cookie.value, cookie.options)
   })
 
   if (response?.redirect != null) {
     res.redirect(response.redirect)
-  } else if (response?.body != null) {
-    res.send(response.body)
-  } else if (response?.error != null) {
-    res.send(response.error)
-    return
   } else {
     next()
   }

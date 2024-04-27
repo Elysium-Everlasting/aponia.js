@@ -1,45 +1,35 @@
-# Session
+# ID (TODO)
 
-Session plugins define an encoding/decoding scheme for converting raw session information
-to (cookie) strings -- the designated storage mechanism for credentials in `aponia.js`.
+The ID plugin handles any stringable value without any encoding/decoding.
+This plugin doesn't require any external dependencies like the [`JSON` plugin](/plugins/session/json),
+and is faster for simple use cases.
 
-Session plugins are minimal, and can be used headlessly to handle session information.
+## When to Use
 
-When used with the framework, session plugins add post-request handlers
-to encode/decode any sessions that are defined during the authentication flow.
+The ID plugin is useful when you only need to store the session ID for the current user,
+or have your own encoding/decoding scheme to convert the raw session information to a string.
 
-## Headless Functionality
+This plugin can extract a single key from a session object, which is the `id` key by default.
+For example:
 
-This section may be relocated to
+```json
+{
+  "id": "session id"
+}
+```
 
-### `getSession`
+The plugin can also accept a string and will not perform any further processing.
 
-Read a compatible cookies object, extract, decode, and return any session information stored in the cookie.
-
-### `getRefresh`
-
-Read a compatible cookies object, extract, decode, and return any refresh information stored in the cookie.
-
-### `createCookiesFromSession`
-
-Convert raw session information to cookie information.
-The cookie information is an object with the name, value, and options.
-
-### `createCookiesFromRefresh`
-
-Convert raw refresh information to cookie information.
-The cookie information is an object with the name, value, and options.
-
-## Getting Started
+## How to Use
 
 1. Initialize an instance of the plugin.
 
 ```ts copy
 // src/session.ts
 
-import { SessionPlugin } from '@aponia.js/core/plugins/session'
+import { IdSessionPlugin } from '@aponia.js/core/plugins/session/id'
 
-export const session = new SessionPlugin()
+export const session = new IdSessionPlugin()
 ```
 
 ### With an auth instance.

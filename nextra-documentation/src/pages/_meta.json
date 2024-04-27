@@ -8,5 +8,17 @@
     }
   },
   "introduction": {},
-  "getting-started": {}
+  "getting-started": {},
+  "plugins": {
+    "title": "Plugins"
+  },
+  "frameworks": {
+    "title": "Frameworks"
+  },
+  "examples": {
+    "title": "Example"
+  },
+  "reference": {
+    "title": "Reference"
+  }
 }
