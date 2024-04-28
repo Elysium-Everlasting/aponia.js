@@ -15,6 +15,9 @@
   "plugins": {
     "title": "Plugins"
   },
+  "adapters": {
+    "title": "Adapters"
+  },
   "frameworks": {
     "title": "Frameworks"
   },

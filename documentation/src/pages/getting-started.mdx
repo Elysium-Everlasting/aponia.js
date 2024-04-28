@@ -1,90 +1,62 @@
-import { Callout, Card, Cards } from 'nextra/components'
+import { Card } from '@/components/mdx/card'
+import { Icon } from '@iconify/react'
+import express from '@iconify-icons/devicon/express'
+import prisma from '@iconify-icons/devicon/prisma'
+import next from '@iconify-icons/devicon/nextjs'
+import svelte from '@iconify-icons/devicon/svelte'
+import { Callout, Cards, Steps } from 'nextra/components'
 
 # Get Started
 
 ## Installation
 
+<Steps>
 
-Install the core module.
+### Install the core module.
 
 ```bash npm2yarn
 npm install @aponia.js/core
 ```
 
+### Initialize a session plugin.
 
-## Create an `Auth` instance
+```ts copy filename="src/auth/session.ts"
+import { JwtSessionPlugin } from '@aponia.js/core/plugins/session/jwt'
 
-```ts copy
-// src/auth.ts
-import { Auth } from '@aponia.js/core'
-
-export const auth = new Auth()
+export const jwtSession = new JwtSessionPlugin()
 ```
 
-## Add plugins
+### Create providers.
 
-<Cards>
-  <Card title="Providers" href="/plugins/providers" image>
-    <div className="p-4">
-      Add provider plugins to handle callbacks
-    </div>
-  </Card>
+```ts copy filename="src/auth/google.ts"
+import { OIDCProvider } from '@aponia.js/core/plugins/providers/oidc'
 
-  <Card title="Session" href="/plugins/session" image>
-    <div className="p-4">
-      Add session plugins to handle encoding/decoding
-    </div>
-  </Card>
+export const google = new OIDCProvider({
+  id: 'google',
+  clientId: process.env['GOOGLE_ID',
+  clientSecret: process.env['GOOGLE_SECRET'],
+  issuer: 'https://accounts.google.com',
+  endpoints: {
+    authorization: {
+      params: {
+        client_id: process.env['GOOGLE_ID'],
+        response_type: 'code',
+        scope: 'openid profile email',
+      },
+    },
+  },
+})
+```
 
-  <Card title="Utilities" href="/plugins/utilities" image>
-    <div className="p-4">
-      Add utility plugins to handle other requests
-    </div>
-  </Card>
-</Cards>
+### Create an adapter.
 
-[Plugin API reference](/reference/plugins)
-
-## Integrate with backend
-
-<Cards>
-  <Card title="SvelteKit" href="/integrations/sveltekit" image>
-    <div className="p-4">
-      SvelteKit image
-    </div>
-  </Card>
-
-  <Card title="Express.js" href="/integrations/express" iamge>
-    <div className="p-4">
-      Express.js image
-    </div>
-  </Card>
-</Cards>
-
-## Full Example
-
-Source code can be found here
-
-> SvelteKit
-
-Initialize database.
-
-```ts copy
-// src/db.ts
-
+```ts copy filename="src/auth/adapter.ts"
 import { PrismaClient } from '@prisma/client'
+import { AdapterPlugin, type Adapter } from '@aponia.js/core/adapter'
 
 const prisma = new PrismaClient()
-```
 
-Create database adapter.
-
-```ts copy
-// src/adapter.ts
-
-import { prisma } from './db'
-
-export const adapter: Adapter = {
+const rawAdapter: Adapter = {
   findAccount: async (_request, response) => {
     return await prisma.account.findFirst({
       where: {
@@ -127,83 +99,70 @@ export const adapter: Adapter = {
     })
   },
 }
+
+export const adapter = new AdapterPlugin(rawAdapter)
 ```
 
-```ts copy
-// src/hooks.server.ts
+### Create an `Auth` instance with the session, adapter, and providers.
 
-import { OAuthProvider } from '@aponia.js/auth.js/providers/oauth'
-import { OIDCProvider } from '@aponia.js/auth.js/providers/oidc'
-import type { Handle } from '@sveltejs/kit'
-import { sequence } from '@sveltejs/kit/hooks'
-import { GITHUB_ID, GITHUB_SECRET, GOOGLE_ID, GOOGLE_SECRET } from '$env/static/private'
-import { adapter as rawAdapter } from './adapter'
-
-const github = new OAuthProvider(
-  GitHub({
-    clientId: GITHUB_ID,
-    clientSecret: GITHUB_SECRET,
-  }),
-)
-
-const google = new OIDCProvider(
-  Google({
-    clientId: GOOGLE_ID,
-    clientSecret: GOOGLE_SECRET,
-  }),
-)
-
-const adapter = new AdapterPlugin(rawAdapter)
+```ts copy filename="src/auth/index.ts"
+import { Auth } from '@aponia.js/core'
+import { jwtSession } from './session'
+import { google } from './google'
+import { adapter } from './adapter'
 
 export const auth = new Auth({
-  plugins: [github, google, adapter, jwt],
+  plugins: [jwtSession, google, adapter]
 })
-
-const authHandle: Handle = async ({ event, resolve }) => {
-  const request: Aponia.RequestInput = {
-    url: event.url,
-    method: event.request.method,
-    headers: event.request.headers,
-    cookies: event.cookies,
-    event,
-  }
-
-  const authResponse = await auth.handle(request)
-
-  // `getSession` and `getRefresh` are only defined if a session plugin
-  // was added to the auth instance for handling encoding/decoding cookies.
-
-  event.locals.getSession ??= authResponse?.getSession
-  event.locals.getRefresh ??= authResponse?.getRefresh
-  event.locals.getUser = async () => {
-    const cookieSession = await event.locals.getSession?.()
-
-    if (cookieSession != null) {
-      const dbSession = await prisma.session.findUnique({
-        where: {
-          id: cookieSession.id,
-          expires: { gt: Date.now() },
-        },
-        include: {
-          user: true,
-        },
-      })
-
-      return dbSession?.user
-    }
-  }
-
-  const response = auth.toResponse(authResponse) ?? resolve(event)
-
-  return response
-}
-
-export const handle = sequence(authHandle)
 ```
 
-<Callout type="info">
-  The database adapter only requires the minimum set of methods in order to coordinate
-  user, account, and session management within the OAuth flow.
+### Use the `Auth` instance in your app!
 
-  It will not automatically handle functionality like deriving the user from the session.
-</Callout>
+<Cards>
+  <Card title="SvelteKit" href="/integrations/sveltekit" icon={<Icon icon={svelte} />} />
+
+  <Card title="Express.js" href="/integrations/express" icon={<Icon icon={express} />} />
+
+  <Card title="Next.js" href="/integrations/next" icon={<Icon icon={next} />} />
+</Cards>
+
+</Steps>
+
+## Plugins
+
+There are three types of plugins provided by the core library.
+
+<Cards>
+  <Card title="Providers" href="/plugins/providers">
+    Provider plugins handle requests for authentication login and callback.
+  </Card>
+
+  <Card title="Session" href="/plugins/session">
+    Session plugins encoding and decoding session information to and from cookies.
+  </Card>
+
+  <Card title="Utilities" href="/plugins/utilities">
+    Utility plugins handle related authentication events.
+  </Card>
+</Cards>
+
+## Adapters
+
+Adapters are made up of methods that you write yourself and can call during your authentication flows.
+Converting an `Adapter` to an `AdapterPlugin` registers a post-request handler
+that handles any authentication information created, i.e. after providers oversee a successful login.
+
+Aponia.js does not provide pre-defined adapters.
+Recipes for different combinations of schemas, databases, and ORMs are provided to get started.
+
+<Cards className="!flex flex-wrap">
+  <Card title="Prisma" href="/adapters/prisma" image className="w-32 h-32 items-center gap-2">
+    <img src="/logos/prisma.svg" className="h-12" />
+  </Card>
+  <Card title="Drizzle" href="/adapters/drizzle" image className="w-32 h-32 items-center gap-2">
+    <img src="/logos/drizzle.svg" className="h-12" />
+  </Card>
+  <Card title="DynamoDB" href="/adapters/dynamodb" image className="w-32 h-32 items-center gap-2">
+    <img src="/logos/dynamodb.svg" className="h-12" />
+  </Card>
+</Cards>
