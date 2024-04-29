@@ -1,5 +1,11 @@
 # @aponia.js/core
 
+## 0.6.0
+
+### Minor Changes
+
+- 32c6149: feat: exclude config option
+
 ## 0.5.2
 
 ### Patch Changes

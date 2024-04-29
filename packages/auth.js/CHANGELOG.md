@@ -1,5 +1,16 @@
 # @aponia.js/auth.js
 
+## 0.6.0
+
+### Minor Changes
+
+- 32c6149: feat: exclude config option
+
+### Patch Changes
+
+- Updated dependencies [32c6149]
+  - @aponia.js/core@0.6.0
+
 ## 0.5.2
 
 ### Patch Changes
