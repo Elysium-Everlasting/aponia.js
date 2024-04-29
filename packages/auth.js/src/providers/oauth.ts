@@ -29,6 +29,10 @@ export class OAuthProvider<T> extends CoreOAuthProvider<T> {
       id,
       clientId,
       clientSecret,
+      checker: {
+        checks: config.checks,
+        ...coreConfig?.checker,
+      },
       client: {
         ...config.client,
         ...config.options?.client,

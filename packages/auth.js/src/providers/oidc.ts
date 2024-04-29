@@ -29,6 +29,10 @@ export class OIDCProvider<T> extends CoreOIDCProvider<T> {
       id,
       clientId,
       clientSecret,
+      checker: {
+        checks: config.checks,
+        ...coreConfig?.checker,
+      },
       client: {
         ...config.client,
         ...config.options?.client,
