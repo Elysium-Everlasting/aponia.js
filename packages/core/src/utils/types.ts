@@ -17,3 +17,5 @@ export type DeepPartial<T> = IsAny<T> extends true
   : T extends Record<PropertyKey, any>
   ? { [K in keyof T]?: DeepPartial<T[K]> }
   : T
+
+export type Pattern = RegExp | string

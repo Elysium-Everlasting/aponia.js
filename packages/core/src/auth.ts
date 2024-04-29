@@ -2,12 +2,14 @@ import { Logger } from './logger'
 import type { Plugin, PluginContext, PluginOptions } from './plugins/plugin'
 import { Router, type Method } from './router'
 import { serializeCookie, type CreateCookiesOptions } from './security/cookie'
-import type { Nullish } from './utils/types'
+import { matchPattern } from './utils/match-pattern'
+import type { Nullish, Pattern } from './utils/types'
 
 export interface AuthConfig {
   logger?: Logger
   cookies?: CreateCookiesOptions
   plugins?: Plugin[]
+  exclude?: Pattern[]
 }
 
 export class Auth {
@@ -35,11 +37,14 @@ export class Auth {
 
   config: AuthConfig
 
+  exclude: Pattern[]
+
   constructor(config: AuthConfig = {}) {
     this.config = config
     this.logger = config.logger ?? new Logger()
     this.cookies = config.cookies
     this.plugins = config.plugins ?? []
+    this.exclude = config.exclude ?? []
 
     this.router = new Router()
 
@@ -61,7 +66,15 @@ export class Auth {
     }
   }
 
+  private shouldIgnoreRoute(request: Aponia.Request): boolean {
+    return this.exclude.some((pattern) => {
+      return matchPattern(request.url.pathname, pattern) != null
+    })
+  }
+
   public async handle(request: Aponia.Request): Promise<Aponia.Response | undefined> {
+    if (this.shouldIgnoreRoute(request)) return
+
     const preHandlers = this.router.getPreHandlers(request.url.pathname)
     const mainHandler = this.router.getHandler(request.method as Method, request.url.pathname)
     const postHandlers = this.router.getPostHandlers(request.url.pathname)
