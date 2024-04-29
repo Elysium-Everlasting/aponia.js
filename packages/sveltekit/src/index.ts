@@ -1,12 +1,7 @@
 import { Auth, type AuthConfig } from '@aponia.js/core/auth'
 import type { Handle } from '@sveltejs/kit'
 
-export type SvelteKitAuth = {
-  handle: Handle
-  auth: Auth
-}
-
-export function sveltekit(authOrConfig: Auth | AuthConfig): SvelteKitAuth {
+export function sveltekit(authOrConfig: Auth | AuthConfig): Handle {
   const auth = 'router' in authOrConfig ? authOrConfig : new Auth(authOrConfig)
 
   const handle: Handle = async ({ event, resolve }) => {
@@ -25,8 +20,7 @@ export function sveltekit(authOrConfig: Auth | AuthConfig): SvelteKitAuth {
     return response
   }
 
-  return {
-    auth,
-    handle,
-  }
+  return handle
 }
+
+export default sveltekit
