@@ -1,5 +1,13 @@
 # @aponia.js/auth.js
 
+## 0.6.1
+
+### Patch Changes
+
+- d6fa227: feat: mark all adapter methods as optional
+- Updated dependencies [d6fa227]
+  - @aponia.js/core@0.6.1
+
 ## 0.6.0
 
 ### Minor Changes
