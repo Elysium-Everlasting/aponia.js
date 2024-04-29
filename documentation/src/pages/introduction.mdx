@@ -12,124 +12,77 @@ and modular utilities for handling related events like session and refresh infor
 
 ### Declarative Routing
 
-Define all OAuth/OIDC providers and their corresponding flows in declarative manner,
-independent of framework constraints.
-
-<Callout type="info">
-  **Aponia.js reduces redundancy by defining handlers in a central location**.
-
-  For frameworks that implement file or directory based routing,
-  every OAuth provider requires a `/auth/login/{providerId}` and `/auth/callback/{providerId}` routes,
-  which do similar things but still require dedicated files.
-</Callout>
+Define all OAuth/OIDC providers in declarative manner.
+The auth framework will delegate the handling process to providers as needed.
 
 ```ts filename="src/auth.ts"
 import { Auth } from '@aponia.js/core'
 import { OAuthProvider } from '@aponia.js/auth.js/plugins/providers/oauth'
-import { OIDCProvider } from '@aponia.js/auth.js/plugins/providers/oidc'
 
-const provider1 = new OAuthProvider({ id: 'provider1' })
-
-const provider2 = new OIDCProvider({ id: 'provider2' })
-
-const providers = [provider1, provider2]
+const provider = new OAuthProvider({ id: 'my-oauth-provider' })
 
 const auth = new Auth({
-  plugins: providers
+  plugins: [provider]
+})
+
+console.log(`Login route handled by ${provider.id}: `, provider.pages.login)
+console.log(`Callback route handled by ${provider.id}: `, provider.pages.callback)
+
+// Example of handling.
+
+const request: Aponia.Request = {
+  url: new URL('http://localhost:3000/auth/login/provider'),
+  method: 'GET',
+  cookies: {},
+  headers: {},
+}
+
+auth.handle(request).then(response => {
+  console.log('response: ', response)
 })
 ```
 
-<Callout type="info">
-  Providers add information to the response, but don't handle session creation or database interactions.
-  Add database interaction via an [adapter plugin](/plugins/adapter) and
-  session encoding/decoding via a [session plugin](/plugins/session).
-</Callout>
+### Easy Framework Integration
 
-### Simple Framework Integration
-
-Aponia.js handles the `/auth/login/{providerId}` and `/auth/callback/{providerId}` endpoints
-by re-routing at the framework-handling level.
-
-**Aponia.js does not provide built-in framework adapters out of the box**.
-The `Aponia.Response` returned by `auth.handle` can be easily mapped to a
-framework appropriate response object.
-
-Read more about the provider plugin API [here](/reference/plugin/providers/authjs)
-
-> Express.js example
+> Express.js
 
 ```ts filename="src/app.ts"
-import { Auth } from '@aponia.js/core'
-import { OAuthProvider } from '@aponia.js/auth.js/plugins/providers/oauth'
-import { OIDCProvider } from '@aponia.js/auth.js/plugins/providers/oidc'
-import cookieParser from 'cookie-parser'
+import { middleware } from '@aponia.js/express'
 import express from 'express'
 
-const provider1 = new OAuthProvider({ id: 'provider1' })
-
-const provider2 = new OIDCProvider({ id: 'provider2' })
-
-const providers = [provider1, provider2]
-
-const auth = new Auth({
-  plugins: providers,
-})
+import auth from './auth'
 
 const app = express()
 
-app.use(cookieParser())
+app.use(middleware(auth))
 
-app.use(async (req, res, next) => {
-  const request: Aponia.Request = {
-    url: new URL(req.protocol + '://' + req.get('host') + req.originalUrl),
-    method: req.method,
-    cookies: req.cookies,
-    headers: new Headers(),
-  }
-
-  const response = await auth.handle(request)
-
-  if (response?.status != null) {
-    res.status(response.status)
-  }
-
-  response?.cookies?.forEach((cookie) => {
-    res.cookie(cookie.name, cookie.value, cookie.options)
-  })
-
-  if (response?.redirect != null) {
-    res.redirect(response.redirect)
-  } else {
-    next()
-  }
-})
+app.listen(3000, () => console.log('Listening on port 3000'))
 ```
 
-<Callout>
-  This example does not handle database interactions or session encoding,
-  it only demonstrates how login and callback routes are handled by the `auth.handle`
-  function.
-</Callout>
+### Headless
 
-### Headless Usage
+All classes have methods that can be invoked directly to handle the authentication process manually.
 
-Aponia.js classes all provide relevant methods for handling the OAuth process manually.
+```ts filename="src/auth/google.ts"
+import { OIDCProvider } from '@aponia.js/core/plugins/providers/oidc'
 
-Here's an example of getting the authorization URL from a GitHub provider
-after configuring it via `auth.js`.
+export const google = new OIDCProvider({
+  id: 'google',
+  clientId: process.env['GOOGLE_ID',
+  clientSecret: process.env['GOOGLE_SECRET'],
+  issuer: 'https://accounts.google.com',
+  endpoints: {
+    authorization: {
+      params: {
+        client_id: process.env['GOOGLE_ID'],
+        response_type: 'code',
+        scope: 'openid profile email',
+      },
+    },
+  },
+})
 
-```ts filename="src/auth/github.ts"
-import GitHub from '@auth/core/providers/github'
-import { OAuthProvider } from '@aponia.js/auth.js/providers/oauth'
-
-export const github = new OAuthProvider(
-  GitHub({
-    clientId: process.env.GITHUB_ID,
-    clientSecret: process.env.GITHUB_SECRET,
-  }),
-)
-
-github.login().then((response) => {
+google.login().then((response) => {
   // The authorization URL that will initialize the OAuth process.
   const authorizationUrl = response.redirect
 
@@ -140,13 +93,3 @@ github.login().then((response) => {
   const status = response.status
 })
 ```
-
-<Callout type="info">
-  Aponia.js does not provide pre-configured OAuth providers out of the box at the moment,
-  but features a flexible API for defining them,
-  and integrations for importing external provider configurations, e.g. from [`auth.js`](https://authjs.dev/).
-
-  [Read more about the core provider plugin](/plugins/providers/core)
-
-  [Read more about the auth.js integration](/plugins/providers/auth)
-</Callout>

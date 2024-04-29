@@ -1,0 +1,14 @@
+{
+  "basic": {
+    "title": "basic"
+  },
+  "basic+credentials": {
+    "title": "basic + credentials"
+  },
+  "basic+refresh": {
+    "title": "basic + refresh"
+  },
+  "flagged": {
+    "title": "flagged"
+  }
+}

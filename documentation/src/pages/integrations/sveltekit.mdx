@@ -1,0 +1,212 @@
+import { Steps } from 'nextra/components'
+
+# SvelteKit
+
+Aponia.js provides a SvelteKit library for convenience.
+
+## Basic Usage
+
+```ts copy filename="src/hooks.server.ts"
+
+import { Auth } from '@aponia.js/core'
+import { sveltekit } from '@aponia.js/sveltekit'
+
+const auth = new Auth()
+
+const authHandle = sveltekit(auth)
+
+export const handle = sveltekit(auth)
+```
+
+## Full Usage
+
+<Steps>
+
+### Install the packages.
+
+```bash npm2yarn
+npm install @aponia.js/core @aponia.js/sveltekit
+```
+
+### Initialize a session plugin.
+
+```ts copy filename="src/lib/server/auth/session.ts"
+import { JwtSessionPlugin } from '@aponia.js/core/plugins/session/jwt'
+
+export const jwtSession = new JwtSessionPlugin()
+```
+
+### Create providers.
+
+```ts copy filename="src/lib/server/auth/google.ts"
+import { OIDCProvider } from '@aponia.js/core/plugins/providers/oidc'
+import { GOOGLE_ID, GOOGLE_SECRET } from '$env/static/private'
+
+export const google = new OIDCProvider({
+  id: 'google',
+  clientId: GOOGLE_ID,
+  clientSecret: GOOGLE_SECRET,
+  issuer: 'https://accounts.google.com',
+  endpoints: {
+    authorization: {
+      params: {
+        client_id: GOOGLE_ID,
+        response_type: 'code',
+        scope: 'openid profile email',
+      },
+    },
+  },
+})
+```
+
+### Initialize Database (for Adapter).
+
+```ts copy filename="src/lib/server/db.ts"
+import { PrismaClient } from '@prisma/client'
+
+export const prisma = new PrismaClient()
+```
+
+### Create an adapter.
+
+```ts copy filename="src/lib/server/auth/adapter.ts"
+import { AdapterPlugin, type Adapter } from '@aponia.js/core/adapter'
+import { prisma } from '$lib/server/db'
+
+const rawAdapter: Adapter = {
+  findAccount: async (_request, response) => {
+    return await prisma.account.findFirst({
+      where: {
+        providerId: response.providerId,
+        providerAccountId: response.providerAccountId,
+      },
+    })
+  },
+  getUserFromAccount: async (account, _request, _response) => {
+    return await prisma.user.findFirst({
+      where: {
+        id: account.userId,
+      },
+    })
+  },
+  createSession: async (user, _account, _request, _response) => {
+    return await prisma.session.create({
+      userId: user.id,
+      expires: Date.now() + 1000 * 60 * 24,
+    })
+  },
+  createUser: async (_request, response) => {
+    return await prisma.user.create({
+      name: response.account.name,
+      avatar: response.account.picture ?? response.account['image'],
+    })
+  },
+  findUserAccounts: async (user, _request, _response) => {
+    return await prisma.account.findMany({
+      where: {
+        userId: user.id,
+      },
+    })
+  },
+  createAccount: async (user, _request, response) => {
+    return await prisma.account.create({
+      providerId: response.providerId,
+      providerAccountId: response.providerAccountId,
+      userId: user.id,
+    })
+  },
+}
+
+export const adapter = new AdapterPlugin(rawAdapter)
+```
+
+### Create an `Auth` instance with the session, adapter, and providers.
+
+```ts copy filename="src/lib/server/auth/index.ts"
+import { Auth } from '@aponia.js/core'
+import { jwtSession } from './session'
+import { google } from './google'
+import { adapter } from './adapter'
+
+export const auth = new Auth({
+  plugins: [jwtSession, google, adapter]
+})
+```
+
+### Define Global Types.
+
+```ts copy filename="src/app.d.ts"
+declare global {
+  namespace Aponia {
+    interface Session extends {
+      id: string
+      expires: number
+    }
+  }
+
+  namespace App {
+    interface Locals {
+      getUser: () => Promise<Aponia.Session | undefined>
+    }
+
+    interface PageData {
+      session?: Aponia.Session
+    }
+  }
+}
+```
+
+### Create SvelteKit hooks.
+
+```ts copy filename="src/hooks.server.ts"
+import type { Handle } from '@sveltejs/kit'
+import { sequence } from '@sveltejs/kit/hooks'
+import { sveltekit } from '@aponia.js/sveltekit'
+import { auth } from '$lib/server/auth'
+import { jwtSession } from '$lib/server/auth/session'
+import { prisma } from '$lib/server/db'
+
+const authHandle = sveltekit(auth)
+
+const sessionHandle: Handle = async ({ event, resolve }) => {
+  // Cached session, if already attempted to get.
+  let session: Aponia.Session | false
+
+  event.locals.getSession = async () => {
+    if (session === false) return undefined
+
+    const cookieSession = await jwtSession.getSession(event.cookies)
+
+    const isValid = cookieSession.expires > Date.now()
+
+    if (!isValid) {
+      session = false
+      return undefined
+    }
+
+    // Verify that the session in the cookie actually exists in the database.
+
+    const dbSession = await prisma.findUnique({
+      where: {
+        id: cookieSession.id
+      }
+    })
+
+    if (dbSession == null) {
+      session = false
+      return undefined
+    }
+
+    session = dbSession
+    return session
+  }
+}
+
+export const handle = sequence(authHandle, sessionHandle)
+```
+
+</Steps>
+
+## Testing
+
+If all the steps were done correctly, then try visiting `/auth/login/google`!

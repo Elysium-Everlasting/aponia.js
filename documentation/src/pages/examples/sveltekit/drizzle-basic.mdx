@@ -1,15 +1,11 @@
 # SvelteKit + Drizzle
 
 This is an example of using aponia.js with [SvelteKit](https://kit.svelte.dev) and [Drizzle ORM](https://orm.drizzle.team)
-with example schema [1].
+with the [basic schema](/reference/database/schemas/basic).
 
-## Database Schema
+## Define Database Schema
 
-Schema [1] features a minimal relationship between three entities: users, accounts, and sessions.
-
-```ts copy
-// src/lib/server/db/schema.ts
-
+```ts copy filename="src/lib/server/db/schema.ts"
 import { createId } from '@paralleldrive/cuid2'
 import { relations, type InferSelectModel } from 'drizzle-orm'
 import { primaryKey, sqliteTable, text } from 'drizzle-orm/sqlite-core'
@@ -87,27 +83,11 @@ export type User = InferSelectModel<typeof user>
 export type Account = InferSelectModel<typeof account>
 ```
 
-### Reasoning
-
-- Each user has a unique ID that can be visualized as a physical person.
-
-- Each user has multiple accounts, which allows them to login via different ways.
-  e.g. A user may have a username/password login as well as a Google account.
-      The user can login using either method and be identified as the same user entity.
-
-- Likewise, every account is associated with a single user, and represents a way that they
-  can login.
-
-- Whenever a user successfully logs into an account, a new session should be made.
-  The session should have an unique ID, be associated with a user, and expire at a finite time.
-
 ## Database Initialization
 
 Initialize a database client.
 
-```ts copy
-// src/lib/server/db/index.ts
-
+```ts copy filename="src/lib/server/db/index.ts"
 import { createClient } from '@libsql/client/web'
 import { drizzle } from 'drizzle-orm/libsql'
 
@@ -130,10 +110,9 @@ export * as schema from './schema'
 ## Type definitions
 
 A big part of aponia.js is type safety, and we can augment aponia.js's interfaces
-with the types defined by the database. In SvelteKit, we can do this global
-module augmentation inside `src/app.d.ts`
+with the types defined by the database.
 
-```ts copy
+```ts copy filename="src/app.d.ts"
 import '@aponia.js/core/types'
 
 import type { Profile } from '@auth/core/types'
@@ -189,9 +168,7 @@ declare global {
 After defining the database schema, an aponia.js database adapter should be defined.
 It should then be converted to an adapter plugin, which allows it to be integrated into the framework lifecycle.
 
-```ts copy
-// src/lib/server/auth/adapter.ts
-
+```ts copy filename="src/lib/server/auth/adapter.ts"
 import { db, account, session, user } from '../db'
 import { AdapterPlugin, type Adapter } from '@aponia.js/core/adapter'
 
@@ -263,9 +240,7 @@ export const adapter = new AdapterPlugin(rawAdapter)
 Define providers to handle specific authentication flows.
 Here, we'll define Google and GitHub providers using the `auth.js` wrapper.
 
-```ts copy
-// src/lib/server/auth/providers.ts
-
+```ts copy filename="src/lib/server/auth/providers.ts"
 import { OAuthProvider } from '@aponia.js/auth.js/providers/oauth'
 import { OIDCProvider } from '@aponia.js/auth.js/providers/oidc'
 import GitHub from '@auth/core/providers/github'
@@ -292,9 +267,7 @@ export const google = new OIDCProvider(
 
 Initialize a session handler.
 
-```ts copy
-// src/lib/server/auth/session.ts
-
+```ts copy filename="src/lib/server/auth/session.ts"
 import { JwtSessionPlugin } from '@aponia.js/core/session/jwt'
 
 export const jwt = new JwtSessionPlugin()
@@ -311,9 +284,7 @@ Prerequisites:
 
 Now, create an auth instance.
 
-```ts copy
-// src/lib/server/auth/index.ts
-
+```ts copy filename="src/lib/server/auth/index.ts"
 import { adapter } from './adapter'
 import { github, google } from './providers'
 import { jwt } from './session'
@@ -324,69 +295,51 @@ export const auth = new Auth({
 
 ```
 
-## SvelteKit Integration
+## SvelteKit Hooks
 
-Now that the auth instance has been declared and is ready to handle requests,
-plug it into SvelteKit's hooks.
-
-### Hooks
-
-```ts copy
+```ts copy filename="src/hooks.server.ts"
 import type { Handle } from '@sveltejs/kit'
 import { sequence } from '@sveltejs/kit/hooks'
-
-import { and, eq, gt } from 'drizzle-orm'
-
+import { sveltekit } from '@aponia.js/sveltekit'
 import { auth } from '$lib/server/auth'
-import { jwt } from '$lib/server/session'
-import { db, session } from '$lib/server/db'
+import { jwtSession } from '$lib/server/auth/session'
+import { prisma } from '$lib/server/db'
 
-const authenticationHandle: Handle = async ({ event, resolve }) => {
-  const authResponse = await auth.handle({
-    url: event.url,
-    method: event.request.method,
-    headers: event.request.headers,
-    cookies: event.cookies,
-    event,
-  })
+const authHandle = sveltekit(auth)
 
-  let user: Aponia.User | false
+const sessionHandle: Handle = async ({ event, resolve }) => {
+  // Cached session, if already attempted to get.
+  let session: Aponia.Session | false
 
-  event.locals.getUser = async () => {
-    if (user === false) return
+  event.locals.getSession = async () => {
+    if (session === false) return undefined
 
-    const cookieSession = await jwt.getSession(event.cookies)
+    const cookieSession = await jwtSession.getSession(event.cookies)
 
-    if (cookieSession == null) {
-      user = false
-      return
+    const isValid = cookieSession.expires > Date.now()
+
+    if (!isValid) {
+      session = false
+      return undefined
     }
 
-    const dbSession = await db.query.session.findFirst({
-      where: and(eq(session.id, cookieSession.id), gt(session.expires, Date.now())),
-      with: {
-        user: true,
-      },
+    // Verify that the session in the cookie actually exists in the database.
+
+    const dbSession = await prisma.findUnique({
+      where: {
+        id: cookieSession.id
+      }
     })
 
-    if (dbSession?.user == null) {
-      user = false
-      return
+    if (dbSession == null) {
+      session = false
+      return undefined
     }
 
-    user = dbSession.user
-
-    return user
+    session = dbSession
+    return session
   }
-
-  /**
-   * Attempt to convert {@link authResponse} to a {@link Response} if possible.
-   * Otherwise, fallback to SvelteKit's default handling.
-   */
-  const response = auth.toResponse(authResponse) ?? resolve(event)
-
-  return response
 }
 
-export const handle = sequence(authenticationHandle)
+export const handle = sequence(authHandle, sessionHandle)
 ```

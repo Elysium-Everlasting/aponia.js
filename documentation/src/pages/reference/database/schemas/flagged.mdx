@@ -1,0 +1,36 @@
+# User + Flagged Account + Session
+
+Uses `user` and `session` tables like the [default strategy](/refrence/database/schemas/basic).
+Omits the `account` table in favor of storing the information directly in the `user` table.
+
+## Entity-Relationship Diagram
+
+```mermaid
+erDiagram
+user {
+    VARCHAR(255) id PK
+    VARCHAR(255) name
+    VARCHAR(255) google_id "NULLABLE"
+    VARCHAR(255) google_credentials "NULLABLE"
+    VARCHAR(255) github_id "NULLABLE"
+    VARCHAR(255) github_credentials "NULLABLE"
+    VARCHAR(255) my_provider_id "NULLABLE"
+    VARCHAR(255) my_provider_credentials "NULLABLE"
+}
+session {
+    VARCHAR(255) id PK
+    VARCHAR(255) user_id FK
+    DATE expires
+}
+user ||--o{ session : has
+```
+
+## Comparison to Default Schema
+
+### Pros
+- Less tables to maintain.
+- Simpler to lookup accounts and users.
+
+### Cons
+- `user` gets larger.
+- `nullable` fields for each account user does not have.

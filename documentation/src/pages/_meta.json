@@ -18,8 +18,8 @@
   "adapters": {
     "title": "Adapters"
   },
-  "frameworks": {
-    "title": "Frameworks"
+  "integrations": {
+    "title": "Integrations"
   },
   "examples": {
     "title": "Example"
