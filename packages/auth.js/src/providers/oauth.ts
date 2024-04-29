@@ -30,7 +30,7 @@ export class OAuthProvider<T> extends CoreOAuthProvider<T> {
       clientId,
       clientSecret,
       checker: {
-        checks: config.checks,
+        checks: config.checks ?? config.options?.checks,
         ...coreConfig?.checker,
       },
       client: {

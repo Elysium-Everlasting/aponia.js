@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-namespace */
 
 import type { Cookie, CookiesObject } from './security/cookie'
-import type { Nullish } from './utils/types'
 
 export type AuthenticatedKeys =
   | 'account'
@@ -11,9 +10,9 @@ export type AuthenticatedKeys =
   | 'providerAccountId'
 
 /**
- * Raw request object that should be provided to the auth handler.
+ * Internal request object.
  */
-export interface AponiaRequestInput {
+export interface AponiaRequest {
   /**
    * The URL of the request.
    */
@@ -33,14 +32,6 @@ export interface AponiaRequestInput {
    * Relevant headers sent with the request.
    */
   headers: Headers
-}
-
-/**
- * Internal request object has extra utilities.
- */
-export interface AponiaRequest extends AponiaRequestInput {
-  getSession?: () => Promise<AponiaSession | Nullish>
-  getRefresh?: () => Promise<AponiaRefresh | Nullish>
 }
 
 export interface AponiaAuthenticatedResponse
@@ -151,18 +142,11 @@ export interface AponiaRefresh {}
  */
 declare global {
   namespace Aponia {
-    interface RequestInput extends AponiaRequestInput {}
-
-    interface Request extends Aponia.RequestInput {
-      getSession?: () => Promise<Aponia.Session | undefined>
-      getRefresh?: () => Promise<Aponia.Refresh | undefined>
-    }
+    interface Request extends AponiaRequest {}
 
     interface Response extends Omit<AponiaResponse, 'account' | 'providerAccountMapping'> {
       account?: Aponia.ProviderAccount
       providerAccountMapping?: Aponia.ProviderAccountMapping
-      getSession?: () => Promise<Aponia.Session | undefined>
-      getRefresh?: () => Promise<Aponia.Refresh | undefined>
     }
 
     interface AuthenticatedResponse

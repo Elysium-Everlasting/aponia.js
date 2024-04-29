@@ -88,22 +88,11 @@ export class Auth {
 
     let response = (await mainHandler?.(request)) ?? undefined
 
-    if (response != null) {
-      response.getSession ??= request.getSession
-      response.getRefresh ??= request.getRefresh
-    }
-
     for (const postHandler of postHandlers) {
       const modifiedResponse = await postHandler(request, response)
       if (modifiedResponse) {
         response = modifiedResponse
       }
-    }
-
-    if (response != null || request.getSession || request.getRefresh) {
-      response ??= {}
-      response.getSession ??= request.getSession
-      response.getRefresh ??= request.getRefresh
     }
 
     return response

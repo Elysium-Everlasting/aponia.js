@@ -90,13 +90,7 @@ export class SessionPlugin implements Plugin {
       },
     }
 
-    context.router.preHandle(this.preHandle.bind(this))
     context.router.postHandle(this.handle.bind(this))
-  }
-
-  async preHandle(request: Aponia.Request) {
-    request.getSession = async () => await this.getSession(request.cookies)
-    request.getRefresh = async () => await this.getRefresh(request.cookies)
   }
 
   async handle(_request: Aponia.Request, response?: Aponia.Response | Nullish): Promise<void> {
