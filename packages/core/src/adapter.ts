@@ -16,7 +16,7 @@ export interface Adapter {
    * 1. A provider responds with a user's credentials.
    * 2. Find the corresponding account that was logged in to.
    */
-  findAccount: (
+  findAccount?: (
     request: Aponia.Request,
     response: Aponia.AuthenticatedResponse,
   ) => Awaitable<Aponia.Account | Nullish>
@@ -26,7 +26,7 @@ export interface Adapter {
    * 2. No account was found.
    * 3. Find the user that owns the account.
    */
-  getUserFromAccount: (
+  getUserFromAccount?: (
     account: Aponia.Account,
     request: Aponia.Request,
     response: Aponia.AuthenticatedResponse,
@@ -40,7 +40,7 @@ export interface Adapter {
    *
    * Accounts and users may be created/found in different ways.
    */
-  createSession: (
+  createSession?: (
     user: Aponia.User,
     account: Aponia.Account,
     request: Aponia.Request,
@@ -52,7 +52,7 @@ export interface Adapter {
    * 2. No account was found.
    * 3. Find a user that is associated with the credentials.
    */
-  findUser: (
+  findUser?: (
     request: Aponia.Request,
     response: Aponia.AuthenticatedResponse,
   ) => Awaitable<Aponia.User | Nullish>
@@ -65,7 +65,7 @@ export interface Adapter {
    *
    * @remarks Do not create an account for the user too; this will be handled later.
    */
-  createUser: (
+  createUser?: (
     request: Aponia.Request,
     response: Aponia.AuthenticatedResponse,
   ) => Awaitable<Aponia.User | Nullish>
@@ -76,7 +76,7 @@ export interface Adapter {
    * 3. A user with the credentials is found, or newly created with the credentials.
    * 4. Find all accounts that the user has.
    */
-  findUserAccounts: (
+  findUserAccounts?: (
     user: Aponia.User,
     request: Aponia.Request,
     response: Aponia.AuthenticatedResponse,
@@ -104,7 +104,7 @@ export interface Adapter {
    * 4. The found user doesn't have any accounts.
    * 5. Create a new account for the user.
    */
-  createAccount: (
+  createAccount?: (
     user: Aponia.User,
     request: Aponia.Request,
     response: Aponia.AuthenticatedResponse,
@@ -159,16 +159,16 @@ export class AdapterPlugin implements Plugin {
       return
     }
 
-    let account = await this.adapter.findAccount(request, response)
+    let account = await this.adapter.findAccount?.(request, response)
 
     if (account != null) {
-      const user = await this.adapter.getUserFromAccount(account, request, response)
+      const user = await this.adapter.getUserFromAccount?.(account, request, response)
 
       if (user == null) {
         return await this.adapter.handleUnboundAccount?.(account, request, response)
       }
 
-      const session = await this.adapter.createSession(user, account, request, response)
+      const session = await this.adapter.createSession?.(user, account, request, response)
 
       if (session != null) {
         response.session = session
@@ -177,17 +177,17 @@ export class AdapterPlugin implements Plugin {
       return response
     }
 
-    let user = await this.adapter.findUser(request, response)
+    let user = await this.adapter.findUser?.(request, response)
 
     if (user == null) {
-      user = await this.adapter.createUser(request, response)
+      user = await this.adapter.createUser?.(request, response)
     }
 
     if (user == null) {
       return
     }
 
-    const accounts = await this.adapter.findUserAccounts(user, request, response)
+    const accounts = await this.adapter.findUserAccounts?.(user, request, response)
 
     if (accounts?.length) {
       account = await this.handleMultipleAccounts(user, accounts, request, response)
@@ -197,13 +197,13 @@ export class AdapterPlugin implements Plugin {
       }
     }
 
-    account = await this.adapter.createAccount(user, request, response)
+    account = await this.adapter.createAccount?.(user, request, response)
 
     if (account == null) {
       return
     }
 
-    const session = await this.adapter.createSession(user, account, request, response)
+    const session = await this.adapter.createSession?.(user, account, request, response)
 
     if (session) {
       response.session = session
