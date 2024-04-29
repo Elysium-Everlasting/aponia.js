@@ -1,5 +1,11 @@
 # @aponia.js/core
 
+## 0.6.5
+
+### Patch Changes
+
+- 44515a8: fix: sveltekit types
+
 ## 0.6.4
 
 ### Patch Changes
