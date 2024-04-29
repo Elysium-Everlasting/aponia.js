@@ -1,5 +1,13 @@
 # @aponia.js/sveltekit
 
+## 0.6.6
+
+### Patch Changes
+
+- 2eae67d: feat: add option to skip checks during callback
+- Updated dependencies [2eae67d]
+  - @aponia.js/core@0.6.6
+
 ## 0.6.5
 
 ### Patch Changes

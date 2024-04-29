@@ -1,5 +1,11 @@
 # @aponia.js/core
 
+## 0.6.6
+
+### Patch Changes
+
+- 2eae67d: feat: add option to skip checks during callback
+
 ## 0.6.5
 
 ### Patch Changes
