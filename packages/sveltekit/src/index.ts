@@ -2,7 +2,7 @@ import { Auth, type AuthConfig } from '@aponia.js/core/auth'
 import type { Handle, RequestEvent } from '@sveltejs/kit'
 
 export function eventToRequest(event: RequestEvent): Aponia.Request {
-  const request: Aponia.RequestInput = {
+  const request: Aponia.Request = {
     url: event.url,
     method: event.request.method,
     headers: event.request.headers,
