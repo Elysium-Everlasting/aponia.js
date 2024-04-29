@@ -1,5 +1,12 @@
 # @aponia.js/core
 
+## 0.6.3
+
+### Patch Changes
+
+- bef47de: feat: sveltekit exports utility transform function
+- 63c83c7: fix: forward checks from auth.js to core
+
 ## 0.6.2
 
 ### Patch Changes
