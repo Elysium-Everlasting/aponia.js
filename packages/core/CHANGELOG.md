@@ -1,5 +1,13 @@
 # @aponia.js/core
 
+## 0.6.4
+
+### Patch Changes
+
+- c19a806: chore: remove function utilities from request object
+- c19a806: fix: forward checks from auth.js options
+  chore: remove adding functions to response
+
 ## 0.6.3
 
 ### Patch Changes
