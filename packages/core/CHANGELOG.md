@@ -1,5 +1,11 @@
 # @aponia.js/core
 
+## 0.6.2
+
+### Patch Changes
+
+- c22667c: chore: fix imports for sveltekit package
+
 ## 0.6.1
 
 ### Patch Changes
