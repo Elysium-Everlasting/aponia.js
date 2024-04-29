@@ -1,5 +1,11 @@
 # @aponia.js/core
 
+## 0.6.1
+
+### Patch Changes
+
+- d6fa227: feat: mark all adapter methods as optional
+
 ## 0.6.0
 
 ### Minor Changes
