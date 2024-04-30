@@ -244,14 +244,14 @@ export class OIDCProvider<T = any> implements Plugin {
     }
   }
 
-  public async callback(request: Aponia.Request, skipChecks?: boolean): Promise<Aponia.Response> {
+  public async callback(request: Aponia.Request): Promise<Aponia.Response> {
     await this.initializeAuthorizationServer()
 
     const cookies: Cookie[] = []
 
     const stateCookie = getCookieValue(request.cookies, this.cookies.state.name)
 
-    const state = skipChecks ? oauth.skipStateCheck : await this.checker.useState(stateCookie)
+    const state = await this.checker.useState(stateCookie)
 
     if (state != oauth.skipStateCheck) {
       cookies.push({
@@ -274,7 +274,7 @@ export class OIDCProvider<T = any> implements Plugin {
 
     const pkceCookie = getCookieValue(request.cookies, this.cookies.pkce.name)
 
-    const pkce = skipChecks ? undefined : await this.checker.usePkce(pkceCookie)
+    const pkce = await this.checker.usePkce(pkceCookie)
 
     if (pkce) {
       cookies.push({
@@ -305,7 +305,7 @@ export class OIDCProvider<T = any> implements Plugin {
 
     const nonceCookie = getCookieValue(request.cookies, this.cookies.nonce.name)
 
-    const nonce = skipChecks ? oauth.expectNoNonce : await this.checker.useNonce(nonceCookie)
+    const nonce = await this.checker.useNonce(nonceCookie)
 
     if (nonce) {
       cookies.push({
