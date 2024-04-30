@@ -22,6 +22,7 @@
   },
   "keywords": [],
   "type": "module",
+  "main": "./src/index.ts",
   "exports": {
     "./*": {
       "require": "./src/*.ts",
