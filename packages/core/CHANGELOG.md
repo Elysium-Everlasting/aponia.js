@@ -1,5 +1,12 @@
 # @aponia.js/core
 
+## 0.6.7
+
+### Patch Changes
+
+- 6797434: feat: entrypoint for core library
+- 568d948: revert: remove "skipChecks" option for oidc callback
+
 ## 0.6.6
 
 ### Patch Changes
