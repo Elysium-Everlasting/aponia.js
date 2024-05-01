@@ -105,6 +105,10 @@ export class OIDCProvider<T = any> implements Plugin {
    */
   logger: Logger
 
+  /**
+   * Proxy for callback.
+   * @remarks Only applies to callback!!
+   */
   origin?: string
 
   constructor(config: OIDCProviderConfig<T>) {
@@ -198,8 +202,7 @@ export class OIDCProvider<T = any> implements Plugin {
     }
 
     if (!url.searchParams.has('redirect_uri') && request != null) {
-      const origin = this.origin ?? request.url.origin
-      const redirectUri = `${origin}${this.pages.callback}`
+      const redirectUri = `${request.url.origin}${this.pages.callback}`
       this.logger.debug(`Automatically adding redirect_uri: ${redirectUri}`)
       url.searchParams.set('redirect_uri', redirectUri)
     }
