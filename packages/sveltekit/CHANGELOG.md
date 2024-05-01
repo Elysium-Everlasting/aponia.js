@@ -1,5 +1,13 @@
 # @aponia.js/sveltekit
 
+## 0.6.8
+
+### Patch Changes
+
+- 22d85f7: feat: origin auth option
+- Updated dependencies [22d85f7]
+  - @aponia.js/core@0.6.8
+
 ## 0.6.7
 
 ### Patch Changes
