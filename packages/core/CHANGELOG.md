@@ -1,5 +1,11 @@
 # @aponia.js/core
 
+## 0.6.9
+
+### Patch Changes
+
+- e163f20: feat: only read custom origin in oauth/oidc callback
+
 ## 0.6.8
 
 ### Patch Changes
