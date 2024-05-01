@@ -105,6 +105,8 @@ export class OIDCProvider<T = any> implements Plugin {
    */
   logger: Logger
 
+  origin?: string
+
   constructor(config: OIDCProviderConfig<T>) {
     this.config = config
     this.id = config.id
@@ -128,6 +130,7 @@ export class OIDCProvider<T = any> implements Plugin {
     this.cookies = DEFAULT_OIDC_COOKIES_OPTIONS
     this.checker = new Checker(config.checker)
     this.logger = config.logger ?? new Logger()
+    this.origin = config.origin
   }
 
   async initializeAuthorizationServer() {
@@ -161,6 +164,10 @@ export class OIDCProvider<T = any> implements Plugin {
       },
     })
 
+    if (options.origin != null) {
+      this.origin = options.origin
+    }
+
     context.router.get(this.pages.login, this.login.bind(this))
     context.router.get(this.pages.callback, this.callback.bind(this))
   }
@@ -191,7 +198,8 @@ export class OIDCProvider<T = any> implements Plugin {
     }
 
     if (!url.searchParams.has('redirect_uri') && request != null) {
-      const redirectUri = `${request.url.origin}${this.pages.callback}`
+      const origin = this.origin ?? request.url.origin
+      const redirectUri = `${origin}${this.pages.callback}`
       this.logger.debug(`Automatically adding redirect_uri: ${redirectUri}`)
       url.searchParams.set('redirect_uri', redirectUri)
     }
@@ -284,11 +292,13 @@ export class OIDCProvider<T = any> implements Plugin {
       })
     }
 
+    const origin = this.origin ?? request.url.origin
+
     const initialCodeGrantResponse = await oauth.authorizationCodeGrantRequest(
       this.authorizationServer,
       this.client,
       codeGrantParams,
-      `${request.url.origin}${this.pages.callback}`,
+      `${origin}${this.pages.callback}`,
       pkce ?? 'auth',
     )
 

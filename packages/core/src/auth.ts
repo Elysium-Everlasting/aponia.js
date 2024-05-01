@@ -10,6 +10,7 @@ export interface AuthConfig {
   cookies?: CreateCookiesOptions
   plugins?: Plugin[]
   exclude?: Pattern[]
+  origin?: string
 }
 
 export class Auth {
@@ -39,12 +40,15 @@ export class Auth {
 
   exclude: Pattern[]
 
+  origin?: string
+
   constructor(config: AuthConfig = {}) {
     this.config = config
     this.logger = config.logger ?? new Logger()
     this.cookies = config.cookies
     this.plugins = config.plugins ?? []
     this.exclude = config.exclude ?? []
+    this.origin = config.origin
 
     this.router = new Router()
 
@@ -63,6 +67,7 @@ export class Auth {
     return {
       cookieOptions: this.cookies,
       logger: this.logger,
+      origin: this.origin,
     }
   }
 

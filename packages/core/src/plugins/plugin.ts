@@ -14,4 +14,5 @@ export interface PluginContext {
 export interface PluginOptions {
   cookieOptions?: CreateCookiesOptions
   logger?: Logger
+  origin?: string
 }
