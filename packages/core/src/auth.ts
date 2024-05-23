@@ -1,7 +1,7 @@
 import { Logger } from './logger'
 import type { Plugin, PluginContext, PluginOptions } from './plugins/plugin'
 import { Router, type Method } from './router'
-import { serializeCookie, type CreateCookiesOptions } from './security/cookie'
+import { serializeCookie, type CreateCookiesOptions, parseCookie } from './security/cookie'
 import { matchPattern } from './utils/match-pattern'
 import type { Nullish, Pattern } from './utils/types'
 
@@ -78,23 +78,36 @@ export class Auth {
   }
 
   public async handle(request: Aponia.Request): Promise<Aponia.Response | undefined> {
-    if (this.shouldIgnoreRoute(request)) return
+    let internalRequest =
+      request instanceof Request
+        ? {
+            url: new URL(request.url),
+            method: request.method,
+            cookies: parseCookie(request.headers.get('cookie')),
+            headers: request.headers,
+          }
+        : request
 
-    const preHandlers = this.router.getPreHandlers(request.url.pathname)
-    const mainHandler = this.router.getHandler(request.method as Method, request.url.pathname)
-    const postHandlers = this.router.getPostHandlers(request.url.pathname)
+    if (this.shouldIgnoreRoute(internalRequest)) return
+
+    const preHandlers = this.router.getPreHandlers(internalRequest.url.pathname)
+    const mainHandler = this.router.getHandler(
+      internalRequest.method as Method,
+      internalRequest.url.pathname,
+    )
+    const postHandlers = this.router.getPostHandlers(internalRequest.url.pathname)
 
     for (const preHandler of preHandlers) {
-      const modifiedRequest = await preHandler(request)
+      const modifiedRequest = await preHandler(internalRequest)
       if (modifiedRequest) {
-        request = modifiedRequest
+        internalRequest = modifiedRequest
       }
     }
 
-    let response = (await mainHandler?.(request)) ?? undefined
+    let response = (await mainHandler?.(internalRequest)) ?? undefined
 
     for (const postHandler of postHandlers) {
-      const modifiedResponse = await postHandler(request, response)
+      const modifiedResponse = await postHandler(internalRequest, response)
       if (modifiedResponse) {
         response = modifiedResponse
       }

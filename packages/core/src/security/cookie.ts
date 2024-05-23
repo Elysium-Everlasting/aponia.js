@@ -109,9 +109,11 @@ export interface CookieParseOptions {
 }
 
 export function parseCookie(
-  serializedCookie: string,
+  serializedCookie: string | null,
   options?: CookieParseOptions,
 ): Record<string, string> {
+  if (serializedCookie == null) return {}
+
   const decode = options?.decode ?? decodeURIComponent
 
   const cookies = serializedCookie
