@@ -1,5 +1,13 @@
 # @aponia.js/auth.js
 
+## 0.6.11
+
+### Patch Changes
+
+- d9c23ed: feat: also allow `Request` object for adapter handler
+- Updated dependencies [d9c23ed]
+  - @aponia.js/core@0.6.11
+
 ## 0.6.10
 
 ### Patch Changes
