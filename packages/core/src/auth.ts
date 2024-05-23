@@ -77,7 +77,10 @@ export class Auth {
     })
   }
 
-  public async handle(request: Aponia.Request): Promise<Aponia.Response | undefined> {
+  public async handle(
+    request: Aponia.Request,
+    response?: Aponia.Response,
+  ): Promise<Aponia.Response | undefined> {
     let internalRequest =
       request instanceof Request
         ? {
@@ -104,16 +107,16 @@ export class Auth {
       }
     }
 
-    let response = (await mainHandler?.(internalRequest)) ?? undefined
+    let internalResponse = response ?? (await mainHandler?.(internalRequest)) ?? undefined
 
     for (const postHandler of postHandlers) {
-      const modifiedResponse = await postHandler(internalRequest, response)
+      const modifiedResponse = await postHandler(internalRequest, internalResponse)
       if (modifiedResponse) {
-        response = modifiedResponse
+        internalResponse = modifiedResponse
       }
     }
 
-    return response
+    return internalResponse
   }
 
   public toResponse(authResponse?: Aponia.Response | Nullish): Response | undefined {
