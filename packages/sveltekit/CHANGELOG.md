@@ -1,5 +1,13 @@
 # @aponia.js/sveltekit
 
+## 0.6.13
+
+### Patch Changes
+
+- 8e25f0b: chore: specify return type for adapter handle
+- Updated dependencies [8e25f0b]
+  - @aponia.js/core@0.6.13
+
 ## 0.6.12
 
 ### Patch Changes

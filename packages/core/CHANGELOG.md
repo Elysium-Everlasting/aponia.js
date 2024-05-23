@@ -1,5 +1,11 @@
 # @aponia.js/core
 
+## 0.6.13
+
+### Patch Changes
+
+- 8e25f0b: chore: specify return type for adapter handle
+
 ## 0.6.12
 
 ### Patch Changes
