@@ -1,5 +1,11 @@
 # @aponia.js/core
 
+## 0.6.15
+
+### Patch Changes
+
+- d61f787: fix: allow request type
+
 ## 0.6.14
 
 ### Patch Changes

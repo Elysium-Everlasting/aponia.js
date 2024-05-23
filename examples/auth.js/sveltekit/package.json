@@ -1,6 +1,6 @@
 {
   "name": "@examples/auth.js-sveltekit",
-  "version": "0.1.25",
+  "version": "0.1.26",
   "description": "sveltekit example with auth.js helpers",
   "private": true,
   "type": "module",
