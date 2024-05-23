@@ -155,7 +155,10 @@ export class AdapterPlugin implements Plugin {
     context.router.postHandle(this.handle.bind(this))
   }
 
-  async handle(request: Aponia.Request | Request, response?: Aponia.Response) {
+  async handle(
+    request: Aponia.Request | Request,
+    response?: Aponia.Response,
+  ): Promise<Aponia.AuthenticatedResponse | undefined> {
     if (!AdapterPlugin.isAuthenticatedResponse(response)) {
       return
     }
