@@ -78,7 +78,7 @@ export class Auth {
   }
 
   public async handle(
-    request: Aponia.Request,
+    request: Aponia.Request | Request,
     response?: Aponia.Response,
   ): Promise<Aponia.Response | undefined> {
     let internalRequest =
