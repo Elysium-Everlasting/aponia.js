@@ -97,6 +97,11 @@ export interface AponiaResponse {
   providerAccountId?: string
 
   /**
+   * Any additional information provided by the provider. e.g. ID token.
+   */
+  providerAccountCredential?: string
+
+  /**
    * A session might be set in the response by a plugin.
    */
   session?: Aponia.Session
