@@ -1,5 +1,12 @@
 # @examples/core-module-augmentation
 
+## 0.1.26
+
+### Patch Changes
+
+- Updated dependencies [5b99b65]
+  - @aponia.js/core@0.6.14
+
 ## 0.1.25
 
 ### Patch Changes
