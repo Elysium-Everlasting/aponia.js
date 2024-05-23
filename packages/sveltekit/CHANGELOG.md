@@ -1,5 +1,13 @@
 # @aponia.js/sveltekit
 
+## 0.6.10
+
+### Patch Changes
+
+- f3f67da: feat: handle transforming regular Request objects
+- Updated dependencies [f3f67da]
+  - @aponia.js/core@0.6.10
+
 ## 0.6.9
 
 ### Patch Changes
