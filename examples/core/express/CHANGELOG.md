@@ -1,5 +1,12 @@
 # @examples/core-express
 
+## 0.1.22
+
+### Patch Changes
+
+- Updated dependencies [f3f67da]
+  - @aponia.js/core@0.6.10
+
 ## 0.1.21
 
 ### Patch Changes

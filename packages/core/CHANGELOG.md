@@ -1,5 +1,11 @@
 # @aponia.js/core
 
+## 0.6.10
+
+### Patch Changes
+
+- f3f67da: feat: handle transforming regular Request objects
+
 ## 0.6.9
 
 ### Patch Changes
