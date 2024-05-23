@@ -1,6 +1,7 @@
 import './types'
 
 import type { Plugin, PluginContext, PluginOptions } from './plugins/plugin'
+import { parseCookie } from './security/cookie'
 import type { Awaitable, Nullish } from './utils/types'
 
 export type AuthenticatedResponse = Required<
@@ -159,16 +160,26 @@ export class AdapterPlugin implements Plugin {
       return
     }
 
-    let account = await this.adapter.findAccount?.(request, response)
+    const internalRequest =
+      request instanceof Request
+        ? {
+            url: new URL(request.url),
+            method: request.method,
+            cookies: parseCookie(request.headers.get('cookie')),
+            headers: request.headers,
+          }
+        : request
+
+    let account = await this.adapter.findAccount?.(internalRequest, response)
 
     if (account != null) {
-      const user = await this.adapter.getUserFromAccount?.(account, request, response)
+      const user = await this.adapter.getUserFromAccount?.(account, internalRequest, response)
 
       if (user == null) {
-        return await this.adapter.handleUnboundAccount?.(account, request, response)
+        return await this.adapter.handleUnboundAccount?.(account, internalRequest, response)
       }
 
-      const session = await this.adapter.createSession?.(user, account, request, response)
+      const session = await this.adapter.createSession?.(user, account, internalRequest, response)
 
       if (session != null) {
         response.session = session
@@ -177,33 +188,33 @@ export class AdapterPlugin implements Plugin {
       return response
     }
 
-    let user = await this.adapter.findUser?.(request, response)
+    let user = await this.adapter.findUser?.(internalRequest, response)
 
     if (user == null) {
-      user = await this.adapter.createUser?.(request, response)
+      user = await this.adapter.createUser?.(internalRequest, response)
     }
 
     if (user == null) {
       return
     }
 
-    const accounts = await this.adapter.findUserAccounts?.(user, request, response)
+    const accounts = await this.adapter.findUserAccounts?.(user, internalRequest, response)
 
     if (accounts?.length) {
-      account = await this.handleMultipleAccounts(user, accounts, request, response)
+      account = await this.handleMultipleAccounts(user, accounts, internalRequest, response)
 
       if (account == null) {
         return
       }
     }
 
-    account = await this.adapter.createAccount?.(user, request, response)
+    account = await this.adapter.createAccount?.(user, internalRequest, response)
 
     if (account == null) {
       return
     }
 
-    const session = await this.adapter.createSession?.(user, account, request, response)
+    const session = await this.adapter.createSession?.(user, account, internalRequest, response)
 
     if (session) {
       response.session = session
