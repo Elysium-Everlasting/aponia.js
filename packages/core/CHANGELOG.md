@@ -1,5 +1,11 @@
 # @aponia.js/core
 
+## 0.6.11
+
+### Patch Changes
+
+- d9c23ed: feat: also allow `Request` object for adapter handler
+
 ## 0.6.10
 
 ### Patch Changes
