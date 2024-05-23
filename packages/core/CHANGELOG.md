@@ -1,5 +1,11 @@
 # @aponia.js/core
 
+## 0.6.16
+
+### Patch Changes
+
+- 5cf673c: feat: providerAccountCredential in response
+
 ## 0.6.15
 
 ### Patch Changes
