@@ -1,5 +1,11 @@
 # @aponia.js/core
 
+## 0.6.14
+
+### Patch Changes
+
+- 5b99b65: feat: allow optional response for auth handle
+
 ## 0.6.13
 
 ### Patch Changes

@@ -1,5 +1,13 @@
 # @aponia.js/sveltekit
 
+## 0.6.14
+
+### Patch Changes
+
+- 5b99b65: feat: allow optional response for auth handle
+- Updated dependencies [5b99b65]
+  - @aponia.js/core@0.6.14
+
 ## 0.6.13
 
 ### Patch Changes
