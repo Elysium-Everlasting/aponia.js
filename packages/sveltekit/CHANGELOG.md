@@ -1,5 +1,13 @@
 # @aponia.js/sveltekit
 
+## 0.6.16
+
+### Patch Changes
+
+- 5cf673c: feat: providerAccountCredential in response
+- Updated dependencies [5cf673c]
+  - @aponia.js/core@0.6.16
+
 ## 0.6.15
 
 ### Patch Changes
