@@ -1,5 +1,13 @@
 # @aponia.js/auth.js
 
+## 0.6.12
+
+### Patch Changes
+
+- 00b5248: fix: wrong type definition
+- Updated dependencies [00b5248]
+  - @aponia.js/core@0.6.12
+
 ## 0.6.11
 
 ### Patch Changes

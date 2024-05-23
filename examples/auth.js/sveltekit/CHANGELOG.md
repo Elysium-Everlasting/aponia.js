@@ -1,5 +1,13 @@
 # @examples/auth.js-sveltekit
 
+## 0.1.23
+
+### Patch Changes
+
+- Updated dependencies [00b5248]
+  - @aponia.js/core@0.6.12
+  - @aponia.js/auth.js@0.6.12
+
 ## 0.1.22
 
 ### Patch Changes
