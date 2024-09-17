@@ -1,5 +1,13 @@
 # @aponia.js/auth.js
 
+## 0.6.18
+
+### Patch Changes
+
+- b7ed1c7: feat(core): allow arbitrary data to exist on the base request object
+- Updated dependencies [b7ed1c7]
+  - @aponia.js/core@0.6.18
+
 ## 0.6.17
 
 ### Patch Changes
