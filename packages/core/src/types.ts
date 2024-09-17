@@ -32,6 +32,11 @@ export interface AponiaRequest {
    * Relevant headers sent with the request.
    */
   headers: Headers
+
+  /**
+   * Any arbitrary data.
+   */
+  [k: string | number | symbol]: any
 }
 
 export interface AponiaAuthenticatedResponse
