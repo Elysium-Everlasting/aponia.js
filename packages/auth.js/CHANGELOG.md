@@ -1,5 +1,13 @@
 # @aponia.js/auth.js
 
+## 0.6.17
+
+### Patch Changes
+
+- 8e1a575: fix(sveltekit): import types from SvelteKit
+- Updated dependencies [8e1a575]
+  - @aponia.js/core@0.6.17
+
 ## 0.6.16
 
 ### Patch Changes
