@@ -62,6 +62,7 @@ export class OAuthProvider<T> extends CoreOAuthProvider<T> {
         token: typeof token === 'string' ? { url: token } : token,
         userinfo: typeof userinfo === 'string' ? { url: userinfo } : userinfo,
       },
+      authorizationServer: coreConfig?.authorizationServer,
     } as OAuthProviderConfig<T>
 
     super(resolvedConfig)

@@ -42,3 +42,11 @@ export const PKCE_NAME = 'pkce.code-verifier'
 export const STATE_NAME = 'state'
 export const NONCE_NAME = 'nonce'
 export const HOST_PREFIX = '__Host-'
+
+/**
+ * @see https://datatracker.ietf.org/doc/html/rfc7636#section-6.2.2
+ */
+export const CODE_CHALLENGE_METHODS = {
+  s256: 'S256',
+  plain: 'plain',
+} as const

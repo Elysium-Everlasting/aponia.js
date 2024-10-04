@@ -62,6 +62,7 @@ export class OIDCProvider<T> extends CoreOIDCProvider<T> {
         token: typeof token === 'string' ? { url: token } : token,
         userinfo: typeof userinfo === 'string' ? { url: userinfo } : userinfo,
       },
+      authorizationServer: coreConfig?.authorizationServer,
     } as OIDCProviderConfig<T>
 
     super(resolvedConfig)

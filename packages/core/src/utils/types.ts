@@ -19,3 +19,9 @@ export type DeepPartial<T> = IsAny<T> extends true
   : T
 
 export type Pattern = RegExp | string
+
+/**
+ * Allows any kind of string, but also has autocomplete.
+ */
+// eslint-disable-next-line @typescript-eslint/ban-types
+export type StringAutocomplete<T> = T | (string & {})

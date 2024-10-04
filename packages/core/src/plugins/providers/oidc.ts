@@ -1,6 +1,7 @@
 import * as oauth from 'oauth4webapi'
 
 import {
+  CODE_CHALLENGE_METHODS,
   DEFAULT_CALLBACK_REDIRECT,
   DEFAULT_CALLBACK_ROUTE,
   DEFAULT_LOGIN_ROUTE,
@@ -161,7 +162,9 @@ export class OIDCProvider<T = any> implements Plugin {
       ...this.config.authorizationServer,
     }
 
-    const supportsPKCE = this.authorizationServer.code_challenge_methods_supported?.includes('S256')
+    const supportsPKCE = this.authorizationServer.code_challenge_methods_supported?.includes(
+      CODE_CHALLENGE_METHODS.s256,
+    )
 
     if (this.checker.checks?.includes('pkce') && !supportsPKCE) {
       this.checker.checks = ['nonce']
