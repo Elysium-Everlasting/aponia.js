@@ -1,5 +1,11 @@
 # @aponia.js/core
 
+## 0.7.3
+
+### Patch Changes
+
+- 8444d43: feat: add enum for known code challenge methods
+
 ## 0.7.2
 
 ### Patch Changes
