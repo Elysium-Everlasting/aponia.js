@@ -130,6 +130,11 @@ export class OIDCProvider<T = any> implements Plugin {
       authorization_endpoint: config.endpoints?.authorization?.url,
       token_endpoint: config.endpoints?.token?.url,
       userinfo_endpoint: config.endpoints?.userinfo?.url,
+
+      /**
+       * Override default configuration with values provided by the user.
+       */
+      ...this.config.authorizationServer,
     }
     this.cookies = DEFAULT_OIDC_COOKIES_OPTIONS
     this.checker = new Checker(config.checker)
@@ -151,7 +156,14 @@ export class OIDCProvider<T = any> implements Plugin {
       this.checker.checks = ['nonce']
     }
 
-    this.authorizationServer = authorizationServer
+    this.authorizationServer = {
+      ...authorizationServer,
+
+      /**
+       * Override default configuration with values provided by the user.
+       */
+      ...this.config.authorizationServer,
+    }
   }
 
   initialize(context: PluginContext, options: PluginOptions): Awaitable<void> {

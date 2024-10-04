@@ -153,6 +153,11 @@ export interface OAuthProviderConfig<T> {
   logger?: Logger
 
   origin?: string
+
+  /**
+   * Override values returned by the discovery request.
+   */
+  authorizationServer?: oauth.AuthorizationServer
 }
 
 export class OAuthProvider<T = any> implements Plugin {
@@ -258,6 +263,11 @@ export class OAuthProvider<T = any> implements Plugin {
       authorization_endpoint: this.endpoints.authorization.url,
       token_endpoint: this.endpoints.token.url,
       userinfo_endpoint: this.endpoints.userinfo.url,
+
+      /**
+       * Override default configuration with values provided by the user.
+       */
+      ...this.config.authorizationServer,
     }
     this.cookies = DEFAULT_OAUTH_COOKIES_OPTIONS
     this.checker = new Checker(config.checker)
