@@ -1,5 +1,11 @@
 # @aponia.js/auth.js
 
+## 0.7.0
+
+### Minor Changes
+
+- dfeeaa5: chore(auth.js): update auth/core peer-dependency
+
 ## 0.6.18
 
 ### Patch Changes
