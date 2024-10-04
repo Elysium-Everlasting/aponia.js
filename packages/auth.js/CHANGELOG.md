@@ -1,5 +1,11 @@
 # @aponia.js/auth.js
 
+## 0.7.2
+
+### Patch Changes
+
+- bc5039e: feat(auth.js): make secondary core config partial
+
 ## 0.7.1
 
 ### Patch Changes
