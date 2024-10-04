@@ -157,7 +157,7 @@ export interface OAuthProviderConfig<T> {
   /**
    * Override values returned by the discovery request.
    */
-  authorizationServer?: oauth.AuthorizationServer
+  authorizationServer?: Partial<oauth.AuthorizationServer>
 }
 
 export class OAuthProvider<T = any> implements Plugin {
