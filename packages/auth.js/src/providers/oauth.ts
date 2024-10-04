@@ -14,7 +14,7 @@ export class OAuthProvider<T> extends CoreOAuthProvider<T> {
 
   constructor(
     config: OAuthConfig<T> & { options?: OAuthUserConfig<T> },
-    coreConfig?: OAuthProviderConfig<T>,
+    coreConfig?: Partial<OAuthProviderConfig<T>>,
   ) {
     const id = coreConfig?.id ?? config.id ?? config.options?.id ?? ''
     const clientId = coreConfig?.clientId ?? config.clientId ?? config.options?.clientId ?? ''
