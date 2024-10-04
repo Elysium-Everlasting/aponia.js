@@ -1,5 +1,12 @@
 # @aponia.js/sveltekit
 
+## 0.6.22
+
+### Patch Changes
+
+- Updated dependencies [8444d43]
+  - @aponia.js/core@0.7.3
+
 ## 0.6.21
 
 ### Patch Changes

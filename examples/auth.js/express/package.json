@@ -1,6 +1,6 @@
 {
   "name": "@examples/auth.js-express",
-  "version": "0.1.35",
+  "version": "0.1.36",
   "description": "express.js example",
   "private": true,
   "type": "module",

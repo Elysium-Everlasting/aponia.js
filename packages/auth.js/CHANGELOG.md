@@ -1,5 +1,13 @@
 # @aponia.js/auth.js
 
+## 0.7.5
+
+### Patch Changes
+
+- 8444d43: fix(auth.js): forward the authorization-server config
+- Updated dependencies [8444d43]
+  - @aponia.js/core@0.7.3
+
 ## 0.7.4
 
 ### Patch Changes
