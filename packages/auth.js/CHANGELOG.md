@@ -1,5 +1,12 @@
 # @aponia.js/auth.js
 
+## 0.7.3
+
+### Patch Changes
+
+- Updated dependencies [279aa9b]
+  - @aponia.js/core@0.7.1
+
 ## 0.7.2
 
 ### Patch Changes

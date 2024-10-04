@@ -1,6 +1,6 @@
 {
   "name": "@examples/core-express",
-  "version": "0.1.31",
+  "version": "0.1.32",
   "description": "express.js example",
   "private": true,
   "type": "module",

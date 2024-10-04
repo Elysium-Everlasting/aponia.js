@@ -1,5 +1,11 @@
 # @aponia.js/core
 
+## 0.7.1
+
+### Patch Changes
+
+- 279aa9b: chore(core): specify authorization-server overrides as partial
+
 ## 0.7.0
 
 ### Minor Changes
