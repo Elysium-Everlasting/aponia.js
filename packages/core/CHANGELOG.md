@@ -1,5 +1,11 @@
 # @aponia.js/core
 
+## 0.7.2
+
+### Patch Changes
+
+- 5850fe7: fix: resolve the authorization-server before determining pkce checks
+
 ## 0.7.1
 
 ### Patch Changes
