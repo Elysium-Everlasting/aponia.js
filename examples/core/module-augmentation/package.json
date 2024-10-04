@@ -1,6 +1,6 @@
 {
   "name": "@examples/core-module-augmentation",
-  "version": "0.1.30",
+  "version": "0.1.31",
   "description": "example of augmenting the core module's interfaces",
   "private": true,
   "type": "module",

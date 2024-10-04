@@ -1,5 +1,11 @@
 # @aponia.js/core
 
+## 0.7.0
+
+### Minor Changes
+
+- ca4236d: feat(core): allow user to override values for authorization server
+
 ## 0.6.18
 
 ### Patch Changes
