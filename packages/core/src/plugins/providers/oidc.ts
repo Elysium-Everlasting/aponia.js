@@ -149,12 +149,8 @@ export class OIDCProvider<T = any> implements Plugin {
 
     const issuer = new URL(this.issuer)
     const discoveryResponse = await oauth.discoveryRequest(issuer)
-    const authorizationServer = await oauth.processDiscoveryResponse(issuer, discoveryResponse)
-    const supportsPKCE = authorizationServer.code_challenge_methods_supported?.includes('S256')
 
-    if (this.checker.checks?.includes('pkce') && !supportsPKCE) {
-      this.checker.checks = ['nonce']
-    }
+    const authorizationServer = await oauth.processDiscoveryResponse(issuer, discoveryResponse)
 
     this.authorizationServer = {
       ...authorizationServer,
@@ -163,6 +159,12 @@ export class OIDCProvider<T = any> implements Plugin {
        * Override default configuration with values provided by the user.
        */
       ...this.config.authorizationServer,
+    }
+
+    const supportsPKCE = this.authorizationServer.code_challenge_methods_supported?.includes('S256')
+
+    if (this.checker.checks?.includes('pkce') && !supportsPKCE) {
+      this.checker.checks = ['nonce']
     }
   }
 
